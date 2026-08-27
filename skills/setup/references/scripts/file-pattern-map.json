@@ -1,0 +1,57 @@
+{
+ "version": 1,
+ "rules": [
+  {
+   "id": "source",
+   "patterns": ["{SOURCE_GLOB_LIST}"],
+   "scopePath": ["{SOURCE_DIRS}"],
+   "excludePath": ["{EXCLUDE_DIRS}"],
+   "requires": {
+    "reads": ["CLAUDE.md", "docs/discipline.md"]
+   },
+   "message": "Source edit: the convention section of CLAUDE.md and docs/discipline.md are loaded in this session. Rules live there -- not summarized here."
+  },
+  {
+   "id": "instructions",
+   "patterns": [
+    "CLAUDE.md",
+    "docs/workflow.md",
+    "docs/discipline.md",
+    ".claude/hooks/session-start-header.md",
+    ".claude/skills/*",
+    "*/.claude/skills/*",
+    ".claude/agents/*.md",
+    "*/.claude/agents/*.md",
+    ".claude/commands/*.md",
+    "*/.claude/commands/*.md"
+   ],
+   "message": "Instruction document: rules + symptoms only, no dated cases, no counts, one rule in one place, section titles not numbers. See docs/workflow.md (Authoring policy section) before editing."
+  },
+  {
+   "id": "hook-config",
+   "patterns": [
+    "file-pattern-map.json",
+    ".claude/hooks/*.ps1",
+    "*/.claude/hooks/*.ps1",
+    ".claude/hooks/*.sh",
+    "*/.claude/hooks/*.sh"
+   ],
+   "requires": {
+    "reads": [".claude/hooks/README.md"]
+   },
+   "message": "Hook config: requires.reads paths and skill names must exist (a typo blocks every file the rule matches). Verify with the commands in .claude/hooks/README.md after editing."
+  },
+  {
+   "id": "specs",
+   "patterns": ["*.md"],
+   "scopePath": ["docs/specs/"],
+   "message": "Spec: if it contains code-structure design (types, modules, interfaces, dependencies), run /design-review before committing. Blockers are the user's call; accepted violations go in the spec's intentional-exceptions table."
+  },
+  {
+   "id": "board",
+   "patterns": ["board.md", "board-archive.md"],
+   "scopePath": ["docs/"],
+   "message": "Board: one-line cards, prerequisites as a '- 선행: `<id>`' line only, commit right after editing. Run bash scripts/board-ready.sh -- stale or broken edges must be zero."
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "workflow",
+  "description": "Set up a local PM-Dev-Reviewer development workflow for a project: CLAUDE.md, workflow doc, commands, and selectable modules (autonomous review loop, commit rhythm, board, hooks, design review).",
+  "version": "0.1.0",
+  "author": {
+    "name": "Jeonghyeon Ha"
+  },
+  "homepage": "https://github.com/HaJH/workflow-skills",
+  "repository": "https://github.com/HaJH/workflow-skills",
+  "license": "MIT"
+}
