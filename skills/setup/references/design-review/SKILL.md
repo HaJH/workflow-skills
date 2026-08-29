@@ -117,9 +117,12 @@ Review Log.
 - **INCOMPLETE** — not a pass. Report the unsettled claims; ask the user whether to dispatch a
   follow-up scoped to just those or accept the gap
 - **Notes** — fold into the spec at your discretion, no user gate
-- **Blockers** — one AskUserQuestion each: finding, evidence, alternative(s), and the option to
-  keep the original. **The agent cannot dismiss a Blocker.** Committing or implementing before the
-  user decides is a workflow violation
+- **Blockers** — report the finding and its evidence as text, then one AskUserQuestion per Blocker
+  carrying the alternatives and the option to keep the original. **Translate out of review
+  vocabulary**: the modal names the decision and what is at stake, never a round code, a judge's
+  phrasing, or a section number without the content it points at. The reader has not read the spec
+  and did not see the rounds. **The agent cannot dismiss a Blocker.** Committing or implementing
+  before the user decides is a workflow violation
 - **Blocker accepted as-is** — record it in the spec's Accepted Costs table (decision, what
   degrades, why it is accepted, approval) **before** committing
 
