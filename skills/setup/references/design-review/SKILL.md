@@ -120,8 +120,8 @@ written into this document — compare against the last few rounds' blocks in ea
 - **Blockers** — one AskUserQuestion each: finding, evidence, alternative(s), and the option to
   keep the original. **The agent cannot dismiss a Blocker.** Committing or implementing before the
   user decides is a workflow violation
-- **Blocker accepted as-is** — record it in the spec's 의도적 예외 table (article, violation,
-  justification, approval) **before** committing
+- **Blocker accepted as-is** — record it in the spec's 감수한 대가 table (decision, what
+  degrades, why it is accepted, approval) **before** committing
 
 ### Re-review rounds
 

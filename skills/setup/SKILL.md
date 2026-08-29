@@ -57,7 +57,7 @@ description: "Use when initializing a new local project (no CI, no remote MR) wi
 | [just] `.claude/commands/just.md` | `references/commands.md` 「/just」 |
 | [gate-script] `scripts/check.ps1` | `references/scripts/check.ps1` (언어 블록만 남긴다) |
 | [hooks] `.claude/settings.json` · `.claude/hooks/*` | `references/hooks.md` · `references/scripts/` |
-| [design-review] 스킬·에이전트 3종·설계 헌법·`docs/specs/` | `references/design-review.md` · `references/design-review/` |
+| [design-review] 스킬·에이전트 3종·설계 원칙·`docs/specs/` | `references/design-review.md` · `references/design-review/` |
 
 생성 문서 전체가 `references/authoring-policy.md`의 문체를 따라야 한다 — 프로젝트 고유 절을 쓸
 때도 사례·날짜·세는 값을 넣지 않는다.

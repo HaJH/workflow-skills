@@ -41,6 +41,6 @@
 - **작업 보드 규칙** → `docs/board.md` 상단
 <!-- /module:board -->
 <!-- module:design-review -->
-- **설계 헌법·설계 검토** → `docs/design-constitution.md` · `.claude/skills/design-review/SKILL.md`
+- **설계 원칙·설계 검토** → `docs/design-principles.md` · `.claude/skills/design-review/SKILL.md`
 <!-- /module:design-review -->
 - **훅 룰 추가·검증** → `.claude/hooks/README.md`

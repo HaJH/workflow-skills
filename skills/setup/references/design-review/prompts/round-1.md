@@ -55,7 +55,7 @@ Assemble the verifier rows into the ledger first (SKILL.md 「Fact Ledger」), t
 Design under review: <spec absolute path>
 Code design is in: <sections>. <Other sections> are scope and evidence — read for context. <Review-record section> is the prior review record.
 
-설계 헌법: docs/design-constitution.md
+설계 원칙: docs/design-principles.md
 팩트 원장: <ledger path>
 
 Read the ledger first. It is authoritative: <n> claims were settled against the code by a prior stage. Do not reopen a file to re-confirm a ledger row.

@@ -25,7 +25,7 @@
 | `gate-script` | 게이트 스크립트 | 켬 | `scripts/check.ps1` (Windows) 또는 `scripts/check.sh` | — |
 | `hooks` | 훅 (파일 패턴 게이트 + 세션 주입) | 켬 | `.claude/settings.json` · `.claude/hooks/*` (`hooks.md`) | — |
 | `discipline` | 개발 규율 문서 | 켬 | `docs/discipline.md` (`discipline-md.md`) | — |
-| `design-review` | 설계 검토 게이트 | 끔 | `.claude/skills/design-review/*` · 에이전트 3종 · `docs/design-constitution.md` · `docs/specs/` (`design-review.md`) | — |
+| `design-review` | 설계 검토 게이트 | 끔 | `.claude/skills/design-review/*` · 에이전트 3종 · `docs/design-principles.md` · `docs/specs/` (`design-review.md`) | — |
 
 의존 모듈을 껐는데 의존하는 모듈을 켰으면 의존 모듈을 같이 켠다고 알리고 켠다.
 
@@ -70,4 +70,4 @@
 | `{SCOPE_OWNER}` · `{LANG_FENCE}` · `{DEP_PROJECT_RULES}` · `{ARCH_DOC}` · `{WHERE_THE_VALUE_IS}` · `{WHERE_THE_VALUE_IS_CONFORMANCE}` | `review-loop.md` | 범위 밖 담당 · 코드 펜스 태그 · 레이어 규칙 · 아키텍처 정본 · 최고 가치 카테고리 |
 | `{AREA_1}` · `{AREA_1_SCOPE}` · `{V0_TITLE}` · `{V0_DEFINITION}` | `board.md` | 첫 영역 그룹 · 첫 마일스톤 |
 | `{SOURCE_GLOB_LIST}` · `{SOURCE_SAMPLE}` | `hooks.md` · `scripts/file-pattern-map.json` | 훅 룰 patterns 배열(`"*.rs"`, `"*.ts"` 식으로 확장자별) · 검증용 소스 파일 하나 |
-| `{DEP_MANIFEST}` | `design-review/design-constitution.md` | 모듈 의존을 선언하는 파일 |
+| `{DEP_MANIFEST}` | `design-review/design-principles.md` | 모듈 의존을 선언하는 파일 |

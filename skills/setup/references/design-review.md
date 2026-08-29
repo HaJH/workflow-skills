@@ -11,7 +11,7 @@
 | `.claude/agents/design-claim-extractor.md` | `design-review/agents/design-claim-extractor.md` | 없음 |
 | `.claude/agents/design-fact-verifier.md` | `design-review/agents/design-fact-verifier.md` | `{SOURCE_DIRS}` |
 | `.claude/agents/design-structure-judge.md` | `design-review/agents/design-structure-judge.md` | 없음 |
-| `docs/design-constitution.md` | `design-review/design-constitution.md` | 프로젝트 고유 조항은 사용자와 함께 추가 |
+| `docs/design-principles.md` | `design-review/design-principles.md` | 프로젝트 고유 축은 사용자와 함께 추가 |
 | `docs/specs/` | 빈 디렉터리 + `.gitkeep` | — |
 | `.gitignore` | `docs/specs/.review-cache/` 추가 | — |
 
@@ -21,13 +21,13 @@ spec 파일명은 `docs/specs/YYYY-MM-DD-<topic>.md`. superpowers의 brainstormi
 
 ## 셋업 시 확인할 것
 
-- 설계 헌법의 프로젝트 고유 조항 — 골격의 조항은 일반 원칙이다. 프로젝트의 레이어 규칙(예: 「core
-  크레이트는 UI 무지」)이 있으면 조항으로 추가한다. 번호는 골격 뒤에 이어서
-- 「의존 방향」 조항의 정본 — 모듈 의존을 선언하는 파일(`Cargo.toml` 워크스페이스, `package.json`,
-  `.Build.cs`)이 있으면 그 이름을 적는다
+- 설계 원칙의 프로젝트 고유 축 — 골격의 축은 일반 원칙이다. 프로젝트의 레이어 규칙(예: 「core
+  크레이트는 UI 무지」)이 있으면 축으로 잇는다. 새 축도 골격의 입장 자격을 통과해야 한다
+- 「의존과 지식의 방향」의 정본 — 모듈 의존을 선언하는 파일(`Cargo.toml` 워크스페이스,
+  `package.json`, `.Build.cs`)이 있으면 그 이름을 적는다
 
 ## 유지 규칙
 
-- 조항 번호는 불변, 추가만. spec·리뷰가 번호로 참조한다
+- 축은 이름으로 참조한다. 번호를 매기지 않는다 — 번호가 붙으면 리뷰가 「제N조 위반」으로 보고하고 spec이 그 문체를 따라간다
 - 파이프라인 티어는 각 에이전트의 frontmatter가 정한다. 바꾸려면 거기서
 - 라운드마다 프로파일링 블록을 낸다. 스킬에 기준값을 박지 않는다

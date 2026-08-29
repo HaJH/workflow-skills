@@ -57,7 +57,7 @@ Spec:              <path>
 Code design is in: <sections>
 Prior findings:    <the 설계 검토 record: each finding and its recorded resolution>
 Rewritten:         <sections the revision touched>
-설계 헌법:          docs/design-constitution.md
+설계 원칙:          docs/design-principles.md
 팩트 원장:          docs/specs/.review-cache/<basename>.facts.md
                    <"모든 행 유효" | "STALE 표시된 행은 무효, 나머지 유효" | "원장 없음">
 Weight:            <DELTA | SCOPED | FULL>

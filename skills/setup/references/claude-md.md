@@ -97,7 +97,7 @@ Dev 자율 진행. 매 라운드:
 
 규모 있는 변경(구조 변경·신규 서브시스템·인터페이스 변경)은 구현 전 `docs/specs/`에 spec을
 쓰고, spec에 코드 구조 설계가 들어 있으면 커밋 전 `/design-review`. **Blocker 기각은 사용자
-결정**이며 수용된 위반은 spec에 「의도적 예외」로 기록한다 → `docs/design-constitution.md`
+결정**이며 수용된 결정은 spec에 「감수한 대가」로 기록한다 → `docs/design-principles.md`
 <!-- /module:design-review -->
 
 <!-- module:discipline -->
