@@ -3,8 +3,8 @@
 #
 #   bash {PROJECT_PATH}/scripts/board-ready.sh
 #
-# Edges live in one place and one format -- a `- 선행: `<id>`` bullet directly
-# under a card (docs/board.md, "선행 줄"). Everything else about a card is prose
+# Edges live in one place and one format -- a `- prereq: `<id>`` bullet directly
+# under a card (docs/board.md, "Prerequisite Line"). Everything else about a card is prose
 # for humans; this reads only that bullet.
 #
 # Three questions, because those are the ones prose cannot answer:
@@ -33,7 +33,7 @@ CARD_RE='^- (⚑ )?\*\*`[a-z0-9-]+`\*\*'
 
 ids_in() { grep -oE "$CARD_RE" | grep -oE '`[a-z0-9-]+`' | tr -d '`'; }
 
-# The "형식" section documents the card syntax inside a fenced block, using the
+# The "Format" section documents the card syntax inside a fenced block, using the
 # same markup as a real card. Drop fenced blocks before anything else or those
 # illustrative ids enter the graph.
 unfenced() { awk '/^```/{f=!f; next} !f' "$1"; }
@@ -50,7 +50,7 @@ has() { case "$1" in *" $2 "*) return 0 ;; *) return 1 ;; esac; }
 
 ready=() blocked=() stale=() broken=()
 
-# Walk the ToDo section, remembering the last card seen so a 선행 bullet can be
+# Walk the ToDo section, remembering the last card seen so a prereq bullet can be
 # attributed to it.
 while IFS= read -r line; do
     if [[ $line =~ ^-\ (⚑\ )?\*\*\`([a-z0-9-]+)\`\*\* ]]; then
@@ -58,7 +58,7 @@ while IFS= read -r line; do
         continue
     fi
     [[ ${card:-} ]] || continue
-    [[ $line =~ ^[[:space:]]+-[[:space:]]*선행: ]] || continue
+    [[ $line =~ ^[[:space:]]+-[[:space:]]*prereq: ]] || continue
 
     for dep in $(echo "$line" | grep -oE '`[a-z0-9-]+`' | tr -d '`'); do
         if has "$done_" "$dep"; then

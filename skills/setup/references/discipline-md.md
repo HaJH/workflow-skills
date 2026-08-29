@@ -1,142 +1,164 @@
-# docs/discipline.md 템플릿 (module: discipline)
+# docs/discipline.md Template (module: discipline)
 
-언어 무관 개발 규율. Dev와 Reviewer 양쪽이 읽는다. 아래를 `{PROJECT_PATH}/docs/discipline.md`로
-생성한다. 프로젝트가 자기 사례를 덧붙이지 않도록 「지침 작성 정책」이 적용된다 — 규칙과
-증상만 늘린다.
+Language-agnostic development discipline. Both Dev and Reviewer read it. Generate the following
+as `{PROJECT_PATH}/docs/discipline.md`. The "Instruction Authoring Policy" applies so that a
+project does not append its own anecdotes — only rules and symptoms grow.
 
 ```markdown
-# 개발 규율
+# Development Discipline
 
-Dev와 Reviewer 양쪽에 적용된다. 각 항목은 지시문과 증상이다. 사례·경위는 커밋 메시지와
-보고서에 남기고 여기에 덧붙이지 않는다 (`docs/workflow.md` 「지침 작성 정책」).
+Applies to Dev and Reviewer alike. Each entry is a directive and a symptom. Anecdotes and
+provenance stay in commit messages and reports and are never appended here
+(`docs/workflow.md` "Instruction Authoring Policy").
 
-## 관측 없이 인과를 단정하지 않는다
+## No Causal Claims Without Observation
 
-**코드를 읽어 세운 인과는 가설이다.** 「원인을 특정했다」고 쓰기 전에 그 인과를 관측으로
-확인했는지 묻는다. 확인하지 않았으면 「가설」이라고 쓰고 관측 수단부터 만든다.
+**A causal story built by reading code is a hypothesis.** Before writing "the cause is
+identified", ask whether that causality was confirmed by observation. If it was not, write
+"hypothesis" and build the means to observe first.
 
-- 관측 수단은 **갈래를 가르는 표**까지 있어야 쓸모가 있다 — 갈래마다 그 갈래를 확정하는
-  관측을 지정하고, 「보내는 쪽도 받는 쪽도 옳은데 반영만 틀린」 갈래를 빠뜨리지 않는다.
-  증상: 로그는 있는데 무엇을 보고 무엇을 판정할지가 사람마다 갈린다
-- **관측 실행이 자기가 무엇을 재는지 같은 출력에 찍게 한다.** 증상: 관측은 정직한데
-  대상이 이 브랜치의 코드가 아니었다(캐시된 모듈, 낡은 빌드, 다른 포트의 창)
-- **게이트가 소스와 어긋나게 실패하면 고치기 전에 다른 트리에서 같은 명령을 돌린다.**
-  워크트리가 있는 동안은 같은 커밋을 두 트리가 들고 있어 소스 원인인지 아티팩트 원인인지
-  한 번에 갈린다. 「빌드했으니 최신이다」는 가정이지 관측이 아니다
-- **답을 이미 아는 대조군에 같은 측정을 돌린다.** 자(尺)가 내가 생각한 것을 재는지 의심하는
-  검사다. 증상: 파이프를 걸친 한 단계가 다른 것을 세고 있었다(`grep -c '\r'`는 CR이 아니라
-  문자 r을 센다)
-- **실제 측정이 0을 냈으면 대조군은 0이 아닌 답을 아는 것으로 고른다.** 죽은 자는 무엇을
-  물어도 0을 낸다. 그 파일에 반드시 있는 짧은 조각을 같은 명령으로 세어 1 이상이 나오는 것을
-  먼저 본다. 증상: 마크다운 강조·어미·줄바꿈이 패턴에 끼어 0건이 나왔다 — 산문을 grep할 때는
-  고유한 명사구만 남긴다
-- **범위를 고르는 옵션을 썼으면 골라진 집합 자체를 먼저 출력해 센다.** 증상: `--no-merges`가
-  머지로 들어온 커밋까지 포함했다(직커밋만 보려면 `--first-parent`)
-- **재현 명령을 적었으면 그 자리에서 돌려 산출물과 대조한다.** 붙이는 것이 검사가 아니다.
-  증상: 문서가 「전수다」·「고친 결과다」라고 말하는데 뒷받침하는 명령의 출력이 어디에도 없다 —
-  출력 건수를 문장 안에 적는다
+- The means to observe is only useful once it has **a table that splits the branches** — assign
+  to each branch the observation that settles it, and do not leave out the branch where "sender
+  and receiver are both right and only the application is wrong". Symptom: there are logs, but
+  what to look at and what to decide from it differs from person to person
+- **Make the observation run print, in the same output, what it is measuring.** Symptom: the
+  observation was honest but its target was not this branch's code (a cached module, a stale
+  build, a window on another port)
+- **When the gate fails out of step with the source, run the same command in another tree before
+  fixing anything.** While a worktree exists, two trees hold the same commit, which separates a
+  source cause from an artifact cause in one step. "It built, so it is current" is an assumption,
+  not an observation
+- **Run the same measurement against a control whose answer you already know.** This is the check
+  on whether the ruler measures what you think it measures. Symptom: one stage across a pipe was
+  counting something else (`grep -c '\r'` counts the letter r, not CR)
+- **When the real measurement returns 0, pick a control whose known answer is not 0.** The dead
+  return 0 to every question. First run the same command over a short fragment that is certainly
+  in that file and see it come back 1 or more. Symptom: markdown emphasis, an inflection, or a
+  line break got into the pattern and it returned 0 hits — when grepping prose, keep only the
+  distinctive noun phrase
+- **When you used an option that selects a range, print and count the selected set itself
+  first.** Symptom: `--no-merges` still included commits that arrived through a merge (for direct
+  commits only, use `--first-parent`)
+- **When you write down a reproduction command, run it right there and compare against the
+  output.** Pasting it is not a check. Symptom: the document says "this is exhaustive" or "this
+  is the result after the fix" while the output of the command backing it is nowhere — write the
+  hit count into the sentence
 
-## 사용자에게 요청해도 되는 유일한 경우 — 관측
+## The Only Time You May Ask the User — Observation
 
-혼자 원인을 확정할 수 없어 로그·재현이 필요할 때만 요청한다. QA 대행이 아니라 관측 수단
-확보다. 요청할 때는 **무엇을 보고 무엇을 판정할 것인지**를 함께 낸다 — 「한번 봐 주세요」는
-관측이 아니다.
+Ask only when you cannot pin the cause alone and need a log or a reproduction. It is securing the
+means to observe, not outsourcing QA. When you ask, state **what to look at and what you will
+decide from it** — "please take a look" is not an observation.
 
-## 테스트가 무엇을 지지하는가
+## What the Test Actually Supports
 
-통과는 그 테스트가 무언가를 지지한다는 증거가 아니다. 증상: 게이트를 우회해 불러서 게이트의
-결함을 못 잡는다 · 도달 불가한 arm에 가드를 걸고 증명 테스트는 다른 arm을 탄다 · 이름은
-일반 규칙인데 본문은 몇 필드만 단언한다.
+A pass is not evidence that the test supports anything. Symptoms: it calls around the gate and so
+cannot catch a defect in the gate · the guard sits on an unreachable arm while the proving test
+goes down another arm · the name is a general rule while the body asserts only a few fields.
 
-1. **되돌려서 깨뜨려 본다.** 새 가드·분기를 넣었으면 그것을 빼고 돌려 해당 테스트가 실제로
-   실패하는지 확인하고 보고서에 적는다. 안 깨지는 것이 답인 경우가 있다 — 그것은 가드가
-   아니라 아낌이다
-2. **가드는 하나씩 뺀다.** 한꺼번에 빼면 각 테스트가 어느 가드를 지지하는지가 사라진다
-3. **무엇을 되돌릴지는 「이 테스트의 이름이 무엇을 주장하는가」가 정한다.** 「가드」라고
-   이름 붙인 것에만 적용하면 「필드」·「매핑」처럼 느껴지는 자리는 빠져나간다
-4. **일반 규칙을 이름에 걸었으면 본문도 일반이어야 한다.** 이름이 「모든 X」를 말하면 X를
-   열거해서 걷는다
-5. **테스트가 실제 경로를 타는지 본다.** 내부 함수를 직접 부르는 테스트는 그 함수까지만
-   지지한다. 종단 경로를 도는 테스트가 하나는 있어야 한다
-6. **가드가 도달 가능한지는 호출부의 조건이 정한다.** 함수 안만 보면 분기가 멀쩡해 보인다 —
-   호출부의 렌더·실행 조건까지 거슬러 「이 분기에 무엇이 도달하는가」를 묻는다
-7. **가드를 옮겼으면 옮긴 자리에서 빼 보라.** 옛 자리에서 빼는 것으로는 아무것도 확인되지
-   않는다. 증상: 테스트는 옳았고 가드가 그 밑에서 빠져나갔는데 초록불이다
-8. **테스트 헬퍼가 대상을 재구현하면 그 테스트는 대상을 지지하지 않는다.** 헬퍼는 대상을
-   부르는 것이지 흉내 내는 것이 아니다
+1. **Revert it and watch it break.** After adding a guard or a branch, take it back out, run, and
+   confirm that the test actually fails — then write that in the report. Sometimes not breaking is
+   the answer — that is not a guard, it is restraint
+2. **Remove guards one at a time.** Remove them together and which test supports which guard is
+   gone
+3. **What to revert is decided by "what does this test's name claim?"** Apply it only to things
+   named "guard" and the places that feel like a "field" or a "mapping" slip through
+4. **If the name carries a general rule, the body must be general too.** If the name says "all
+   X", enumerate X and walk it
+5. **Check that the test goes down the real path.** A test that calls an internal function
+   directly supports only that function. At least one test must run the end-to-end path
+6. **Whether a guard is reachable is decided by the condition at the call site.** Look only
+   inside the function and the branch seems fine — trace back to the render and execution
+   conditions at the call site and ask "what reaches this branch?"
+7. **If you moved a guard, remove it at the new place.** Removing it at the old place confirms
+   nothing. Symptom: the test was right, the guard slipped out from under it, and the light is
+   still green
+8. **A test helper that reimplements the target means the test does not support the target.** A
+   helper calls the target; it does not imitate it
 
-접을 수 있으면 접는다 — 소비자를 인자로 받게 만들면 컴파일러가 인자 수로 막는다. 테스트보다
-강하다.
+Collapse it when you can — make it take the consumer as a parameter and the compiler blocks by
+arity. That is stronger than a test.
 
-## 일치는 정확성이 아니다
+## Matching Is Not Correctness
 
-공유 정의에는 두 소비자의 일치를 보는 테스트와 별개로 **그것이 무엇을 뜻하는지를 직접
-단언하는 테스트**가 하나 있어야 한다. 양쪽이 함께 틀리면 교차 테스트는 언제나 초록이다.
+Alongside the test that checks two consumers match, a shared definition must have one test that
+**asserts directly what it means**. When both sides are wrong together, the cross test is always
+green.
 
-## 세지 말고 누구를 적는다
+## Name Them, Do Not Count Them
 
-주석·문서가 **실재하는 코드의 개수를 세는** 형태(「여덟 라우트 전부」·「두 호출자」·
-「both」·「유일한」)는 쓸 때는 참이고 초록불인 채로 거짓이 된다. 소비자를 더하는 사람은 코드를
-읽지 산문을 감사하지 않는다.
+A comment or document in the shape of **counting how many pieces of code exist** ("all eight
+routes", "the two callers", "both", "the only") is true when written and turns false with the
+light still green. Whoever adds a consumer reads code; they do not audit prose.
 
-- **공유 정의를 정당화하는 주석은 몇이 공유하는지가 아니라 누가 공유하는지를 적는다.**
-  목록을 쓸 수 없으면 그 문장이 참인지 실은 모르는 것이다
-- **소비자 목록은 고정 표기로 쓴다** — `/// Consumers: a, b, c`. grep으로 모이는 집합이 된다
-- **항목은 호출부 이름이다.** 용도(「카드 컬럼용」)로 적으면 호출이 안 바뀌어도 낡는다
-- **목록에는 닫히는 지점을 적는다.** 하류를 가리키면 하류 전부를 열거해야 한다. 값싼 검사:
-  그 목록을 grep 하나로 재현할 수 있는가
-- **가정적 수는 괜찮다** — 「사본이 셋이면 갈라진다」는 낡을 수 없다
-- 접을 수 있으면 접는다 — 목록이 타입의 생성자 목록이 되면 컴파일러가 센다
+- **A comment justifying a shared definition writes who shares it, not how many.** If you cannot
+  write the list, you do not actually know whether the sentence is true
+- **Write a consumer list in a fixed notation** — `/// Consumers: a, b, c`. It becomes a set that
+  grep gathers
+- **Entries are call-site names.** Written by purpose ("for the card column"), it goes stale even
+  when no call changed
+- **Write where the list closes.** Point downstream and you must enumerate all of downstream. The
+  cheap check: can you reproduce that list with one grep?
+- **A hypothetical count is fine** — "three copies would diverge" cannot go stale
+- Collapse it when you can — once the list is a type's constructor list, the compiler counts it
 
-### 리뷰 질문 — 이 커밋이 무엇의 소비자가 됐는가
+### Review Question — What Did This Commit Become a Consumer Of
 
-목록을 찾아 맞는지 보는 방향으로는 못 잡는다. 갈라지는 순간은 **새 호출부를 추가한 커밋**인데
-호출부 쪽에는 목록이 없다. 그래서 브랜치 리뷰는 「이 커밋이 무엇의 소비자가 됐는가」를 묻고,
-그 대상에 소비자 목록이 있으면 이 브랜치가 들어갔는지 본다. 짝은 「무엇의 소비자이기를
-그만뒀는가」 — 지운 이름을 알고 있으므로 검색이 더 쉽다.
+You cannot catch it by finding the list and checking whether it is right. The moment of
+divergence is **the commit that adds a new call site**, and there is no list on the call-site
+side. So a branch review asks "what did this commit become a consumer of?", and where that target
+carries a consumer list, checks whether this branch went into it. Its pair is "what did it stop
+being a consumer of" — the search is easier because you know the removed name.
 
-### 서술 sweep — 라운드마다
+### Prose Sweep — Every Round
 
-1. **심볼 sweep**: 이 라운드가 지우거나 새로 부른 심볼로 `git grep`. 이어서 `grep -r
-   docs/reports/` — 보고서는 gitignored라 `git grep` 범위 밖이다
-2. **수 낱말 sweep**: `git diff main...HEAD | grep '^+' | grep -E '(둘|셋|넷|both|all|only|
-   every|뿐|전부|유일)'` — 이 라운드가 새로 쓴 문장이 대상
-3. **범주 sweep**: 열거된 범주에 항목을 더했으면 그 범주의 이름(「예외」·「소비자」·「갈래」)으로
-   파일 전체를 훑는다. 앞 라운드가 쓴 줄은 추가 줄에 없다
-4. **어휘 sweep**: 지운 심볼을 산문이 부르던 말로도 훑는다 — 이름뿐 아니라 **무엇 옆에
-   있었는지**와 **무엇을 하는 것이었는지**로도. 0건을 적을 때는 무엇에 대한 0인지를 함께 적는다
-5. **소관이 바뀌면 그 개념을 다루는 문서는 통독한다.** 문서는 자기를 「이 카드」·「여기」로
-   부르므로 자기 이름으로 안 잡힌다
+1. **Symbol sweep**: `git grep` for the symbols this round deleted or newly introduced. Then
+   `grep -r docs/reports/` — reports are gitignored and so outside `git grep`'s range
+2. **Number-word sweep**: `git diff main...HEAD | grep '^+' | grep -E '(two|three|four|both|all|
+   only|every|sole|entire)'` — the target is the sentences this round newly wrote
+3. **Category sweep**: if you added an entry to an enumerated category, sweep the whole file by
+   that category's name ("exception", "consumer", "branch"). Lines an earlier round wrote are not
+   in the added lines
+4. **Vocabulary sweep**: sweep for a deleted symbol by the words prose called it too — not only
+   the name, but also **what it sat next to** and **what it did**. When you write down a zero,
+   write what the zero was about
+5. **When ownership changes, read the whole document that covers that concept.** A document calls
+   itself "this card" or "here", so it is not caught by its own name
 
-세 갈래가 같은 뿌리다 — **했다고 믿은 검사가 그 자리에 닿지 않았다**: 범위(그 줄이 대상 밖) ·
-어휘(부르는 말이 달랐다) · 실행(돌리지 않았다). 갈래마다 「훑었다」·「0건이다」·「적어 뒀다」가
-참인 채로 끝나므로 아무도 다시 보지 않는다.
+The three branches share one root — **the check you believed you ran did not reach that place**:
+range (that line was outside the target) · vocabulary (it was called something else) · execution
+(it was never run). In every branch, "I swept it", "there are zero hits", and "I wrote it down"
+finish out true, so nobody looks again.
 
-## 주석 — 기본값은 없음
+## Comments — No Default
 
-이름·타입·구조로 의도가 드러나는 코드가 정본이다. 설명이 필요해 보이면 주석 전에 코드를
-자명하게(이름 변경·함수 추출·조건 분리) 만들 수 있는지 먼저 본다.
+Code whose intent shows through its names, types, and structure is the canon. When an explanation
+seems needed, first check whether the code can be made self-evident (rename, extract a function,
+split a condition) before writing a comment.
 
-**달아야 하는 것**: 수식·알고리즘의 유도, 비자명한 의도·제약(왜 다른 자연스러운 방식이면
-안 되는지), 함정 경고, 외부 호환성 경계.
-**달면 안 되는 것**: 이름이 이미 말하는 것의 재서술, 다른 곳에 정본이 있는 것의 복제, 다른
-파일이 하는 일의 서술, 작업 경위·이슈 번호·후속 계획, 주석 처리된 코드.
+**Comment on**: the derivation of a formula or algorithm, a non-obvious intent or constraint (why
+the other natural way does not work), a trap warning, an external compatibility boundary.
+**Never comment**: a restatement of what the name already says, a copy of something whose canon
+is elsewhere, a description of what another file does, work provenance or issue numbers or
+follow-up plans, commented-out code.
 
-쓰기 직전 3문:
+Three questions right before writing one:
 
-1. **이 주석은 다른 파일이 바뀌면 틀려지는가?** 그렇다면 쓰지 않는다. 그 why가 정말 필요하면
-   코드로 옮긴다(이름·함수 추출·어서션)
-2. **리뷰 지적에 답하려는 것인가?** 그 근거가 갈 곳은 보고서의 Response다. 코드에 또 쓰면
-   정본이 둘이 된다
-3. **주변이 다 달고 있어서인가?** 준수 근거가 아니다
+1. **Does this comment go wrong when another file changes?** Then do not write it. If that "why"
+   is genuinely needed, move it into code (a name, an extracted function, an assertion)
+2. **Is it answering a review finding?** That rationale belongs in the report's Response. Written
+   into the code as well, there are now two canons
+3. **Is it because everything around it has one?** That is not a reason to comply
 
-주석-코드 불일치를 발견하면 정정보다 **삭제를 먼저** 검토한다. 리뷰에서 주석은 **코드와의 사실
-불일치만** 지적하고 리뷰당 1건 캡, 판정에 영향을 주지 않는다.
+On finding a comment-code mismatch, consider **deletion before correction**. In review, a comment
+finding covers **factual mismatch with the code only**, capped at one per review, with no effect
+on the verdict.
 
-## 문서 작업의 함정
+## Documentation-Work Traps
 
-- **경로를 heredoc으로 써 넣지 않는다** — `\v`·`\t`·`\n`으로 시작하는 Windows 경로가 제어
-  문자가 된다. `Edit`/`Write` 도구를 쓴다. 증상: 렌더된 문서에서 글자 하나가 사라져 오타처럼
-  읽히고 `git diff`도 그리지 않는다
-- **미리보기·확인용 산출물은 리포 밖에 쓴다.** 작업 트리에 떨어지면 `git add -A`가 커밋한다
+- **Never write a path in through a heredoc** — a Windows path starting with `\v`, `\t`, or `\n`
+  becomes a control character. Use the `Edit`/`Write` tools. Symptom: a character vanishes from
+  the rendered document, reads as a typo, and `git diff` does not draw it either
+- **Write preview and check output outside the repo.** Landing in the working tree, `git add -A`
+  commits it
 ```

@@ -1,151 +1,168 @@
-# 지침 작성 정책
+# Instruction Authoring Policy
 
-에이전트 지침(CLAUDE.md · `docs/workflow.md` · `docs/discipline.md` · 훅 룰 · 스킬 ·
-에이전트 정의)을 **추가·수정·삭제**할 때의 규칙. 이 스킬 자신과 이 스킬이 생성하는
-문서 전부에 적용한다. 생성 시 `docs/workflow.md` 「지침 작성 정책」 절에 이 문서의
-「문체」·「세는 값」·「한 규칙은 한 곳에만」·「라인 번호」·「메모리」 절을 옮긴다.
+Rules for **adding, editing, and deleting** agent instructions (CLAUDE.md · `docs/workflow.md` ·
+`docs/discipline.md` · hook rules · skills · agent definitions). Applies to this skill itself and
+to every document this skill generates. At generation time, copy this document's "Voice",
+"Counted Values", "One Rule, One Place", "Line Numbers", and "Memory" sections into the
+"Instruction Authoring Policy" section of `docs/workflow.md`.
 
-## 문체 — 규칙과 증상만 남긴다
+Instructions are written in English. Agent responses follow the user's language.
 
-지침은 작업 중에 열린다. 읽는 쪽은 규칙 하나를 확인하고 다음으로 넘어가며, 규칙을
-뒷받침하는 논증은 그 이동에 얹히는 짐이다.
+## Voice — Rules and Symptoms Only
 
-**남긴다**
+Instructions are opened mid-task. The reader confirms one rule and moves on, and the argument
+backing that rule is dead weight carried through that move.
 
-- 지시문 한 줄. 명령형·단정형(「~한다 / ~하지 않는다」).
-- **증상** 한 구절. 그 상황을 어떻게 알아보는가 — 로그 문구, 눈에 보이는 증세, 깨지는 지점.
+**Keep**
 
-**넣지 않는다**
+- One directive line. Imperative and declarative ("do X / never do X").
+- One clause of **symptom**. How you recognize the situation — a log string, a visible sign,
+  the point where it breaks.
 
-- 날짜·이슈 ID·브랜치명을 건 위반 사례.
-- 측정치·재현 기록·증거.
-- 작성 당시의 검토 과정·대안 비교·변명·회고.
-- 규칙의 적용 범위 밖 사정 — 범용 문서에 특정 프로젝트 사정을 끼워 넣지 않는다.
+**Leave out**
 
-**이유는 확인된 것만 쓴다.** 이유가 확실하지 않으면 이유를 빼고 규칙과 증상만 쓴다.
-경위·증거·판단 근거가 남을 곳은 커밋 메시지 · 보고서 · spec이다.
+- Violation anecdotes tied to a date, issue ID, or branch name.
+- Measurements, reproduction records, evidence.
+- The review process, alternatives weighed, excuses, retrospectives from the time of writing.
+- Circumstances outside the rule's scope — never wedge one project's situation into a general
+  document.
 
-증상: 같은 문서를 짧은 간격으로 다시 고치고 있다. 규칙 하나에 「보강」·「개정」 절이
-붙어 자란다. → 덧붙이지 말고 그 절을 다시 쓴다.
+**Write a reason only when it is confirmed.** If the reason is not certain, drop it and keep the
+rule and the symptom. Provenance, evidence, and reasoning belong in commit messages, reports,
+and specs.
 
-## 세는 값을 문서에 박지 않는다
+Symptom: the same document is being edited again after a short interval. A single rule grows
+"amendment" and "revision" subsections. → Do not append; rewrite the section.
 
-파일 수 · 항목 수 · 소비자 수처럼 **세어서 나오는 값**은 변경 하나에 틀려진다. 갱신은
-해법이 아니다.
+## Counted Values Stay Out of Documents
 
-- 숫자 대신 **다시 뽑는 수단**을 적는다 — 명령 · 스크립트 · 검색어.
-- 판단에 필요한 것은 대개 숫자가 아니라 **성질**이다(「대부분이 X다」).
-- 예외는 시점이 고정된 기록 — 커밋 메시지 · 보고서 · spec.
+Values that come from **counting** — number of files, number of entries, number of consumers —
+go wrong on a single change. Updating them is not the fix.
 
-증상: 문서가 말하는 개수가 실제와 다르다. 「둘 다」·「유일한」·「전부」가 거짓이 되어 있다.
+- Instead of a number, write the **means to recount** — a command, a script, a search term.
+- What the decision needs is usually not the number but the **property** ("most of them are X").
+- The exception is a record fixed to a point in time — commit message, report, spec.
 
-## 한 규칙은 한 곳에만
+Symptom: the count in the document differs from reality. "Both", "the only", "all of them" have
+become false.
 
-같은 규칙을 두 곳에 적으면 한쪽만 고쳐지고 다른 쪽이 낡아 **현재 규칙과 모순되는
-지시**가 된다.
+## One Rule, One Place
 
-- 다른 문서의 규칙은 **경로 + 절 제목**으로 가리킨다: `→ docs/workflow.md 「커밋 리듬」`.
-- 요약이 필요하면 한 줄 + 포인터까지.
-- 절 번호(§3.2)로 가리키지 않는다 — 절 하나만 끼어들어도 어긋난다. 절 제목으로 가리킨다.
+Writing the same rule in two places means only one gets fixed, and the other goes stale into an
+**instruction that contradicts the current rule**.
 
-## 진실 소스 배치
+- Point at a rule in another document by **path + section title**: `→ docs/workflow.md "Commit
+  Rhythm"`.
+- If a summary is needed, one line plus the pointer.
+- Never point by section number (§3.2) — one inserted section throws it off. Point by section
+  title.
 
-| 위치 | 담는 것 | 담지 않는 것 |
+## Source-of-Truth Placement
+
+| Location | Holds | Does not hold |
 |---|---|---|
-| `CLAUDE.md` | 항상 적용되는 핵심 원칙 + 상세 문서 포인터 | 긴 절차, 도메인 세부 규칙 |
-| `docs/workflow.md` | 브랜치·역할·루프·보고서·머지·워크트리 절차 | 코딩 규칙, 도메인 사용법 |
-| `docs/discipline.md` | 언어 무관 개발 규율(관측·테스트·서술) | 절차 |
-| `.claude/hooks/session-start-header.md` | 반복 위반 항목 한 줄 요약 + 상세 문서 인덱스 | 규칙 원문 |
-| `.claude/skills/*/SKILL.md` | 도메인 사용법·패턴(토픽 조회형) | 프로젝트 전역 규칙 사본 |
-| `.claude/skills/review-*/references/rules.md` | 리뷰 렌즈(심각도 + 검출 패턴) | 규칙 설명 재서술 |
-| `.claude/hooks/file-pattern-map.json` | 파일 편집 시점의 환기·게이트 | 규칙 본문 |
+| `CLAUDE.md` | Core principles that always apply + pointers to detailed documents | Long procedures, domain detail rules |
+| `docs/workflow.md` | Branch, role, loop, report, merge, worktree procedures | Coding rules, domain usage |
+| `docs/discipline.md` | Language-agnostic development discipline (observation, testing, prose) | Procedures |
+| `.claude/hooks/session-start-header.md` | One-line summaries of repeatedly violated items + index of detailed documents | Rule text |
+| `.claude/skills/*/SKILL.md` | Domain usage and patterns (topic lookup) | Copies of project-wide rules |
+| `.claude/skills/review-*/references/rules.md` | Review lenses (severity + detection patterns) | Restatements of rule explanations |
+| `.claude/hooks/file-pattern-map.json` | Reminders and gates at file-edit time | Rule bodies |
 
-배치가 애매하면 **「언제 이 규칙이 필요한가」**로 정한다. 항상 → CLAUDE.md, 특정
-절차에 들어갈 때 → workflow.md, 특정 파일을 열 때 → file-pattern-map 룰, 사용법을
-찾을 때 → 스킬.
+When placement is unclear, decide by **"when is this rule needed?"** Always → CLAUDE.md; when
+entering a specific procedure → workflow.md; when opening a specific file → a file-pattern-map
+rule; when looking up usage → a skill.
 
-## CLAUDE.md 작성
+## Writing CLAUDE.md
 
-매 턴 컨텍스트를 소비한다. 길이가 곧 비용이다.
+It consumes context every turn. Length is cost.
 
-- 실행 가능한 지시만. 프로젝트 소개·아키텍처 설명은 `docs/`로 보내고 포인터만 남긴다.
-- 코드에서 읽히는 것(디렉터리 구조, 파일 목록)은 쓰지 않는다.
-- 불릿 위주, 문단 금지. 지시의 핵심 동사를 굵게.
-- 금지 규칙은 금지 + 깨지는 지점 한 구절.
-- 한 항목이 세 줄을 넘으면 `docs/`로 옮기고 한 줄 + 포인터를 남긴다.
+- Actionable instructions only. Send project introductions and architecture explanations to
+  `docs/` and leave a pointer.
+- Do not write what is readable from the code (directory structure, file listings).
+- Bullets, no paragraphs. Bold the key verb of each instruction.
+- A prohibition is the prohibition plus one clause naming where it breaks.
+- If an entry runs past three lines, move it to `docs/` and leave one line plus a pointer.
 
-## SKILL.md 작성
+## Writing SKILL.md
 
-- frontmatter `description`이 호출 여부를 정한다. 「무엇에 관한 스킬인가」가 아니라
-  **「언제 호출해야 하는가」**를 `Use when …` 형태로 쓴다. 「언제 쓰지 않는가」도 한 줄.
-- 본문은 결론부터. 배경 설명으로 시작하지 않는다.
-- SKILL.md는 인덱스, 상세는 `references/`로. 필요한 토픽만 읽히게 한다.
-- 예제는 그대로 복사되는 최소 형태로.
-- CLAUDE.md·`docs/*` 규칙을 스킬 본문에 복사하지 않는다.
+- The frontmatter `description` decides whether the skill gets invoked. Write **"when should this
+  be invoked?"** in `Use when …` form, not "what is this skill about?". Add one line on when not
+  to use it.
+- The body leads with the conclusion. Do not open with background.
+- SKILL.md is an index; detail goes to `references/`. Let only the needed topic be read.
+- Examples are in the minimal form that gets copied verbatim.
+- Do not copy CLAUDE.md or `docs/*` rules into a skill body.
 
-## 에이전트 정의 작성
+## Writing Agent Definitions
 
-- `model`·`effort`를 frontmatter에 고정한다. 상속시키면 세션 설정에 따라 판정 기준이
-  달라진다.
-- 리뷰어는 `tools`에서 `Write`·`Edit`를 뺀다.
-- 규칙을 본문에 복사하지 않는다. 스킬과 정본 문서를 가리키고, 둘이 어긋날 때 **어느 쪽이
-  이기는지**를 명시한다.
-- 서브에이전트는 CLAUDE.md를 상속하지 않는다 — 읽어야 할 정본을 본문에 경로로 적는다.
+- Pin `model` and `effort` in the frontmatter. Inherited, the judgment bar shifts with the
+  session settings.
+- Remove `Write` and `Edit` from a reviewer's `tools`.
+- Do not copy rules into the body. Point at the skill and the canonical document, and state
+  **which one wins** when the two disagree.
+- A subagent does not inherit CLAUDE.md — write the paths of the canonical documents it must read
+  into the body.
 
-## 훅 룰 작성
+## Writing Hook Rules
 
-훅은 잊지 않게 하는 장치지 가르치는 장치가 아니다.
+A hook is a device that keeps you from forgetting, not a device that teaches.
 
-- `message`는 정본 경로를 가리키는 포인터. 규칙 본문을 복사하지 않는다.
-- `requires`는 fail-closed다. `reads` 경로나 `skills` 이름에 오타가 있으면 그 룰에 걸린
-  파일을 아무도 편집할 수 없다. 추가·수정 후 검증 명령으로 실제 매칭을 확인한다.
-- 승격은 보수적으로. 지침이 「필수 / 정독 후 진행」이라 선언한 것만 `requires`로. 나머지는
-  `message`로 시작한다.
-- 편집 시점이 아닌 요구(커밋 전·머지 전 게이트)는 `requires`로 걸지 않는다 — 작성 자체가 막힌다.
-- 알림은 세션당 룰 1회다.
-- 스크립트는 예외 시 exit 0(fail-open)을 유지한다.
+- `message` is a pointer to the canonical path. Do not copy the rule body into it.
+- `requires` is fail-closed. A typo in a `reads` path or a `skills` name means nobody can edit the
+  files that rule matches. After adding or editing one, confirm the actual match with the
+  verification commands.
+- Promote conservatively. Only what the instructions declare "required / read fully before
+  proceeding" becomes `requires`. Everything else starts as `message`.
+- Requirements that do not belong at edit time (pre-commit, pre-merge gates) are never hooked as
+  `requires` — they block the writing itself.
+- Notification is once per rule per session.
+- Scripts keep exit 0 (fail-open) on exceptions.
 
-## session-start-header 승격 기준
+## session-start-header Promotion Criteria
 
-매 세션·매 서브에이전트에 통째로 주입된다. 한 줄 추가 = 모든 세션의 상시 비용.
+It is injected whole into every session and every subagent. One added line = a standing cost on
+every session.
 
-- 올린다: 지침에 이미 있는데도 반복 위반된 항목.
-- 안 올린다: 갓 만든 규칙, 특정 도메인 한정 규칙(→ file-pattern-map 룰).
-- 형식: 한 줄 요약 + `→ 정본문서.md 「절」`. 원문을 옮기지 않는다.
-- 위반이 멎으면 내린다.
+- Promote: an item already in the instructions that is violated repeatedly.
+- Do not promote: a freshly written rule, or a rule limited to one domain (→ a file-pattern-map
+  rule).
+- Form: one-line summary + `→ canonical-document.md "Section"`. Do not move the original text.
+- Demote it once the violations stop.
 
-## 커밋되는 문서에 라인 번호 참조 금지
+## Line Numbers: Never in Committed Documents
 
-코드를 가리킬 때는 `파일명 + 심볼명`으로 쓴다. `Foo.rs:391` 금지 — 위에 한 줄만
-늘어도 어긋난다. 예외는 base commit에 묶여 gitignore되는 캐시(설계 검토 팩트 원장)와
-gitignore되는 보고서.
+Point at code with **file name + symbol name**. `Foo.rs:391` is banned — one added line above
+throws it off. The exceptions are the gitignored cache tied to a base commit (the design-review
+fact ledger) and gitignored reports.
 
-## 메모리에 영구 규칙 금지
+## Memory: No Permanent Rules
 
-`~/.claude/projects/<slug>/memory/`는 머신 로컬이고 서브에이전트에 전달되지 않는다.
-영구 규칙·컨벤션·반복 함정을 두면 머신 간·메인/서브 간 동작이 갈린다. 「이거 기억해」라고
-해도 영구 규칙이면 배치표의 해당 위치에 쓰고 어디에 넣었는지 보고한다.
+`~/.claude/projects/<slug>/memory/` is machine-local and is not passed to subagents. Putting
+permanent rules, conventions, or recurring traps there makes behavior diverge between machines
+and between main and sub sessions. Even when told "remember this", if it is a permanent rule,
+write it at its place in the placement table and report where you put it.
 
-## 새 규칙 추가 절차
+## Adding a New Rule
 
-1. 중복 확인 — 같은 취지의 규칙이 있는지 grep. 있으면 그 항목을 고친다.
-2. 위치 결정 — 배치표.
-3. 작성 — 지시문 + 증상.
-4. 편집 시점 환기가 필요하면 file-pattern-map 룰 추가 → 검증.
-5. 반복 위반 이력이 있으면 session-start-header에 한 줄.
+1. Check for duplication — grep for a rule with the same intent. If one exists, edit that entry.
+2. Decide placement — the placement table.
+3. Write — directive + symptom.
+4. If an edit-time reminder is needed, add a file-pattern-map rule → verify.
+5. If there is a history of repeated violation, add one line to session-start-header.
 
-## 변경·삭제 시 동반 갱신
+## Companion Updates on Change or Deletion
 
-규칙 하나를 고치면 그것을 가리키는 쪽이 같이 낡는다. 수정 후 grep으로 훑는다:
-`CLAUDE.md` 포인터 줄 · `session-start-header.md` · `file-pattern-map.json`의
-`message` / `requires.reads` · 관련 `SKILL.md` · `.claude/agents/*.md`.
+Fixing one rule leaves whatever points at it stale. After editing, sweep with grep: the pointer
+lines in `CLAUDE.md` · `session-start-header.md` · `message` / `requires.reads` in
+`file-pattern-map.json` · the related `SKILL.md` · `.claude/agents/*.md`.
 
-문서를 삭제·이동하면 `requires.reads`에 남은 경로가 영원히 충족되지 않아 그 룰에 걸린
-파일을 아무도 편집할 수 없다.
+Deleting or moving a document leaves a path in `requires.reads` that can never be satisfied, and
+nobody can edit the files that rule matches.
 
-## 파일별 제약
+## Per-File Constraints
 
 - `*.md` · `*.json`: UTF-8.
-- `*.ps1`: ASCII 문자만. PowerShell 5.1은 BOM 없는 한글 리터럴을 cp949로 읽어 깨뜨린다.
-  한글이 꼭 필요하면 UTF-8 BOM으로 저장한다.
-- `.claude/settings.json` 수정 후에는 `/hooks` 메뉴를 열거나 재시작해야 반영된다.
+- `*.ps1`: ASCII characters only. PowerShell 5.1 reads non-ASCII literals without a BOM as cp949
+  and corrupts them. If non-ASCII is genuinely required, save with a UTF-8 BOM.
+- After editing `.claude/settings.json`, open the `/hooks` menu or restart for it to take effect.

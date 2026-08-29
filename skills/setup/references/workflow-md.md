@@ -1,228 +1,246 @@
-# docs/workflow.md 템플릿
+# docs/workflow.md Template
 
-아래를 `{PROJECT_PATH}/docs/workflow.md`로 생성한다. 「자율 리뷰-수정 루프」의 종료 조건 셋과
-예산 연장 규칙은 요약하지 말고 그대로 둔다 — 루프가 발산하지 않는 이유 전부다.
-「지침 작성 정책」 절은 `authoring-policy.md`의 「문체」·「세는 값」·「한 규칙은 한 곳에만」·
-「라인 번호」·「메모리」 절을 옮겨 채운다.
+Generate the following as `{PROJECT_PATH}/docs/workflow.md`. Leave the three stop conditions and
+the budget-extension rule in "Autonomous Review-Fix Loop" exactly as they are, without
+summarizing — together they are the whole reason the loop does not diverge. Fill the "Instruction
+Authoring Policy" section by moving in the "Voice", "Counted Values", "One Rule, One Place",
+"Line Numbers", and "Memory" sections of `authoring-policy.md`.
 
 ```markdown
-# {PROJECT_NAME} 개발 워크플로
+# {PROJECT_NAME} Development Workflow
 
-## 개발 실행
+## Running and Building
 
 <!-- module:gate-script -->
-- **게이트 목록은 `scripts/check.ps1` 하나다.** 이 문서와 커맨드는 그것을 가리키기만 한다.
-  문서가 명령을 나열하면 스크립트와 갈라지고, 갈라지는 방향은 언제나 조용한 쪽이다.
-  무엇이 도는지 보려면 그 파일을 읽는다
-- 포맷은 먼저 고친다 — 게이트는 고치지 않고 거절한다: `{FORMAT_CMD}`
+- **The gate list is `scripts/check.ps1`, and nothing else.** This document and the commands only
+  point at it. A document that lists commands diverges from the script, and it always diverges in
+  the quiet direction. To see what runs, read that file
+- Fix formatting first — the gate rejects rather than fixes: `{FORMAT_CMD}`
 <!-- /module:gate-script -->
 <!-- module:!gate-script -->
-- 검증 게이트 (커밋 전): `{GATE_CMD}`
+- Verification gate (before committing): `{GATE_CMD}`
 <!-- /module:!gate-script -->
 - {RUN_NOTES}
 
-## 브랜치 전략
+## Branch Strategy
 
-- `main` — 안정 브랜치. 직접 커밋 금지, 로컬 머지로만 반영
-- `feature/*` — 기능 개발 · `hotfix/*` — 긴급 수정
+- `main` — stable branch. No direct commits; landed only through a local merge
+- `feature/*` — feature development · `hotfix/*` — urgent fixes
 
-### 워크트리 필수 (코드 작업)
+### Worktree Required (Code Work)
 
-메인 트리 `{PROJECT_PATH}`는 **항상 `main`에 둔다.** 에디터도 여기에 붙여 두고, 여기서 하는
-일은 문서 작업뿐이다. 코드를 고치는 작업은 예외 없이 워크트리에서 한다:
+The main tree `{PROJECT_PATH}` **always stays on `main`.** Keep the editor attached there too,
+and the only work done there is documentation. Work that changes code happens in a worktree,
+without exception:
 
 ```powershell
 git -C {PROJECT_PATH} worktree add -b feature/<id> {WORKTREES_PATH}/<id>
-# 작업 → 커밋 → main에서 머지
+# work -> commit -> merge from main
 git -C {PROJECT_PATH} merge --no-ff feature/<id>
 git -C {PROJECT_PATH} worktree remove {WORKTREES_PATH}/<id>
 git -C {PROJECT_PATH} branch -d feature/<id>
 ```
 
-- 폴더명은 브랜치명에서 `feature/` 접두사를 뗀 flat 이름
-- 워크트리는 로컬 `main` 최신 커밋에서 분기한다. `EnterWorktree`는 현재 HEAD에서 분기하므로
-  메인 트리가 `main`이 아니면 구버전에서 분기된다
-- `-worktrees` 폴더가 비면 폴더 자체도 삭제
-- `git worktree remove`가 「Directory not empty」로 거부하면(빌드 산출물·`node_modules`)
-  폴더를 지운 뒤 `git worktree prune`. `prune`을 건너뛰면 `git worktree list`에 유령이 남는다
+- The folder name is the flat name left after stripping the `feature/` prefix from the branch name
+- A worktree branches from the latest local `main` commit. `EnterWorktree` branches from the
+  current HEAD, so if the main tree is not on `main` it branches from an old version
+- When the `-worktrees` folder is empty, delete the folder itself
+- If `git worktree remove` refuses with "Directory not empty" (build output, `node_modules`),
+  delete the folder and then run `git worktree prune`. Skip the `prune` and a ghost stays in
+  `git worktree list`
 
-**코드 변경이 없는 문서 작업은 main에 직접 커밋한다.** `docs/` 전체와 `*.md`. 문서 한 줄
-고치려고 브랜치와 워크트리를 파지 않는다. 코드와 함께 바뀌는 설계 문서는 그 코드의 브랜치를 탄다.
+**Documentation work with no code change is committed directly on main.** All of `docs/` and
+`*.md`. Do not cut a branch and a worktree to fix one line of a document. A design document that
+changes together with code rides that code's branch.
 
-## 에이전트 역할
+## Agent Roles
 
-- **PM** (메인 세션): 피처 정의, Dev 지시, 보고서 확인, Reviewer 호출, 머지 실행. 코드를 직접
-  읽지 않고 보고서로 판단한다 — 컨텍스트 경량 유지.
-  <!-- module:watch -->Dev의 커밋을 감시해 사용자에게 중계한다 (`/pm` 「진행 보고」).<!-- /module:watch -->
-- **Dev** (워크트리 서브에이전트): 격리 개발. 구현 → 자율 QA 루프 → 보고서 최종화 → PM 보고.
-  <!-- module:commit-rhythm -->진행 중에도 논리 단위마다 커밋해 상태를 드러낸다 (「커밋 리듬」).<!-- /module:commit-rhythm -->
-- **Reviewer**: diff + 보고서 기반 리뷰. 판정을 보고서에 기록.
+- **PM** (main session): defines features, directs Dev, checks reports, calls Reviewer, executes
+  merges. Judges from the report without reading code directly — keeping context light.
+  <!-- module:watch -->Watches Dev's commits and relays them to the user (`/pm` "Progress Reporting").<!-- /module:watch -->
+- **Dev** (worktree subagent): isolated development. Implement → autonomous QA loop → finalize
+  report → report to PM.
+  <!-- module:commit-rhythm -->Commits at every logical unit even mid-work, so the state is visible ("Commit Rhythm").<!-- /module:commit-rhythm -->
+- **Reviewer**: reviews from the diff plus the report. Records the verdict in the report.
 
-## 피처 라이프사이클
+## Feature Lifecycle
 
-계획(PM) → 개발(Dev, 워크트리) → 자율 QA(Dev) → 보고(Dev) → 리뷰(Reviewer) → 머지(PM) →
-정리 → **사용자 실사용 확인(머지 후)**
+Plan (PM) → develop (Dev, worktree) → autonomous QA (Dev) → report (Dev) → review (Reviewer) →
+merge (PM) → clean up → **user verification in real use (after merge)**
 
-### 사용자 확인은 머지 뒤다
+### User Verification Happens After Merge
 
-Dev도 Reviewer도 실행 결과(GUI·소리·상호작용)를 볼 수 없는 영역이 있다. 그 결함은 리뷰가
-못 잡는 것이 아니라 **닿을 수 없다** — 라운드를 늘려도 안 나온다. 그 사각지대를 게이트로 두지
-않는다.
+There are areas whose runtime results (GUI, sound, interaction) neither Dev nor Reviewer can see.
+Those defects are not ones the review misses — they are ones the review **cannot reach**, and
+more rounds will not surface them. Do not make that blind spot a gate.
 
-- **PM은 스모크를 요청하지 않는다.** 앱을 띄우지도 않는다. Dev 보고가 끝나면 곧바로 리뷰를
-  걸고 머지까지 간다
-- 사용자는 **머지된 뒤 실사용에서** 확인한다. 문제가 나오면 새 워크트리·브랜치로 픽스 카드를
-  판다. 원래 카드는 그대로 마무리한다
-- Dev 보고서의 **「사용자가 눈으로 확인해야 할 것」**은 유지한다. 코드가 어디에 닿지 못했는지를
-  적는 유일한 자리이고 픽스 카드가 어디부터 볼지를 말한다. 다만 통과 조건이 아니다
+- **PM does not ask for a smoke test.** PM does not launch the app either. Once Dev's report is
+  in, go straight to review and on to the merge
+- The user verifies **in real use after the merge**. If a problem shows up, cut a fix card on a
+  new worktree and branch. The original card is closed as it is
+- Keep **"For the User to Check by Eye"** in the Dev report. It is the only place that records
+  where the code could not reach, and it tells a fix card where to look first. It is not a pass
+  condition
 
-대가는 감수한다: 머지된 코드에 결함이 남을 수 있다. 완전 로컬 리포라 머지가 되돌리기 어려운
-조작이 아닌 것이 이 트레이드오프를 가능하게 한다.
+The cost is accepted: defects can remain in merged code. What makes this trade-off possible is a
+fully local repository, where a merge is not a hard-to-reverse operation.
 
-### 사용자에게 요청해도 되는 유일한 경우 — 관측
+### The Only Time You May Ask the User — Observation
 
-혼자 원인을 확정할 수 없어 로그·재현이 필요할 때만 요청한다. 요청할 때는 **무엇을 보고
-무엇을 판정할 것인지**를 함께 낸다. 「한번 봐 주세요」는 관측이 아니다.
+Ask only when you cannot pin the cause alone and need a log or a reproduction. When you ask,
+state **what to look at and what you will decide from it**. "Please take a look" is not an
+observation.
 <!-- module:discipline -->
-근거와 검사 목록은 `docs/discipline.md` 「관측 없이 인과를 단정하지 않는다」.
+The rationale and the checklist are in `docs/discipline.md` "No Causal Claims Without Observation".
 <!-- /module:discipline -->
 
 <!-- module:commit-rhythm -->
-## 커밋 리듬 (Dev)
+## Commit Rhythm (Dev)
 
-Dev는 **논리 단위마다 커밋한다.** 커밋은 완성물의 포장이 아니라 Dev의 진행 로그다 — 사용자와
-PM이 `git log`만으로 어디까지 왔는지 볼 수 있어야 한다. 한 커밋으로 끝내면 다 끝날 때까지
-아무것도 보이지 않고, 방향이 틀어져도 되돌릴 지점이 없다.
+Dev **commits at every logical unit.** A commit is not the wrapping on a finished product; it is
+Dev's progress log — the user and PM must be able to see how far the work has come from `git log`
+alone. Finish in one commit and nothing is visible until everything is done, with no point to
+return to when the direction goes wrong.
 
-논리 단위는 「DTO 추가」·「스캐너 구현」·「커맨드 배선」·「테스트 추가」 같은 의미 있는 작업
-하나다. 다음 시점에 끊는다: 새 모듈·타입·커맨드를 하나 추가했을 때 · 기존 동작을 바꾸는 수정이
-한 덩어리 끝났을 때 · 리뷰 이슈 하나를 고쳤을 때 · 방향을 바꾸기 직전.
+A logical unit is one meaningful piece of work: "add the DTO", "implement the scanner", "wire the
+command", "add tests". Cut at these points: after adding one new module, type, or command · after
+finishing one chunk of a change to existing behavior · after fixing one review issue · right
+before changing direction.
 
-### 중간 커밋은 깨져도 된다
+### Intermediate Commits May Be Broken
 
-- 컴파일이 안 되는 상태도 커밋한다. 제목 앞에 **`wip:`** 를 붙인다 (`wip: sketch scanner walk`)
-- `wip:` 커밋에는 게이트를 요구하지 않는다
-- 게이트가 필요한 시점은 **HEAD가 남에게 보이는 순간**뿐이다: `/report` 직전 · 각 리뷰 수정
-  라운드를 마칠 때 · 머지 대상 HEAD. 마지막 커밋이 `wip:`로 남았으면 게이트를 통과시키는 커밋을
-  하나 더 얹는다
+- Commit a state that does not even compile. Prefix the subject with **`wip:`**
+  (`wip: sketch scanner walk`)
+- A `wip:` commit is not required to pass the gate
+- The gate is required only **at the moment HEAD becomes visible to someone else**: right before
+  `/report` · at the end of each review-fix round · the HEAD being merged. If the last commit is
+  still a `wip:`, add one more commit that gets the gate to pass
 
-대가는 감수한다: `wip:` 커밋이 main 히스토리에 남아 그 구간에서 `git bisect`가 무의미하다.
-bisect 시에는 `wip:` 커밋을 건너뛴다. 중간 커밋을 정리해서 머지하지는 않는다 — squash·rebase
-금지는 그대로다.
+The cost is accepted: `wip:` commits stay in main's history and `git bisect` is meaningless over
+that stretch. Skip `wip:` commits when bisecting. Do not tidy the intermediate commits before
+merging — the ban on squash and rebase stands.
 <!-- /module:commit-rhythm -->
 
 <!-- module:review-loop -->
-## 자율 리뷰-수정 루프
+## Autonomous Review-Fix Loop
 
-Dev가 구현 완료 후 PM 개입 없이 돈다. 리뷰는 **Dev 세션 안에서 돌지 않는다** — 클린 컨텍스트
-서브에이전트에 디스패치한다.
+Dev runs this after finishing the implementation, without PM involvement. The review **does not
+run inside the Dev session** — it is dispatched to clean-context subagents.
 
-### 왜 서브에이전트인가
+### Why Subagents
 
-속도가 아니라 **자기가 쓴 코드를 자기가 판정하지 않기 위해서**다. 그것이 이 리뷰의 유일한
-가치이고, 그래서 **대화 이력을 넘기지 않는다** — 서브에이전트에게 주는 것은 대상 파일 목록뿐이고,
-어떻게 리뷰할지는 전부 스킬과 정본 문서에서 온다.
+Not for speed, but **so that nobody judges the code they wrote themselves.** That is this
+review's only value, which is why **the conversation history is not passed on** — a subagent gets
+the target file list and nothing else, and everything about how to review comes from the skill
+and the canonical documents.
 
-**티어를 고정한다.** 상속시키면 세션 설정에 따라 라운드마다 판정 기준이 달라진다. 구조 판단은
-패턴 매칭이 안 되는 부분이라 세션 effort가 내려가도 같이 내려가면 안 된다.
+**Pin the tiers.** Inherited, the judgment bar shifts from round to round with the session
+settings. Structural judgment is exactly the part pattern matching cannot do, so it must not drop
+along with a lowered session effort.
 
 {DISPATCH_TABLE}
 
-### 매 라운드
+### Each Round
 
-각 단계가 끝나면 **확인받지 말고 다음 단계로** 간다.
+When a step finishes, **move to the next one without asking for confirmation**.
 
-1. **대상 조립** — 브랜치가 바꾼 것 전부:
+1. **Assemble the target** — everything the branch changed:
 
    ```bash
-   git diff --name-only main...HEAD          # 커밋된 변경
-   git diff --name-only HEAD                 # 미커밋
-   git diff --name-only --cached             # 스테이지
-   git ls-files --others --exclude-standard  # 신규 미추적
+   git diff --name-only main...HEAD          # committed changes
+   git diff --name-only HEAD                 # uncommitted
+   git diff --name-only --cached             # staged
+   git ls-files --others --exclude-standard  # new, untracked
    ```
 
-   합집합에서 `{EXCLUDE_DIRS}`와 생성물을 뺀 뒤 렌즈별로 가른다.
+   Take the union, subtract `{EXCLUDE_DIRS}` and generated files, then split it by lens.
 
-2. **병렬 디스패치** — 리뷰 호출을 **한 메시지에** 넣는다. 해당 렌즈의 대상이 없으면 뺀다.
-   각 리뷰어에게 주는 것은 자기 몫의 **대상 파일 목록**뿐이다.
+2. **Dispatch in parallel** — put the review calls **in one message**. Drop a lens that has no
+   targets. Each reviewer gets only **its own target file list**.
 
-3. **결과 병합** — 보고서를 파일 단위로 합치고 프로파일링 라인을 함께 싣는다. **오케스트레이터가
-   조립한다** — 서브에이전트는 자기 벽시계를 못 본다 (task notification의 `duration_ms` ·
-   `subagent_tokens` · `tool_uses`).
+3. **Merge the results** — combine the reports per file and carry the profiling line with them.
+   **The orchestrator assembles it** — a subagent cannot see its own wall clock (`duration_ms` ·
+   `subagent_tokens` · `tool_uses` from the task notification).
 
-4. **수정** — 이슈 하나를 고칠 때마다 커밋한다. 라운드를 마칠 때 게이트를 통과시키고 보고서를
-   갱신한다.
+4. **Fix** — commit each time you fix one issue. At the end of the round, get the gate to pass and
+   update the report.
 
-5. **서술 sweep** — <!-- module:discipline -->`docs/discipline.md` 「서술 sweep」<!-- /module:discipline --><!-- module:!discipline -->이 라운드가 지우거나 새로 부른 심볼로 `git grep` + `grep -r docs/reports/`<!-- /module:!discipline -->
+5. **Prose sweep** — <!-- module:discipline -->`docs/discipline.md` "Prose Sweep"<!-- /module:discipline --><!-- module:!discipline -->`git grep` + `grep -r docs/reports/` for symbols this round deleted or newly introduced<!-- /module:!discipline -->
 
-6. **수렴 판정** — 아래. 수렴하지 않으면 1로 돌아간다.
+6. **Convergence check** — below. If it has not converged, go back to 1.
 
-### 수렴 판정
+### Convergence Check
 
-**계속 조건은 하나다: 살아있는 최고 등급(Critical / Refactor)이 있으면 다음 라운드를 돈다.**
+**There is one condition for continuing: if a live top grade (Critical / Refactor) remains, run
+another round.**
 
-**종료** (하나라도 해당):
+**Stop** (any one of these):
 
-1. **findings 0건.**
-2. **최고 등급이 없다.** 남은 낮은 등급은 사유를 보고서에 적고 넘긴다 — **그것까지 0으로
-   만들려 들면 주석 자기증식으로 되돌아간다.**
-3. **직전 fix가 주석·문서 텍스트만 바꿨다** (코드 토큰 변경 없음). 그 주석이 다음 라운드의
-   지적을 부르는 자기증식을 끊는 지점이다.
+1. **Zero findings.**
+2. **No top grade remains.** For the low grades that are left, write the reason in the report and
+   move on — **trying to drive those to zero as well leads back to comment self-propagation.**
+3. **The previous fix changed only comments or document text** (no code token changed). That is
+   the point that breaks the self-propagation where a comment invites the next round's finding.
 
-**게이트** (자동 종료가 아니라 **사용자 판단**):
+**Gates** (not an automatic stop — **the user decides**):
 
-- **비수렴** — 라운드 N의 findings가 N-1과 같은 소재를 **새 코드 근거 없이** 다시 들고 왔다.
-  한 번 더 고치지 말고 멈춘다. 수렴하지 않는 리뷰는 라운드를 더 돌아서 풀 문제가 아니다.
-- **라운드 예산 {ROUND_BUDGET} 도달했는데 최고 등급이 남았다** — 남은 findings를 등급별로 정리해
-  PM에 보고하고 멈춘다. **자동으로 넘기지 않는다.** 계속 돌지 / 그대로 넘길지 / 범위를 다시
-  잡을지는 사용자 결정이다.
+- **Non-convergence** — round N's findings brought back round N-1's material **with no new
+  evidence in the code**. Do not fix it one more time; stop. A review that does not converge is
+  not a problem more rounds will solve.
+- **The round budget {ROUND_BUDGET} was reached and a top grade remains** — organize the
+  remaining findings by grade, report to PM, and stop. **Do not pass it through automatically.**
+  Whether to keep going, pass it through as is, or rescope is the user's decision.
 
-  **연장은 이 문서를 고쳐서 하지 않는다.** 사용자가 「N라운드 더」를 승인하면 그 승인은 **그
-  브랜치에 한해서만** 유효하다. 상수 {ROUND_BUDGET}은 그대로 둔다 — 문서를 고치면 다음 피처가
-  거기서 시작하고 또 연장하는 식으로 **예산이 피처마다 우상향**해, 루프 안전장치라는 목적 자체가
-  무력해진다.
+  **An extension is not made by editing this document.** When the user approves "N more rounds",
+  that approval is valid **for that branch only**. Leave the constant {ROUND_BUDGET} alone —
+  editing the document means the next feature starts from there and extends again, so **the
+  budget ratchets upward feature by feature** and its whole purpose as a loop safeguard is gone.
 
-판정 대상은 **findings 텍스트의 소재 대조**로 한정한다. 지적의 타당성을 여기서 재판정하지
-않는다 — 그것은 클린 컨텍스트 리뷰어의 몫이고, 이쪽이 뒤집으면 자기판정 문제가 그대로 재현된다.
-근거를 대고 거부하는 자리는 보고서의 Response 섹션이다.
+Limit the check to **comparing the material in the findings text**. Do not re-adjudicate whether
+a finding is valid here — that belongs to the clean-context reviewer, and reversing it from this
+side reproduces the self-judgment problem exactly. The place to refuse with evidence is the
+Response section of the report.
 <!-- /module:review-loop -->
 
-## 보고서 규격
+## Report Format
 
-- 경로 (**절대 경로 필수** — 워크트리에서도 동일 경로 사용): `{PROJECT_PATH}/docs/reports/<branch-name>.md`
-- 브랜치명의 `/`는 `-`로 치환 (예: `feature/scan` → `feature-scan.md`)
-- git 추적 제외 (gitignored). 보고서는 gitignore 대상이라 워크트리에 복사되지 않으므로
-  절대 경로로만 읽고 쓴다
-- 이전 Review/Response 섹션은 수정·삭제하지 않는다
-- 머지 완료 후 삭제
+- Path (**absolute path required** — the same path is used from inside a worktree):
+  `{PROJECT_PATH}/docs/reports/<branch-name>.md`
+- Replace `/` in the branch name with `-` (e.g. `feature/scan` → `feature-scan.md`)
+- Excluded from git tracking (gitignored). Because the report is gitignored it is not copied into
+  the worktree, so read and write it by absolute path only
+- Never edit or delete an earlier Review/Response section
+- Delete it after the merge completes
 
-### 사용자가 나중에 쓸 것은 보고서에 두지 않는다
+### What the User Will Need Later Does Not Live in the Report
 
-보고서는 gitignored이고 `/merge-branch`가 삭제한다. 머지 뒤에도 살아 있어야 하는 것을 여기
-적으면 **지워지고 히스토리로도 못 되살린다.**
+The report is gitignored and `/merge-branch` deletes it. Write something here that must survive
+the merge and **it is erased, with no way to recover it from history either.**
 
-- 「사용자가 눈으로 확인해야 할 것」처럼 머지 직후 한 번 쓰고 버리는 것은 보고서가 맞는 자리
-- 몇 주 뒤에 다시 꺼내 쓸 절차(계측 명령줄, 산출 파일의 필드 의미, 판정 기준)는 **정본
-  문서**(`docs/`)로 보낸다. 보고서에는 그 문서를 가리키는 줄만 남긴다
-- 판별 기준은 「이 문장을 읽을 사람이 **브랜치가 사라진 뒤에** 읽는가」다
-- 사용자가 돌릴 명령줄은 **메인 트리** 기준으로 적는다 — gitignore된 설정·환경은 워크트리에
-  따라오지 않는다
+- Something written once right after the merge and then discarded — "For the User to Check by
+  Eye" — belongs in the report
+- A procedure that gets pulled out again weeks later (a measurement command line, the meaning of
+  fields in an output file, a decision criterion) goes to a **canonical document** (`docs/`). The
+  report keeps only the line pointing at that document
+- The test is "**does the person reading this sentence read it after the branch is gone?**"
+- Write command lines the user will run **against the main tree** — gitignored settings and
+  environment do not follow into a worktree
 
-구조:
+Structure:
 
 ```markdown
 # Report: <branch-name>
 
 ## Feature
 
-(피처 설명)
+(feature description)
 
 ## Dev Report
 
 ### Changes
 ### Decisions
 ### Notes
-### 사용자가 눈으로 확인해야 할 것
+### For the User to Check by Eye
 
 ---
 
@@ -232,114 +250,129 @@ Dev가 구현 완료 후 PM 개입 없이 돈다. 리뷰는 **Dev 세션 안에�
 
 ### Issues
 
-- **[Critical]** 파일:라인 — 설명
-- **[Warning]** 파일:라인 — 설명
-- **[Info]** 파일:라인 — 설명
+- **[Critical]** file:line — description
+- **[Warning]** file:line — description
+- **[Info]** file:line — description
 
-프로파일링: <s> (<분>) · <tok> · 도구 <n> · <model>/<effort>
-규모: 파일 <n>개 / <총 줄 수>줄 · 지적 <n>건
+Profiling: <s> (<min>) · <tok> · tools <n> · <model>/<effort>
+Scale: <n> files / <total lines> lines · <n> findings
 
 ## Dev Response #N
 
-- [Critical] 파일:라인 — 수정 완료 (<커밋>)
-- [Warning] 파일:라인 — 거부 사유
+- [Critical] file:line — fixed (<commit>)
+- [Warning] file:line — reason for refusal
 ```
 
-## 머지 규칙
+## Merge Rules
 
-- `git merge --no-ff` — squash 금지, 히스토리 보존
-- 충돌: merge 커밋으로 해소 (rebase/force-push 금지)
-- 리모트 푸시는 자동으로 하지 않는다 (사용자에게 확인)
-- 머지 후 정리(사용자 확인 후): feature 브랜치 삭제, 워크트리 제거, 보고서 삭제
+- `git merge --no-ff` — no squash, history preserved
+- Conflicts: resolve in the merge commit (no rebase, no force-push)
+- Never push to a remote automatically (confirm with the user)
+- Cleanup after the merge (once the user confirms): delete the feature branch, remove the
+  worktree, delete the report
 <!-- module:board -->
-- 보고서를 삭제하기 **전에** 결론 한 줄을 `docs/board-archive.md`로 옮긴다
+- **Before** deleting the report, move a one-line conclusion into `docs/board-archive.md`
 <!-- /module:board -->
 
 <!-- module:board -->
-## 작업 보드
+## Work Board
 
-- `docs/board.md` — In Progress / ToDo. 지금 하는 것과 곧 할 것만
-- `docs/roadmap.md` — 마일스톤 완성 정의 + 다음 마일스톤 후보. 승격 시 제거
-- `docs/backlog.md` — 설계 검토에서 탈락·후순위로 밀린 항목. 되살릴 때만 ToDo로 승격
-- `docs/board-archive.md` — 완료 항목. 마일스톤 단위로 묶음
-- `docs/issues/<id>.md` — 카드의 배경·경위·결정
+- `docs/board.md` — In Progress / ToDo. Only what is being done now and what comes next
+- `docs/roadmap.md` — the definition of done for a milestone plus candidates for the next one.
+  Removed on promotion
+- `docs/backlog.md` — items dropped or deferred in design review. Promoted to ToDo only when
+  revived
+- `docs/board-archive.md` — completed items, grouped by milestone
+- `docs/issues/<id>.md` — a card's background, provenance, and decisions
 
-흐름은 `이슈 → 설계 → 구현 → 완료`다. ToDo는 사용자·PM 판단에서 나오고, 설계 문서는 그
-이슈를 수행하며 만들어지는 산출물이다. 항목 ID는 kebab-case 슬러그이며 한번 정하면 고정한다 —
-브랜치 `feature/<id>`, 보고서 `docs/reports/feature-<id>.md`가 이 문자열로 묶인다.
+The flow is `issue → design → implementation → done`. ToDo comes out of user and PM judgment, and
+a design document is an artifact produced while carrying out that issue. An item ID is a
+kebab-case slug and is fixed once chosen — the branch `feature/<id>` and the report
+`docs/reports/feature-<id>.md` are tied together by that string.
 
-갱신은 PM(`/pm`)이 담당한다. 카드 사이의 **선행 관계는 산문이 아니라 `- 선행: <id>` 줄**로
-적는다. `bash scripts/board-ready.sh`가 그 줄을 읽어 착수 가능한 카드와 낡은 선행·깨진 참조를
-낸다. 상세 규칙은 `docs/board.md` 상단.
+PM (`/pm`) owns the updates. Write the **prerequisite relation between cards as a `- prereq:
+<id>` line, not as prose**. `bash scripts/board-ready.sh` reads those lines and produces the
+startable cards along with stale prerequisites and broken references. The detailed rules are at
+the top of `docs/board.md`.
 <!-- /module:board -->
 
-## 설계 문서
+## Design Documents
 
-- `docs/design/*`는 **서브시스템 단위**로 유지한다. 이슈마다 새 문서를 만들지 않고 후속 이슈는
-  기존 문서를 고쳐 쓴다
-- 구현이 끝나도 아카이브하지 않는다. 문서의 역할이 「이렇게 만들 것」에서 「이렇게 만들어져
-  있다」로 바뀔 뿐이다. 아카이브로 가는 건 이슈지 설계 문서가 아니다
-- 상태 줄로 현황 표시: `draft` → `확정` → `구현됨`. 구현 중 결정이 바뀌면 문서를 갱신한다 —
-  어긋난 문서는 없느니만 못하다
-- 코드와 더 이상 대응하지 않는 **폐기** 문서만 `docs/design/archive/`로
+- Keep `docs/design/*` **per subsystem**. Do not create a new document per issue; a follow-up
+  issue edits the existing document
+- Do not archive one when the implementation is done. The document's role merely changes from
+  "this is what will be built" to "this is how it is built". What goes to the archive is the
+  issue, not the design document
+- Show the state with a status line: `draft` → `settled` → `implemented`. When a decision changes
+  during implementation, update the document — a document out of step with the code is worse than
+  none
+- Only a **retired** document, one that no longer corresponds to any code, goes to
+  `docs/design/archive/`
 
 <!-- module:design-review -->
-## 설계 검토 게이트
+## Design Review Gate
 
-규모 있는 변경(구조 변경·다단계 마이그레이션·신규 서브시스템·인터페이스 변경)은 구현 전
-`docs/specs/YYYY-MM-DD-<topic>.md`에 spec을 쓴다. 사소한 수정·버그픽스는 예외.
+For a change of size (structural change, multi-stage migration, new subsystem, interface change),
+write a spec in `docs/specs/YYYY-MM-DD-<topic>.md` before implementing. Trivial fixes and
+bugfixes are exempt.
 
-spec에 **코드 구조 설계**(신규/변경 타입·모듈·인터페이스·의존 관계)가 들어 있으면 커밋 전
-`/design-review` — 클린 컨텍스트 파이프라인이 `docs/design-principles.md` + 일반 설계 원칙
-관점으로 검수한다. spec 없이 내리는 구조적 설계 결정도 동일. **Blocker 기각은 사용자 결정 —
-에이전트 단독 통과 처리 금지. 수용된 결정은 spec에 「감수한 대가」 기록 필수.**
+If the spec contains **code structure design** (new or changed types, modules, interfaces,
+dependencies), run `/design-review` before committing — a clean-context pipeline inspects it
+against `docs/design-principles.md` plus general design principles. The same applies to a
+structural design decision made without a spec. **Overriding a Blocker is the user's decision —
+an agent must never pass one on its own. An accepted decision must be recorded in the spec as an
+"Accepted Cost".**
 
-### spec 작성 규칙
+### Writing a Spec
 
-- **결정에는 대가를 적는다.** 장점만 서술된 결정은 미검토 결정으로 본다.
-- **대안은 실제로 검토한 것만 적는다.** 개수를 채우려고 기각용 대안을 지어내지 않는다. 선택지가
-  하나뿐이었으면 왜 하나뿐이었는지를 적는다.
-- **원칙 이름을 근거로 인용하지 않는다.** 무엇이 어떻게 나빠지는지를 쓴다.
-- **전역 승격은 근거를 적는다.** 지역 스코프로 충분한 상태·기능을 전역으로 올리거나, 프레임워크
-  밖에 커스텀 싱글톤·정적 매니저를 신설할 때.
-- **미머지 형제 작업은 의존으로만 등장한다.** 전제는 기준 브랜치의 현재 상태로 세운다. 충돌
-  회피·머지 순서·자리 조율 서술은 전제에도 대안 기각 사유에도 리스크에도 넣지 않는다.
+- **Write the cost of every decision.** A decision described only by its advantages counts as an
+  unexamined decision.
+- **List only alternatives you actually considered.** Do not invent throwaway alternatives to fill
+  a count. If there was only one option, write why there was only one.
+- **Never cite a principle's name as the rationale.** Write what gets worse and how.
+- **Write the rationale for a promotion to global scope.** That is, raising state or a capability
+  that local scope would have covered, or introducing a custom singleton or static manager
+  outside the framework.
+- **Unmerged sibling work appears only as a dependency.** Build premises on the current state of
+  the base branch. Never put conflict avoidance, merge ordering, or slot coordination into the
+  premises, the reasons for rejecting alternatives, or the risks.
 
-#### 감수한 대가 (Complexity Tracking)
+#### Accepted Costs (Complexity Tracking)
 
-설계 품질을 떨어뜨리는 줄 알면서 채택한 결정은 spec에 아래 표로 남긴다(사용자 승인 필수). 기록
-없는 채택은 워크플로 위반이다.
+A decision adopted in the knowledge that it lowers design quality is recorded in the spec in the
+table below (user approval required). Adopting one without the record is a workflow violation.
 
-| 결정 | 떨어지는 품질 | 감수 이유 (더 단순한 대안이 안 되는 이유) | 승인 |
+| Decision | Quality lost | Reason accepted (why the simpler alternative does not work) | Approved |
 |------|---------------|------------------------------------------|------|
-| ... | ... | ... | 사용자 / YYYY-MM-DD |
+| ... | ... | ... | user / YYYY-MM-DD |
 
-리뷰의 역할 구분: `/design-review` = spec의 코드 구조 설계 검토 / 자율 루프 = 브랜치 전체
-사이클 리뷰 / `/review-*` = 대상 지정 임시 점검.
+How the reviews divide up: `/design-review` = review of the code structure design in a spec /
+autonomous loop = whole-cycle review of the branch / `/review-*` = targeted ad-hoc check.
 <!-- /module:design-review -->
 
-## 지침 작성 정책
+## Instruction Authoring Policy
 
 {AUTHORING_POLICY}
 
-## 세션 내 확정 사실 — 재실측 금지
+## Facts Established in This Session
 
-이번 세션에서 이미 확인한 것은 다시 조사하지 않고 그대로 쓴다. 같은 조사를 두 번 하면 직전
-대화를 잊은 것으로 읽힌다.
+Do not investigate again what this session already confirmed; use it as it is. Doing the same
+investigation twice reads as having forgotten the conversation just before.
 
-**그대로 쓴다**: 이번 세션에서 Read한 파일 내용, 실행한 명령의 출력, 방금 만든/고친 파일의
-내용(`Edit`/`Write`는 실패하면 에러를 낸다 — 재-Read 금지), 사용자가 답한 결정, 앞 턴에서 내린
-결론.
+**Use as is**: the contents of files Read this session, the output of commands run, the contents
+of files just created or fixed (`Edit`/`Write` raise an error when they fail — no re-Read), the
+decisions the user answered, the conclusions reached in earlier turns.
 
-**다시 본다 — 아래 셋뿐이고, 왜 다시 보는지 한 구절로 밝힌다**: 대상이 움직인 것을 아는 경우
-(그 뒤에 편집했다 / 바뀌었다고 알림이 왔다) · 외부 상태(빌드·다른 세션의 커밋처럼 시간이
-지나면 변하는 것) · 컨텍스트 요약으로 원문이 사라졌고 정확한 값이 필요한 경우.
+**Look again — only in these three cases, and say in one clause why you are looking again**: you
+know the target moved (you edited it afterwards / a notification said it changed) · external
+state (things that change over time, such as a build or another session's commits) · the original
+text is gone to a context summary and you need the exact value.
 ```
 
-## 치환 안내
+## Substitution Notes
 
-- `{DISPATCH_TABLE}`: 리뷰 방식에 따라 `review-loop.md` 「디스패치 표」에서 가져온다.
-- `{AUTHORING_POLICY}`: `authoring-policy.md`의 해당 절들을 그대로 옮긴다.
-- `{RUN_NOTES}`: 개발 서버 포트, 생성물 위치, 디버그 데이터 루트처럼 프로젝트 고유 실행
-  정보. 없으면 줄을 지운다.
-- `<!-- module:!X -->`는 **X를 고르지 않았을 때만** 남기는 블록이다.
+- `{DISPATCH_TABLE}`: taken from "Dispatch Table" in `review-loop.md`, per the review mode.
+- `{AUTHORING_POLICY}`: move in the corresponding sections of `authoring-policy.md` verbatim.
+- `{RUN_NOTES}`: project-specific run information such as the dev server port, output locations,
+  or the debug data root. Delete the line if there is none.
+- `<!-- module:!X -->` is a block kept **only when X was not selected**.

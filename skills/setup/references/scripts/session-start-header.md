@@ -1,46 +1,53 @@
-# 프로젝트 컨텍스트 자동 로드
+# Automatic Project Context Load
 
-이하는 SessionStart/SubagentStart 훅이 매 세션·에이전트에 주입하는 {PROJECT_NAME} 핵심 규칙이다.
-**작업 규모와 무관하게 적용된다.** 상세 규칙은 아래 「상세 문서」를 작업 진입 시 Read.
+What follows are the core {PROJECT_NAME} rules the SessionStart/SubagentStart hook injects into
+every session and every agent. **They apply regardless of the size of the work.** Read the
+detailed rules under "Detailed Documents" below when entering the work.
 
-## 반복 위반 함정 — 매 세션 재인지
+## Repeat-Violation Traps — Re-registered Every Session
 
-지침에 있어도 반복 위반된 항목만 올린다. _강조용이며 진실 소스는 각 지침 문서._ 위반이 멎으면
-내린다.
+Only items already in the instructions that are violated repeatedly go here. _This is emphasis;
+the source of truth is each instruction document._ Demote an item once the violations stop.
 
-- **🚫 메인 트리는 항상 `main`** — 코드는 예외 없이 워크트리에서. 메인 트리에서 브랜치를 바꾸면
-  다른 세션·에디터의 미커밋 변경이 딸려간다 → `CLAUDE.md` 「Git」
-- **🚫 조사 ≠ 착수** — 질문 턴의 산출물은 보고 + 방향 제안. 사용자 허락 후에만 파일 변경 →
-  `CLAUDE.md` 「에이전트 행동」
-- **🚫 사용자에게 빌드·실행·확인 요청 금지** — 확인은 머지 뒤 실사용. 예외는 관측이 필요할 때뿐 →
-  `docs/workflow.md` 「사용자 확인은 머지 뒤다」
-- **🚫 세션 내 확정 사실 재실측 금지** → `docs/workflow.md` 「세션 내 확정 사실」
-- **🚫 지침·문서에 사례·날짜·세는 값 금지** → `docs/workflow.md` 「지침 작성 정책」
+- **🚫 The main tree is always on `main`** — code work happens in a worktree, without exception.
+  Switching branches in the main tree drags along uncommitted changes from other sessions and
+  editors → `CLAUDE.md` "Git"
+- **🚫 Investigating is not starting** — the output of a question turn is a report plus a proposed
+  direction. Change files only after the user permits it → `CLAUDE.md` "Agent Behavior"
+- **🚫 Never ask the user to build, run, or verify** — verification happens in real use after the
+  merge. The one exception is when observation is required → `docs/workflow.md` "User
+  Verification Happens After Merge"
+- **🚫 Never re-measure a fact established in this session** → `docs/workflow.md` "Facts
+  Established in This Session"
+- **🚫 No anecdotes, dates, or counted values in instructions and documents** →
+  `docs/workflow.md` "Instruction Authoring Policy"
 <!-- module:commit-rhythm -->
-- **논리 단위마다 커밋, 깨진 상태는 `wip:`** — 게이트는 보고·리뷰·머지 시점 HEAD에만 →
-  `docs/workflow.md` 「커밋 리듬」
+- **Commit at every logical unit; prefix a broken state with `wip:`** — the gate applies only to
+  HEAD at report, review, and merge time → `docs/workflow.md` "Commit Rhythm"
 <!-- /module:commit-rhythm -->
 <!-- module:review-loop -->
-- **리뷰는 클린 컨텍스트 + 티어 고정** — `general-purpose` 금지. `/code-review`에는 effort 명시 →
-  `docs/workflow.md` 「자율 리뷰-수정 루프」
+- **Reviews run in a clean context with pinned tiers** — no `general-purpose`. State the effort
+  for `/code-review` → `docs/workflow.md` "Autonomous Review-Fix Loop"
 <!-- /module:review-loop -->
 <!-- module:discipline -->
-- **주석 기본값은 없음** — 쓰기 직전 3문 → `docs/discipline.md` 「주석」
-- **세지 말고 누구를 적는다** — `Consumers:` 고정 표기 → `docs/discipline.md`
+- **Comments have no default** — three questions right before writing one → `docs/discipline.md`
+  "Comments"
+- **Name them, do not count them** — the fixed `Consumers:` notation → `docs/discipline.md`
 <!-- /module:discipline -->
-- **메모리에 영구 규칙 금지** → `CLAUDE.md` 「에이전트 행동」
+- **No permanent rules in memory** → `CLAUDE.md` "Agent Behavior"
 
-## 상세 문서 — 작업 진입 시 Read (매 세션 통째 주입 X)
+## Detailed Documents — Read When Entering the Work (Not Injected Whole Every Session)
 
-- **워크플로·역할·루프·보고서·머지** → `docs/workflow.md` _(메인 세션에는 주입됨)_
+- **Workflow, roles, loop, reports, merge** → `docs/workflow.md` _(injected for the main session)_
 <!-- module:discipline -->
-- **개발 규율 (관측·테스트·서술·주석)** → `docs/discipline.md`
+- **Development discipline (observation, tests, prose, comments)** → `docs/discipline.md`
 <!-- /module:discipline -->
-- **{LANG} 컨벤션·게이트** → `CLAUDE.md` 「{LANG} 컨벤션」
+- **{LANG} conventions and gates** → `CLAUDE.md` "{LANG} Conventions"
 <!-- module:board -->
-- **작업 보드 규칙** → `docs/board.md` 상단
+- **Work board rules** → the top of `docs/board.md`
 <!-- /module:board -->
 <!-- module:design-review -->
-- **설계 원칙·설계 검토** → `docs/design-principles.md` · `.claude/skills/design-review/SKILL.md`
+- **Design principles and design review** → `docs/design-principles.md` ·
+  `.claude/skills/design-review/SKILL.md`
 <!-- /module:design-review -->
-- **훅 룰 추가·검증** → `.claude/hooks/README.md`
+- **Adding and verifying hook rules** → `.claude/hooks/README.md`

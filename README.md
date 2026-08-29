@@ -18,6 +18,10 @@ git clone https://github.com/HaJH/workflow-skills.git ~/.claude/skills/workflow
 
 To try it without installing: `claude --plugin-dir ./workflow-skills`.
 
+## Language
+
+The skill and everything it generates are written in English. The generated `CLAUDE.md` tells the agent to respond and plan in the user's language.
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).

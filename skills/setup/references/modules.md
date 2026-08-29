@@ -1,73 +1,76 @@
-# 모듈 카탈로그
+# Module Catalog
 
-셋업은 **핵심 + 선택 모듈**로 구성한다. 사용자가 고른 모듈만 생성하고, 템플릿 안의
-`<!-- module:<id> -->` … `<!-- /module:<id> -->` 블록은 해당 모듈을 골랐을 때만 남긴다
-(안 골랐으면 블록 전체를 지운다. 마커 줄 자체는 항상 지운다).
+A setup is **core + optional modules**. Generate only the modules the user selected, and keep a
+`<!-- module:<id> -->` … `<!-- /module:<id> -->` block only when that module was selected (if it
+was not, delete the whole block. The marker lines themselves are always deleted).
 
-## 핵심 (항상)
+## Core (always)
 
-| 생성 | 템플릿 |
+| Generated | Template |
 |---|---|
 | `CLAUDE.md` | `claude-md.md` |
 | `docs/workflow.md` | `workflow-md.md` |
 | `.claude/commands/pm.md` · `commit.md` · `report.md` · `merge-branch.md` | `commands.md` |
-| `.gitignore`에 `docs/reports/` · `.claude/settings.local.json` 추가 | — |
+| `docs/reports/` · `.claude/settings.local.json` added to `.gitignore` | — |
 
-## 모듈
+## Modules
 
-| id | 이름 | 기본 | 생성하는 것 | 의존 |
+| id | Name | Default | Generates | Depends on |
 |---|---|---|---|---|
-| `review-loop` | 자율 리뷰-수정 루프 | 켬 | `/review` 커맨드, 리뷰 방식에 따른 스킬·에이전트 (`review-loop.md`) | — |
-| `commit-rhythm` | 커밋 리듬 (`wip:`) | 켬 | — (CLAUDE.md·workflow.md·커맨드의 블록) | — |
-| `board` | 작업 보드 | 켬 | `docs/board.md` · `roadmap.md` · `backlog.md` · `board-archive.md` · `docs/issues/` · `scripts/board-ready.sh` (`board.md`) | — |
-| `watch` | PM 진행 감시 | 켬 | `scripts/watch-commits.sh` | `commit-rhythm` |
-| `just` | `/just` 절차 생략 커맨드 | 켬 | `.claude/commands/just.md` | — |
-| `gate-script` | 게이트 스크립트 | 켬 | `scripts/check.ps1` (Windows) 또는 `scripts/check.sh` | — |
-| `hooks` | 훅 (파일 패턴 게이트 + 세션 주입) | 켬 | `.claude/settings.json` · `.claude/hooks/*` (`hooks.md`) | — |
-| `discipline` | 개발 규율 문서 | 켬 | `docs/discipline.md` (`discipline-md.md`) | — |
-| `design-review` | 설계 검토 게이트 | 끔 | `.claude/skills/design-review/*` · 에이전트 3종 · `docs/design-principles.md` · `docs/specs/` (`design-review.md`) | — |
+| `review-loop` | Autonomous review-fix loop | on | `/review` command, plus the skills and agents for the chosen review mode (`review-loop.md`) | — |
+| `commit-rhythm` | Commit rhythm (`wip:`) | on | — (blocks inside CLAUDE.md, workflow.md, commands) | — |
+| `board` | Work board | on | `docs/board.md` · `roadmap.md` · `backlog.md` · `board-archive.md` · `docs/issues/` · `scripts/board-ready.sh` (`board.md`) | — |
+| `watch` | PM progress watch | on | `scripts/watch-commits.sh` | `commit-rhythm` |
+| `just` | `/just` procedure-skip command | on | `.claude/commands/just.md` | — |
+| `gate-script` | Gate script | on | `scripts/check.ps1` (Windows) or `scripts/check.sh` | — |
+| `hooks` | Hooks (file-pattern gate + session injection) | on | `.claude/settings.json` · `.claude/hooks/*` (`hooks.md`) | — |
+| `discipline` | Development discipline document | on | `docs/discipline.md` (`discipline-md.md`) | — |
+| `design-review` | Design review gate | off | `.claude/skills/design-review/*` · 3 agents · `docs/design-principles.md` · `docs/specs/` (`design-review.md`) | — |
 
-의존 모듈을 껐는데 의존하는 모듈을 켰으면 의존 모듈을 같이 켠다고 알리고 켠다.
+If a dependency module is off while a module that depends on it is on, announce that the
+dependency is being turned on as well, and turn it on.
 
-### `review-loop`의 리뷰 방식 (하위 선택)
+### Review mode for `review-loop` (sub-choice)
 
-| 값 | 규칙 대조·정확성 렌즈 | 구조 판단 렌즈 | 생성 |
+| Value | Rule-conformance and correctness lens | Structural judgment lens | Generates |
 |---|---|---|---|
-| `mixed` (기본) | 내장 `/code-review <effort>` | 커스텀 `{PREFIX}-refactor-reviewer` (opus/xhigh) | `refactor-review` 스킬 + 에이전트 |
-| `official` | 내장 `/code-review <effort>` | 없음 (같은 리뷰가 단순화 제안까지 냄) | — |
-| `custom` | 커스텀 `{PREFIX}-code-reviewer` (sonnet/medium) + 언어 규칙 파일 | 커스텀 `{PREFIX}-refactor-reviewer` (opus/xhigh) | 두 스킬 + 두 에이전트 + `review-rules-*.md` |
+| `mixed` (default) | built-in `/code-review <effort>` | custom `{PREFIX}-refactor-reviewer` (opus/xhigh) | `refactor-review` skill + agent |
+| `official` | built-in `/code-review <effort>` | none (the same review also produces simplification suggestions) | — |
+| `custom` | custom `{PREFIX}-code-reviewer` (sonnet/medium) + language rules file | custom `{PREFIX}-refactor-reviewer` (opus/xhigh) | two skills + two agents + `review-rules-*.md` |
 
-프로젝트가 렌즈를 더 가지면(예: 프론트엔드) `custom` 골격으로 스킬·에이전트를 짝으로 하나 더
-만든다. 티어는 「섞인 렌즈 = 중간(sonnet/high)」.
+If the project has further lenses (a frontend, say), build one more skill-and-agent pair from the
+`custom` skeleton. Tier it by "mixed lens = middle (sonnet/high)".
 
-## 자리표시자
+## Placeholders
 
-| 이름 | 뜻 | 예 |
+| Name | Meaning | Example |
 |---|---|---|
-| `{PROJECT_NAME}` | 프로젝트 이름 | `MyApp` |
-| `{PROJECT_PATH}` | 메인 트리 절대 경로, 슬래시 | `F:/Repo/MyApp` |
-| `{WORKTREES_PATH}` | 워크트리 부모 경로 | `F:/Repo/MyApp-worktrees` |
-| `{PREFIX}` | 에이전트 이름 접두사 | `myapp` |
-| `{LANG}` | 주 언어 | `Rust` |
-| `{SOURCE_GLOB}` | 리뷰 대상 소스 패턴 | `**/*.rs` |
-| `{SOURCE_DIRS}` | 소스 디렉터리 (훅 scopePath·리뷰 대상) | `crates/`, `ui/src/` |
-| `{EXCLUDE_DIRS}` | 리뷰 대상에서 빼는 것 (벤더·생성물) | `vendor/`, `node_modules/` |
-| `{GATE_CMD}` | 게이트 명령 한 줄 | `.\scripts\check.ps1` |
-| `{ROUND_BUDGET}` | 라운드 예산 | `3` |
-| `{REVIEW_EFFORT}` | `/code-review`에 넘기는 effort | `high` |
-| `{HOSTING}` | 호스팅 | `GitHub (private, gh)` / `완전 로컬` |
+| `{PROJECT_NAME}` | Project name | `MyApp` |
+| `{PROJECT_PATH}` | Absolute path of the main tree, forward slashes | `F:/Repo/MyApp` |
+| `{WORKTREES_PATH}` | Worktree parent path | `F:/Repo/MyApp-worktrees` |
+| `{PREFIX}` | Agent name prefix | `myapp` |
+| `{LANG}` | Primary language | `Rust` |
+| `{SOURCE_GLOB}` | Source pattern under review | `**/*.rs` |
+| `{SOURCE_DIRS}` | Source directories (hook scopePath, review targets) | `crates/`, `ui/src/` |
+| `{EXCLUDE_DIRS}` | Excluded from review (vendor, generated) | `vendor/`, `node_modules/` |
+| `{GATE_CMD}` | One-line gate command | `.\scripts\check.ps1` |
+| `{ROUND_BUDGET}` | Round budget | `3` |
+| `{REVIEW_EFFORT}` | effort passed to `/code-review` | `high` |
+| `{HOSTING}` | Hosting | `GitHub (private, gh)` / `fully local` |
 
-모든 경로는 슬래시로 쓴다. 보고서 경로처럼 워크트리에서도 같아야 하는 경로는 반드시 절대 경로다.
+Write every path with forward slashes. A path that must stay identical inside a worktree — a
+report path, for instance — is always absolute.
 
-### 템플릿 국소 자리표시자
+### Template-Local Placeholders
 
-한 템플릿 안에서만 쓰이며 그 파일의 「치환 안내」가 뜻을 정한다. 생성 뒤 잔존 검사 대상이다.
+Used inside a single template, with its meaning fixed by that file's "Substitution Notes". They
+are subject to the leftover check after generation.
 
-| 이름 | 파일 | 뜻 |
+| Name | File | Meaning |
 |---|---|---|
-| `{ONE_LINE_DESCRIPTION}` · `{LANG_CONVENTIONS}` · `{SKILL_LIST}` | `claude-md.md` | 한 줄 설명 · 언어 컨벤션 절 · 스킬 목록 |
-| `{DISPATCH_TABLE}` · `{AUTHORING_POLICY}` · `{RUN_NOTES}` · `{FORMAT_CMD}` | `workflow-md.md` | 디스패치 표 · 지침 작성 정책 절 · 실행 정보 · 포맷 명령 |
-| `{SCOPE_OWNER}` · `{LANG_FENCE}` · `{DEP_PROJECT_RULES}` · `{ARCH_DOC}` · `{WHERE_THE_VALUE_IS}` · `{WHERE_THE_VALUE_IS_CONFORMANCE}` | `review-loop.md` | 범위 밖 담당 · 코드 펜스 태그 · 레이어 규칙 · 아키텍처 정본 · 최고 가치 카테고리 |
-| `{AREA_1}` · `{AREA_1_SCOPE}` · `{V0_TITLE}` · `{V0_DEFINITION}` | `board.md` | 첫 영역 그룹 · 첫 마일스톤 |
-| `{SOURCE_GLOB_LIST}` · `{SOURCE_SAMPLE}` | `hooks.md` · `scripts/file-pattern-map.json` | 훅 룰 patterns 배열(`"*.rs"`, `"*.ts"` 식으로 확장자별) · 검증용 소스 파일 하나 |
-| `{DEP_MANIFEST}` | `design-review/design-principles.md` | 모듈 의존을 선언하는 파일 |
+| `{ONE_LINE_DESCRIPTION}` · `{LANG_CONVENTIONS}` · `{SKILL_LIST}` | `claude-md.md` | One-line description · language conventions section · skill list |
+| `{DISPATCH_TABLE}` · `{AUTHORING_POLICY}` · `{RUN_NOTES}` · `{FORMAT_CMD}` | `workflow-md.md` | Dispatch table · instruction authoring policy section · run info · format command |
+| `{SCOPE_OWNER}` · `{LANG_FENCE}` · `{DEP_PROJECT_RULES}` · `{ARCH_DOC}` · `{WHERE_THE_VALUE_IS}` · `{WHERE_THE_VALUE_IS_CONFORMANCE}` | `review-loop.md` | Out-of-scope owner · code fence tag · layer rules · architecture canon · highest-value category |
+| `{AREA_1}` · `{AREA_1_SCOPE}` · `{V0_TITLE}` · `{V0_DEFINITION}` | `board.md` | First area group · first milestone |
+| `{SOURCE_GLOB_LIST}` · `{SOURCE_SAMPLE}` | `hooks.md` · `scripts/file-pattern-map.json` | Hook rule patterns array (per extension, as `"*.rs"`, `"*.ts"`) · one source file for verification |
+| `{DEP_MANIFEST}` | `design-review/design-principles.md` | The file that declares module dependencies |

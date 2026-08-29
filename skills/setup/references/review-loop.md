@@ -1,105 +1,121 @@
-# 자율 리뷰-수정 루프 (module: review-loop)
+# Autonomous Review-Fix Loop (module: review-loop)
 
-루프의 절차와 수렴 판정은 `workflow-md.md`에 있다. 이 문서는 **리뷰 방식별로 무엇을 생성하고
-디스패치 표를 어떻게 채우는지**와, 커스텀 리뷰 스킬·에이전트의 골격이다.
+The loop's procedure and convergence check live in `workflow-md.md`. This document covers **what
+each review mode generates and how to fill the dispatch table**, plus the skeletons for the
+custom review skills and agents.
 
-## 리뷰 방식
+## Review Modes
 
-| 값 | 규칙 대조·정확성 | 구조 판단 | 생성 |
+| Value | Rule conformance and correctness | Structural judgment | Generates |
 |---|---|---|---|
-| `mixed` (기본) | 내장 `/code-review` | `{PREFIX}-refactor-reviewer` | `refactor-review` 스킬 + 에이전트 |
-| `official` | 내장 `/code-review` | 같은 리뷰의 단순화 제안으로 갈음 | 없음 |
-| `custom` | `{PREFIX}-code-reviewer` + `review-code` 스킬 + 언어 규칙 | `{PREFIX}-refactor-reviewer` | 스킬 2 + 에이전트 2 + rules.md |
+| `mixed` (default) | built-in `/code-review` | `{PREFIX}-refactor-reviewer` | `refactor-review` skill + agent |
+| `official` | built-in `/code-review` | covered by the same review's simplification suggestions | none |
+| `custom` | `{PREFIX}-code-reviewer` + `review-code` skill + language rules | `{PREFIX}-refactor-reviewer` | 2 skills + 2 agents + rules.md |
 
-**내장 `/code-review`의 성질** (판단 근거): 클린 컨텍스트(`context: fork`, 대화 이력 없음) ·
-effort는 인자로 고정(`/code-review high …`) · 모델은 세션 모델 · CLAUDE.md만 읽음(REVIEW.md는
-로컬에서 안 읽음) · 대상은 `main...HEAD` 같은 ref 범위 지정 가능 · 백그라운드 서브에이전트라
-완료가 task notification으로 온다 · Claude가 자율 호출 가능. `ultra`는 사용자만 실행 가능.
+**Properties of the built-in `/code-review`** (the basis for the choice): clean context
+(`context: fork`, no conversation history) · effort pinned as an argument (`/code-review high …`)
+· model is the session model · reads only CLAUDE.md (REVIEW.md is not read locally) · the target
+can be given as a ref range such as `main...HEAD` · it is a background subagent, so completion
+arrives as a task notification · Claude can invoke it autonomously. `ultra` can be run by the
+user only.
 
-`mixed`를 기본으로 두는 이유: 규칙 대조는 `/code-review` + CLAUDE.md 컨벤션 절로 대체되고
-언어 규칙 파일의 유지 부담이 사라진다. 구조 판단은 **모델 고정**(세션이 sonnet이어도 opus)과
-판정 기준(두 번째 사례 전 일반화 금지 · 대안 없으면 findings 아님)이 값이라 커스텀으로 남긴다.
+Why `mixed` is the default: rule conformance is covered by `/code-review` plus the CLAUDE.md
+conventions section, and the maintenance burden of a language rules file disappears. Structural
+judgment stays custom because the value is in the **pinned model** (opus even when the session is
+sonnet) and in the judgment criteria (no generalization before the second case · no finding
+without an alternative).
 
-## 디스패치 표 (`{DISPATCH_TABLE}`)
+## Dispatch Table (`{DISPATCH_TABLE}`)
 
 ### `mixed`
 
 ```markdown
-| 렌즈 | 호출 | 티어 | 대상 |
+| Lens | Call | Tier | Target |
 |---|---|---|---|
-| 정확성·규칙 대조 | `Skill: code-review {REVIEW_EFFORT} main...HEAD` | 세션 모델 / {REVIEW_EFFORT} | 브랜치 전체 |
-| 구조 판단 | `Agent(subagent_type: "{PREFIX}-refactor-reviewer")` | opus / xhigh | `{SOURCE_GLOB}` 대상 파일 목록 |
+| Correctness and rule conformance | `Skill: code-review {REVIEW_EFFORT} main...HEAD` | session model / {REVIEW_EFFORT} | the whole branch |
+| Structural judgment | `Agent(subagent_type: "{PREFIX}-refactor-reviewer")` | opus / xhigh | target file list matching `{SOURCE_GLOB}` |
 
-- `/code-review`에는 **effort를 매번 명시한다** — 생략하면 마지막에 입력한 레벨을 재사용해
-  라운드마다 기준이 흔들린다
-- `/code-review` findings의 등급 대응: **정확성(correctness) 결함 = Critical**, 재사용·단순화·
-  효율 제안 = Warning. 수렴 판정은 이 대응으로 본다
-- `/code-review`가 읽는 프로젝트 규칙은 `CLAUDE.md` 「{LANG} 컨벤션」뿐이다 — 툴이 잡지 못하는
-  프로젝트 고유 규칙은 거기에 둔다
-- `general-purpose`로 구조 리뷰를 띄우지 않는다 — 세션 effort를 물려받고, Agent 툴에는 `effort`
-  파라미터가 없어 `subagent_type` 이름이 티어를 고정하는 유일한 수단이다
+- **State the effort every time** for `/code-review` — omit it and it reuses the level typed last,
+  so the bar wobbles from round to round
+- Grade mapping for `/code-review` findings: **a correctness defect = Critical**, a reuse,
+  simplification, or efficiency suggestion = Warning. The convergence check reads this mapping
+- The only project rules `/code-review` reads are `CLAUDE.md` "{LANG} Conventions" — put the
+  project-specific rules a tool cannot catch there
+- Never launch the structural review as `general-purpose` — it inherits the session effort, and
+  because the Agent tool has no `effort` parameter, the `subagent_type` name is the only way to
+  pin the tier
 ```
 
 ### `official`
 
 ```markdown
-| 렌즈 | 호출 | 티어 | 대상 |
+| Lens | Call | Tier | Target |
 |---|---|---|---|
-| 전체 | `Skill: code-review {REVIEW_EFFORT} main...HEAD` | 세션 모델 / {REVIEW_EFFORT} | 브랜치 전체 |
+| Everything | `Skill: code-review {REVIEW_EFFORT} main...HEAD` | session model / {REVIEW_EFFORT} | the whole branch |
 
-- effort를 매번 명시한다. 등급 대응: 정확성 결함 = Critical, 정리 제안 = Warning
-- 구조 판단 기준(두 번째 사례 전 일반화 금지, 대안 없으면 지적 아님)은 `CLAUDE.md`
-  「{LANG} 컨벤션」에 한 줄씩 둔다
+- State the effort every time. Grade mapping: a correctness defect = Critical, a cleanup
+  suggestion = Warning
+- Put the structural judgment criteria (no generalization before the second case, no finding
+  without an alternative) in `CLAUDE.md` "{LANG} Conventions", one line each
 ```
 
 ### `custom`
 
 ```markdown
-| 스킬 | `subagent_type` | 티어 | 성격 |
+| Skill | `subagent_type` | Tier | Character |
 |---|---|---|---|
-| `/refactor-review` | `{PREFIX}-refactor-reviewer` | opus / xhigh | 구조 판단 |
-| `/review-code` | `{PREFIX}-code-reviewer` | sonnet / medium | 규칙 대조 |
+| `/refactor-review` | `{PREFIX}-refactor-reviewer` | opus / xhigh | structural judgment |
+| `/review-code` | `{PREFIX}-code-reviewer` | sonnet / medium | rule conformance |
 
-- `general-purpose`로 띄우지 않는다 — 세션 effort를 물려받고, Agent 툴에는 `effort` 파라미터가
-  없어 `subagent_type` 이름이 티어를 고정하는 유일한 수단이다. 디스패치 프롬프트는 **대상 파일
-  목록만** 넘긴다
-- 렌즈를 더 두면 한 줄씩 추가한다. 섞인 렌즈(대조 항목 다수 + 판단 항목 하나)는 sonnet / high
+- Never launch as `general-purpose` — it inherits the session effort, and because the Agent tool
+  has no `effort` parameter, the `subagent_type` name is the only way to pin the tier. The
+  dispatch prompt passes **the target file list and nothing else**
+- Add one row per additional lens. A mixed lens (many conformance items plus one judgment item)
+  is sonnet / high
 ```
 
-## 모든 커스텀 리뷰 스킬이 갖는 세 가지
+## Three Things Every Custom Review Skill Has
 
-1. **인자 필수.** 빈 인자로 `git diff HEAD`(미커밋)를 대상 삼는 모드를 만들지 않는다. 커밋
-   리듬이 「이슈 하나 고칠 때마다 커밋」이면 커밋 직후 대상 0건으로 조용히 통과하고, CI 없는
-   로컬 워크플로에는 그것을 뒤에서 잡아줄 것이 없다. 인자가 없으면 안내만 내고 종료한다.
-2. **`## Dispatch` 절** — `subagent_type`과 티어, `general-purpose` 금지 이유.
-3. **`### 프로파일링` 절** — 결과와 같은 메시지에 비용을 낸다. 오케스트레이터가 조립한다.
-   규모를 반드시 같이 낸다. 기준값은 스킬에 박지 않는다 — 모델이나 티어가 바뀌는 순간 낡는다.
+1. **The argument is required.** Never build a mode where an empty argument takes
+   `git diff HEAD` (uncommitted) as the target. When the commit rhythm is "commit each time you
+   fix one issue", it passes quietly with zero targets right after a commit, and a local workflow
+   with no CI has nothing behind it to catch that. With no argument, print the guidance and stop.
+2. **A `## Dispatch` section** — the `subagent_type`, the tier, and why `general-purpose` is
+   banned.
+3. **A `### Profiling` section** — report the cost in the same message as the results. The
+   orchestrator assembles it. Always include the scale. Never pin a baseline value into the skill
+   — it goes stale the moment the model or the tier changes.
 
-## 리뷰어 에이전트 본문 작법
+## Writing the Reviewer Agent Body
 
-- `tools`에서 Write/Edit를 뺀다 (`Read, Grep, Glob, Bash`). 리뷰어는 지적만 하고 못 고친다
-- 규칙을 본문에 복사하지 않는다. 스킬과 정본 문서를 가리키고, 둘이 어긋날 때 어느 쪽이 이기는지
-  명시한다. 서브에이전트는 CLAUDE.md를 상속하지 않으므로 읽을 정본을 경로로 적는다
-- **「Where the value is」 절** — 그 프로젝트에서 **툴이 닿을 수 없는** 카테고리를 하나나 둘 골라
-  먼저 태운다. 컴파일도 되고 린트도 통과하는데 사고가 나는 자리다. 싸구려 지적이 그것을 밀어내지
-  말라고 함께 적는다
-- **이미 게이트가 잡는 것에 findings를 쓰지 않는다** — 린터가 거절할 코드가 보이면 게이트를 안
-  돌린 것이고, 옳은 출력은 그 사실 한 줄이지 경고 하나당 한 건이 아니다
-- **볼 수 없는 것** — GUI·소리·상호작용처럼 이 루프의 누구도 실행할 수 없는 영역은 findings가
-  아니라 보고서의 「사용자가 눈으로 확인해야 할 것」이다. 증거가 스크린샷일 지적은 내지 않는다
-- **생성물 편집을 제안하지 않는다** — 고칠 자리는 언제나 상류다
-- **설계 문서와 코드가 어긋나면 그것이 findings다** — 어느 쪽을 믿는지와 이유를 말한다.
-  조용히 한쪽을 고르지 않는다
-- **건수 상한** — 작은 지적이 길게 늘어서면 중요한 하나가 묻힌다
-- **구체적 대안 없으면 findings가 아니다** — 어디로 가야 하는지 못 대면 아직 다 생각하지 않은 것이다
-- **최상위 등급은 보고 전에 한 번 반박해본다** — 맞는 구조를 틀렸다고 해서 멀쩡한 코드를 고치게
-  만드는 것과, 개별 항목이 무해해 보여서 경계가 옆 레이어의 관심사를 삼킨 것을 통과시키는 것이
-  대칭인 실패다
-- **주석 자기증식 차단** — 주석·문서는 코드를 거짓으로 서술할 때만 findings다. 표현·어조는 아니다
+- Remove Write and Edit from `tools` (`Read, Grep, Glob, Bash`). A reviewer only reports; it
+  cannot fix
+- Do not copy rules into the body. Point at the skill and the canonical documents, and state
+  which one wins when the two disagree. A subagent does not inherit CLAUDE.md, so write the paths
+  of the canonical documents to read
+- **A "Where the value is" section** — pick the one or two categories in that project that
+  **tools cannot reach** and run them first. They are the places that compile and lint clean and
+  still cause incidents. Write alongside them that cheap findings must not crowd them out
+- **Never spend a finding on what the gate already catches** — code the linter would refuse means
+  the gate was not run, and the right output is one line saying so, not one finding per warning
+- **What you cannot see** — areas nobody in this loop can run, such as GUI, sound, and
+  interaction, go not into findings but into the report's "For the User to Check by Eye". Never
+  raise a finding whose evidence would be a screenshot
+- **Never propose editing generated files** — the place to fix is always upstream
+- **A design document out of step with the code is itself a finding** — say which one you believe
+  and why. Do not silently pick one
+- **A cap on the count** — small findings in a long line bury the one that matters
+- **No finding without a concrete alternative** — if you cannot say where it should go, you have
+  not finished thinking
+- **Argue against a top-grade finding once before reporting it** — calling a correct structure
+  wrong and making someone fix healthy code, and waving through a boundary that swallowed the
+  next layer's concern because each item looked harmless, are symmetric failures
+- **Block comment self-propagation** — a comment or document is a finding only when it describes
+  the code falsely. Wording and tone are not
 
 ---
 
-## refactor-review 스킬 골격
+## refactor-review Skill Skeleton
 
 `.claude/skills/refactor-review/SKILL.md` (`mixed` · `custom`)
 
@@ -113,39 +129,40 @@ description: "Use when a specific file or directory needs a structural quality c
 
 Analyze {LANG} code for structural improvement opportunities.
 
-**대상 지정 임시 점검용이다.** 브랜치 전체의 사이클 리뷰는 `docs/workflow.md` 「자율 리뷰-수정
-루프」가 클린 컨텍스트 서브에이전트로 수행한다 — 자기가 쓴 코드를 자기가 판정하지 않기 위해서다.
+**This is for a targeted ad-hoc check.** The whole-branch cycle review is carried out by
+`docs/workflow.md` "Autonomous Review-Fix Loop" through clean-context subagents — so that nobody
+judges the code they wrote themselves.
 
-**Arguments**: `$ARGUMENTS` — **필수**
+**Arguments**: `$ARGUMENTS` — **required**
 - File path: review that file
 - Directory path: review all `{SOURCE_GLOB}` files in that directory
 
 ## Dispatch
 
-When this review runs as a subagent — the normal case in the 피처 완료 flow — dispatch it as
-`subagent_type: "{PREFIX}-refactor-reviewer"` (opus / xhigh), never `general-purpose`.
+When this review runs as a subagent — the normal case in the feature completion flow — dispatch
+it as `subagent_type: "{PREFIX}-refactor-reviewer"` (opus / xhigh), never `general-purpose`.
 
 The tier is deliberately the high one and is pinned rather than inherited: structural judgment
 cannot be pattern-matched, so it must not drop when the session effort does. `general-purpose`
 inherits whatever the session is set to, and the Agent tool has no `effort` parameter.
 
-The dispatch prompt only needs the target files — the agent loads this skill and the 정본
+The dispatch prompt only needs the target files — the agent loads this skill and the canonical
 documents itself.
 
-### 프로파일링 — report it with the results
+### Profiling — report it with the results
 
 When dispatched, report what the review cost in the same message as the findings. **The
 orchestrator assembles this** — a subagent cannot see its own wall clock. The task notification
 carries `duration_ms`, `subagent_tokens`, and `tool_uses`.
 
 ```
-프로파일링: <s> (<분>) · <tok> · 도구 <n> · opus/xhigh
-규모: 파일 <n>개 / <총 줄 수>줄 · 지적 <n>건
+Profiling: <s> (<min>) · <tok> · tools <n> · opus/xhigh
+Scale: <n> files / <total lines> lines · <n> findings
 ```
 
-Always include 규모. No baseline is written into this skill — compare against recent runs. If
-duration climbs while 규모 holds steady, the cause is almost always how much it is being asked
-to *write*.
+Always include the scale. No baseline is written into this skill — compare against recent runs.
+If duration climbs while the scale holds steady, the cause is almost always how much it is being
+asked to *write*.
 
 ## Execution
 
@@ -156,12 +173,13 @@ to *write*.
 
 Exclude `{EXCLUDE_DIRS}` in every case.
 
-**인자가 없으면 실행하지 않는다.** 안내만 출력하고 종료:
+**With no argument, do not run.** Print the guidance and stop:
 
-> `/refactor-review`는 파일·디렉터리를 지정해야 합니다. 브랜치 전체 리뷰는 자율 리뷰-수정
-> 루프가 `main...HEAD` diff를 대상으로 수행합니다.
+> `/refactor-review` needs a file or a directory. The whole-branch review is carried out by the
+> autonomous review-fix loop over the `main...HEAD` diff.
 
-빈 인자로 미커밋 변경을 대상 삼으면 커밋 직후에 대상 0건으로 조용히 통과한다.
+Taking uncommitted changes as the target on an empty argument passes quietly with zero targets
+right after a commit.
 
 ### 2. Read and Analyze
 
@@ -202,14 +220,15 @@ with a concrete code sketch.
 - Core logic embedded in the UI/adapter layer → extract to core
 {DEP_PROJECT_RULES}
 
-#### EXT: Extensibility (실증된 필요에 한함)
+#### EXT: Extensibility (only where the need is demonstrated)
 - Hardcoded values that should be configurable — only when a sibling value already is
 - Type-specific branches that should be polymorphic — only when duplicated in 2+ places
 - Missing abstraction where a **second implementation already exists**
 
-**지적 금지**: "likely extension point" 류 추측성 확장 제안, 목적 없는 래핑·중간 레이어,
-두 번째 사례 없는 일반화. 반대로 **이미 들어와 있는 추측성 일반화**(사용처가 하나뿐인 추상)는
-**Consider**다.
+**Never report**: speculative extension suggestions of the "likely extension point" kind,
+purposeless wrapping or intermediate layers, generalization with no second case. Conversely,
+**speculative generality already in the code** (an abstraction with a single use site) is a
+**Consider**.
 
 ### 4. Severity
 
@@ -262,13 +281,13 @@ This skill does NOT check: naming, formatting, error handling, security, lint-le
 tests — {SCOPE_OWNER} covers those.
 ```
 
-치환: `{DEP_PROJECT_RULES}` — 프로젝트의 레이어 규칙(예: 「core 크레이트는 UI 무지」)을 한 줄씩.
-없으면 지운다. `{SCOPE_OWNER}` — `mixed`면 「`/code-review`」, `custom`이면 「`/review-code`」.
-`{LANG_FENCE}` — 코드 펜스 언어 태그.
+Substitution: `{DEP_PROJECT_RULES}` — the project's layer rules (for example, "the core crate is
+ignorant of the UI"), one line each. Delete it if there are none. `{SCOPE_OWNER}` — for `mixed`,
+"`/code-review`"; for `custom`, "`/review-code`". `{LANG_FENCE}` — the code fence language tag.
 
 ---
 
-## {PREFIX}-refactor-reviewer 에이전트 골격
+## {PREFIX}-refactor-reviewer Agent Skeleton
 
 `.claude/agents/{PREFIX}-refactor-reviewer.md` (`mixed` · `custom`)
 
@@ -294,10 +313,10 @@ judgment takes reading the code as a whole and holding several files in mind at 
 
 1. `.claude/skills/refactor-review/SKILL.md` — the procedure, the 5 categories, severity
    definitions, output format, scope boundary. Follow it exactly.
-2. {ARCH_DOC} — the **정본** for the layer graph and boundaries every DEP judgment rests on.
+2. {ARCH_DOC} — the **canon** for the layer graph and boundaries every DEP judgment rests on.
 3. `CLAUDE.md` — project conventions. Subagents do not inherit it; read it.
 <!-- module:discipline -->
-4. `docs/discipline.md` — 「세지 말고 누구를 적는다」 and 「주석」 govern what counts as a
+4. `docs/discipline.md` — "Name Them, Do Not Count Them" and "Comments" govern what counts as a
    documentation finding.
 <!-- /module:discipline -->
 
@@ -343,8 +362,8 @@ answers it.
 
 Nobody in this loop can run the program. Visual, layout, and interaction defects are out of
 reach, and `docs/workflow.md` takes them off the gate deliberately. Judge code, not rendered
-results; a risk you cannot confirm belongs in the report's 「사용자가 눈으로 확인해야 할 것」,
-said once.
+results; a risk you cannot confirm belongs in the report's "For the User to Check by Eye", said
+once.
 
 ## Comments and docs are structure too, but not prose to polish
 
@@ -356,17 +375,18 @@ does not move the verdict.
 ## Output
 
 Exactly the report format in `SKILL.md` §5, including the summary table. Omit files with no
-findings. Korean prose; code identifiers and code blocks stay as-is.
+findings. Prose in the user's language; code identifiers and code blocks stay as-is.
 ```
 
-치환: `{ARCH_DOC}` — 아키텍처 정본 경로(`docs/design/architecture.md`). 없으면 그 줄을 지우고
-「CLAUDE.md의 구조 절」로 대체. `{WHERE_THE_VALUE_IS}` — 프로젝트에서 툴이 닿지 못하는 구조
-결함 하나나 둘(예: 「core 크레이트에 UI 타입이 들어오는 것 — 컴파일도 게이트도 통과하지만 서버화
-여지를 조용히 잃는다」). 셋업 시 사용자에게 묻는다.
+Substitution: `{ARCH_DOC}` — the path of the architecture canon (`docs/design/architecture.md`).
+If there is none, delete that line and replace it with "the structure section of CLAUDE.md".
+`{WHERE_THE_VALUE_IS}` — the one or two structural defects in the project that tools cannot reach
+(for example, "a UI type entering the core crate — it compiles and passes the gate while quietly
+losing the room to move to a server"). Ask the user at setup.
 
 ---
 
-## review-code 스킬 골격 (`custom`만)
+## review-code Skill Skeleton (`custom` only)
 
 `.claude/skills/review-code/SKILL.md`
 
@@ -380,10 +400,10 @@ description: "Use when a specific file or directory needs a convention check aga
 
 Analyze {LANG} code against project rules and report violations.
 
-**대상 지정 임시 점검용이다.** 브랜치 전체의 사이클 리뷰는 `docs/workflow.md` 「자율 리뷰-수정
-루프」가 클린 컨텍스트 서브에이전트로 수행한다.
+**This is for a targeted ad-hoc check.** The whole-branch cycle review is carried out by
+`docs/workflow.md` "Autonomous Review-Fix Loop" through clean-context subagents.
 
-**Arguments**: `$ARGUMENTS` — **필수** (file or directory)
+**Arguments**: `$ARGUMENTS` — **required** (file or directory)
 
 ## Dispatch
 
@@ -392,14 +412,14 @@ Conformance checking against a written rule set does not need the top tier; stru
 does, and that is `/refactor-review`'s job at its own tier. The dispatch prompt only needs the
 target files.
 
-### 프로파일링 — report it with the results
+### Profiling — report it with the results
 
 ```
-프로파일링: <s> (<분>) · <tok> · 도구 <n> · sonnet/medium
-규모: 파일 <n>개 / <총 줄 수>줄 · 지적 <n>건
+Profiling: <s> (<min>) · <tok> · tools <n> · sonnet/medium
+Scale: <n> files / <total lines> lines · <n> findings
 ```
 
-The orchestrator assembles this from the task notification. Always include 규모. No baseline.
+The orchestrator assembles this from the task notification. Always include the scale. No baseline.
 
 ## Execution
 
@@ -408,16 +428,16 @@ The orchestrator assembles this from the task notification. Always include 규�
 - File → read that file · Directory → Glob `$ARGUMENTS/{SOURCE_GLOB}`
 - Exclude `{EXCLUDE_DIRS}`
 
-**인자가 없으면 실행하지 않는다.** 안내만 출력하고 종료:
+**With no argument, do not run.** Print the guidance and stop:
 
-> `/review-code`는 파일·디렉터리를 지정해야 합니다. 브랜치 전체 리뷰는 자율 리뷰-수정 루프가
-> `main...HEAD` diff를 대상으로 수행합니다.
+> `/review-code` needs a file or a directory. The whole-branch review is carried out by the
+> autonomous review-fix loop over the `main...HEAD` diff.
 
 ### 2. Load Rules
 
 Read [references/rules.md](references/rules.md). rules.md is a **review lens, not the source of
 truth**: items marked **P** (project-specific) carry only a severity and a check pattern; their
-정본 is `CLAUDE.md`. If the two disagree, CLAUDE.md wins.
+canon is `CLAUDE.md`. If the two disagree, CLAUDE.md wins.
 
 ### 3. Analyze Each File
 
@@ -462,12 +482,12 @@ was not run, and the right output is one note saying so.
 ```
 ```
 
-`references/rules.md`는 `review-rules-{lang}.md`(+ 프레임워크 addon)를 복사하고 「프로젝트 고유
-(P)」 절을 채운다.
+`references/rules.md` is a copy of `review-rules-{lang}.md` (+ any framework addon) with the
+"P: Project-Specific" section filled in.
 
 ---
 
-## {PREFIX}-code-reviewer 에이전트 골격 (`custom`만)
+## {PREFIX}-code-reviewer Agent Skeleton (`custom` only)
 
 ```markdown
 ---
@@ -488,9 +508,9 @@ is any good. Structural quality is `/refactor-review`'s job at its own tier.
 
 1. `.claude/skills/review-code/SKILL.md` — procedure, categories, report format. Follow it exactly.
 2. `.claude/skills/review-code/references/rules.md` — the review lens.
-3. `CLAUDE.md` — the 정본 for every **P** item. **If rules.md and CLAUDE.md disagree, CLAUDE.md wins.**
+3. `CLAUDE.md` — the canon for every **P** item. **If rules.md and CLAUDE.md disagree, CLAUDE.md wins.**
 <!-- module:discipline -->
-4. `docs/discipline.md` 「주석」 — what counts as a comment finding.
+4. `docs/discipline.md` "Comments" — what counts as a comment finding.
 <!-- /module:discipline -->
 
 The dispatch prompt names the target files. Everything else comes from those documents.
@@ -515,7 +535,7 @@ Every finding carries a `file:line` that must be right and a fix that must compi
 ## What you cannot see
 
 Nobody in this loop can run the program. Judge code, not rendered results; a risk you cannot
-confirm belongs in the report's 「사용자가 눈으로 확인해야 할 것」, said once.
+confirm belongs in the report's "For the User to Check by Eye", said once.
 
 **Never suggest editing generated files.** The fix is always upstream.
 
@@ -527,10 +547,11 @@ are not findings. At most one such finding per review; it does not move the verd
 ## Output
 
 Exactly the report format in `SKILL.md`, including the summary table. Omit files with no findings.
-Korean prose; code identifiers and code blocks stay as-is.
+Prose in the user's language; code identifiers and code blocks stay as-is.
 ```
 
-치환: `{WHERE_THE_VALUE_IS_CONFORMANCE}` — 규칙 대조 렌즈에서 툴이 잡지 못하는 최고 가치
-카테고리(예: 「GPL 소스 직역 코드가 메인 리포에 들어오는 것 — 컴파일도 게이트도 통과하고 MIT로
-배포된다」·「프로덕션 경로의 `unwrap()` — 이 워크스페이스는 `[lints]`가 없어 clippy 기본값이
-허용한다」). 셋업 시 사용자에게 묻는다.
+Substitution: `{WHERE_THE_VALUE_IS_CONFORMANCE}` — the highest-value category in the
+rule-conformance lens that tools cannot catch (for example, "code translated line by line from a
+GPL source entering the main repo — it compiles, passes the gate, and ships under MIT", or "an
+`unwrap()` on a production path — this workspace has no `[lints]`, so the clippy default allows
+it"). Ask the user at setup.

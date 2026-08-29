@@ -1,49 +1,59 @@
 # C++ Unreal Engine Review Rules (Addon)
 
-`review-rules-cpp.md`에 덧붙여 쓴다. Severity 정의는 base와 같다. **P** 항목의 정본은 프로젝트
-코딩 규칙 문서다.
+Used on top of `review-rules-cpp.md`. The severity definitions are the same as the base. The
+canon for a **P** item is the project's coding rules document.
 
 ## NC-UE: UE Naming Conventions
 
-**Warning:** 클래스/구조체 UE 접두사 누락 (A/U/F/I/E/T/S), 파일명에 타입 접두사 포함
-**Info:** Blueprint 노출 함수명이 BP 사용자 관점에서 불명확
+**Warning:** Missing UE prefix on a class or struct (A/U/F/I/E/T/S), type prefix included in the
+file name
+**Info:** A Blueprint-exposed function name that is unclear from the BP user's point of view
 
 ## FMT-UE: Formatting
 
-**Critical:** **P** C++ 소스의 장식적 비ASCII 문자(`—` `–` `→` `§`) — BOM 없는 파일을 MSVC가
-cp949로 해석해 컴파일 파손. 한글 주석 자체는 허용
-**Critical:** 블록 주석 본문의 `*/` 시퀀스 — 주석이 거기서 끝나 뒤 텍스트가 코드로 해석됨
+**Critical:** **P** Decorative non-ASCII characters (`—` `–` `→` `§`) in C++ source — MSVC reads
+a file without a BOM in the local codepage and the compile breaks. Non-ASCII comment text itself
+is allowed
+**Critical:** A `*/` sequence inside a block comment body — the comment ends there and the text
+after it is parsed as code
 
-**Check pattern**: 코드·주석 전체를 비ASCII로 스캔(한글 제외). `/* … */` 구간 안의 `*/`.
+**Check pattern**: scan all code and comments for non-ASCII (excluding natural-language comment
+text). `*/` inside a `/* … */` span.
 
 ## UE: Unreal Engine Specific
 
-**Critical:** 싱글플레이 프로젝트의 리플리케이션 코드 (`Replicated`, `Server`, `Client`, `NetMulticast`)
-**Warning:** UObject 멤버에 `UPROPERTY()` 누락 (GC 미추적), Blueprint 함수에 `Category` 누락,
-생성자/소멸자에서 가상 함수 호출, 문자열 리터럴에 `TEXT()` 누락
-**Info:** 불필요한 Tick 활성화
+**Critical:** Replication code in a single-player project (`Replicated`, `Server`, `Client`,
+`NetMulticast`)
+**Warning:** Missing `UPROPERTY()` on a UObject member (not GC-tracked), missing `Category` on a
+Blueprint function, virtual call in a constructor or destructor, missing `TEXT()` on a string
+literal
+**Info:** Tick enabled unnecessarily
 
 ## R-UE: UE Resource Management
 
-**Critical:** 에셋 직접 로드 (레지스트리/GameData 패턴 사용), `NewObject`/`CreateDefaultSubobject`의
-잘못된 Outer, 인터페이스 raw 포인터를 멤버로 보관 (GC 추적 불가 — 액터로 보관)
-**Warning:** 게임플레이 코드(Tick·Notify·어빌리티)에서 `LoadSynchronous()`를 정상 경로로 사용 —
-하드 레퍼런스 또는 프리로드. `Get()` 실패 후 폴백은 허용, 에디터 전용 코드는 예외
+**Critical:** Loading an asset directly (use the registry / GameData pattern), wrong Outer on
+`NewObject`/`CreateDefaultSubobject`, holding an interface raw pointer as a member (not
+GC-trackable — hold the actor instead)
+**Warning:** `LoadSynchronous()` on the normal path in gameplay code (Tick, Notify, ability) —
+use a hard reference or preload. A fallback after a failed `Get()` is allowed, and editor-only
+code is exempt
 
-## GAS: Gameplay Ability System (해당 시)
+## GAS: Gameplay Ability System (when applicable)
 
-**Critical:** Raw GAS 패턴 직접 사용 (래퍼 경유 필수), GameplayTag 하드코딩
-**Warning:** AbilitySystemComponent 직접 접근 (서브시스템/인터페이스 경유)
+**Critical:** Raw GAS patterns used directly (must go through the wrapper), hardcoded
+GameplayTag
+**Warning:** Direct access to AbilitySystemComponent (go through the subsystem or interface)
 
 ## IF: Interface & Casting
 
-**Warning:** **P** `Cast<ConcreteClass>` / `Cast<IInterface>` — 프로젝트의 인터페이스 헬퍼 경유.
-건드린 함수 전체에서 본다, 바뀐 줄만이 아니라
+**Warning:** **P** `Cast<ConcreteClass>` / `Cast<IInterface>` — go through the project's
+interface helper. Look at the whole function you touched, not only the changed lines
 
 ## MOD-UE: Module Dependencies
 
-**Critical:** 순환 의존, `.Build.cs`에 미등록된 모듈 `#include`
-**Warning:** 단방향 의존성 흐름 위반, 불필요한 모듈 의존 추가
+**Critical:** Circular dependency, `#include` of a module not registered in `.Build.cs`
+**Warning:** Violation of the one-way dependency flow, unnecessary module dependency added
 
-**Check pattern**: 파일 경로에서 모듈(`Source/<Module>/`)을 잡고 그 `.Build.cs`의
-`Public/PrivateDependencyModuleNames`를 읽는다 — **`.Build.cs`가 정본**이고 아키텍처 문서는 개요다.
+**Check pattern**: take the module from the file path (`Source/<Module>/`) and read
+`Public/PrivateDependencyModuleNames` in its `.Build.cs` — **the `.Build.cs` is the canon** and
+the architecture document is an overview.

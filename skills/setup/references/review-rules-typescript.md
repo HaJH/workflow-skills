@@ -1,10 +1,11 @@
 # TypeScript Review Rules
 
-리뷰 렌즈. 심각도와 검출 패턴만 둔다. **P** 항목의 정본은 `CLAUDE.md`이며 둘이 어긋나면 CLAUDE.md가
-이긴다. 게이트(린터 · `tsc` · 포매터)가 거절하는 것은 findings로 쓰지 않는다 — 보이면 「게이트를
-안 돌렸다」 한 줄. 미사용 import, 포맷, 린트 규칙 위반은 여기 없다.
+A review lens. It carries severity and detection patterns only. The canon for a **P** item is
+`CLAUDE.md`, and CLAUDE.md wins when the two disagree. Never spend a finding on what the gate
+(linter · `tsc` · formatter) rejects — if you see it, that is one line saying "the gate was not
+run". Unused imports, formatting, and lint rule violations are not here.
 
-React를 쓰면 `review-rules-typescript-react.md`를 덧붙인다.
+If the project uses React, add `review-rules-typescript-react.md`.
 
 ## Severity
 
@@ -14,43 +15,51 @@ React를 쓰면 `review-rules-typescript-react.md`를 덧붙인다.
 
 ## TYPE: Type Quality
 
-**Critical:** 외부 경계(IPC·API·파일)의 페이로드 타입을 수기로 재정의 — 생성 타입이나 스키마
-추론 타입을 import할 것 (수기 사본은 상대편 변경 시 조용히 어긋난다), 오류 분기를 `error.message`
-문자열 매칭으로 — 코드/타입으로 분기할 것
-**Warning:** `any`, 근거 없는 `as` 단언, non-null 단언(`!`) — 좁히기 가드 대상, 유니언 리터럴 타입이
-존재하는 곳에 느슨한 `string`, exported 함수 반환 타입 누락
-**Info:** `unknown` 대신 `any`를 받는 catch/파라미터
+**Critical:** The payload type of an external boundary (IPC, API, file) redefined by hand —
+import the generated type or the schema-inferred type (a hand-written copy silently goes out of
+step when the other side changes); error branching by string-matching on `error.message` — branch
+on a code or a type
+**Warning:** `any`, an `as` assertion with no basis, a non-null assertion (`!`) — a narrowing
+guard belongs there, a loose `string` where a union literal type exists, missing return type on an
+exported function
+**Info:** catch or parameter typed `any` instead of `unknown`
 
 ## ERR: Error Handling
 
-**Critical:** 호출부가 `void`로 버리는 async 액션의 실패 무시 — 내부에서 catch해 표면의 오류 필드로
-라우팅할 것 (unhandled rejection이 유일한 흔적이면 안 된다), 빈 catch
-**Warning:** 외부 입력·파일 I/O의 에러 처리 누락, loading/error 상태 누락
+**Critical:** The failure of an async action the caller discards as `void` ignored — catch it
+inside and route it to the surface's error field (an unhandled rejection must not be the only
+trace); empty catch
+**Warning:** Error handling missing on external input or file I/O, loading/error state missing
 
 ## SEC: Security
 
-**Critical:** 비정제 HTML 삽입(XSS), `eval`/`Function`, 경로 traversal
-**Warning:** 파일 경로 미검증, 하드코딩 자격증명
+**Critical:** Unsanitized HTML insertion (XSS), `eval`/`Function`, path traversal
+**Warning:** File path unvalidated, hardcoded credential
 
-## BOUNDARY: 경계 (project-specific)
+## BOUNDARY: Boundaries (project-specific)
 
-**Critical:** **P** 백엔드·IPC·네트워크 호출을 단일 게이트웨이 모듈 밖에서 직접 — 게이트웨이의
-존재 이유가 조용히 거짓이 된다. 새 백엔드 접점마다 확인
-**Critical:** **P** 생성물(`*.gen.ts`, 바인딩) 수동 편집 제안·수행 — 상류를 고치고 재생성
-**Warning:** 루프 안 원격 호출 (N+1), 낙관적 갱신이 확정 응답과 경합 — 확정 스냅샷이 단일 진실 소스
+**Critical:** **P** A backend, IPC, or network call made directly outside the single gateway
+module — the gateway's reason to exist quietly becomes a lie. Check at every new backend contact
+point
+**Critical:** **P** Proposing or performing a hand edit of a generated file (`*.gen.ts`,
+bindings) — fix upstream and regenerate
+**Warning:** Remote call inside a loop (N+1), an optimistic update racing the confirmed response —
+the confirmed snapshot is the single source of truth
 
 ## STRUCT: Structure
 
-**Warning:** 3+줄 중복 블록 → 공유 함수/컴포넌트, 역할이 섞인 모듈 → 역할선으로 분할, 모듈 간 직접
-결합(다른 모듈의 내부 상태에 의존)
-**Info:** 하드코딩 값 (매직넘버·문자열)
+**Warning:** Duplicated block of 3+ lines → a shared function or component, a module with mixed
+roles → split along the role line, direct coupling between modules (depending on another module's
+internal state)
+**Info:** Hardcoded value (magic number or string)
 
 ## TEST: Testing
 
-**Warning:** 테스트 없는 공개 함수, 되돌려도 안 깨지는 가드 테스트
-**Info:** 엣지 케이스 누락, snapshot 테스트 과도 의존
+**Warning:** Public function with no test, a guard test that does not break when the guard is
+reverted
+**Info:** Missing edge case, snapshot tests over-relied on
 
-## P: 프로젝트 고유
+## P: Project-Specific
 
-(셋업 시 채운다. BOUNDARY의 게이트웨이 경로·생성물 목록을 구체 경로로. 각 항목은 심각도 + 검출
-패턴 + `→ CLAUDE.md 「절」`)
+(Filled in at setup. Give BOUNDARY's gateway path and the list of generated files as concrete
+paths. Each entry is severity + detection pattern + `→ CLAUDE.md "Section"`)

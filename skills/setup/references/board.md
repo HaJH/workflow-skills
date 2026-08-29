@@ -1,214 +1,228 @@
-# 작업 보드 (module: board)
+# Work Board (module: board)
 
-외부 이슈 트래커가 없는 로컬 프로젝트용. 생성 파일:
+For a local project with no external issue tracker. Files generated:
 
-| 파일 | 내용 |
+| File | Contents |
 |---|---|
-| `docs/board.md` | 규칙 + In Progress / ToDo |
-| `docs/roadmap.md` | 마일스톤 사다리 + 후보 |
-| `docs/backlog.md` | 탈락·후순위 |
-| `docs/board-archive.md` | 완료 (마일스톤별) |
-| `docs/issues/` | 빈 디렉터리 (`.gitkeep`) |
-| `scripts/board-ready.sh` | `scripts/board-ready.sh` 복사, `REPO` 기본값 치환 |
+| `docs/board.md` | Rules + In Progress / ToDo |
+| `docs/roadmap.md` | Milestone ladder + candidates |
+| `docs/backlog.md` | Dropped and deferred |
+| `docs/board-archive.md` | Done (by milestone) |
+| `docs/issues/` | Empty directory (`.gitkeep`) |
+| `scripts/board-ready.sh` | Copy of `scripts/board-ready.sh`, with the `REPO` default substituted |
 
 ## docs/board.md
 
 ```markdown
-# 보드
+# Board
 
-지금 하는 것(In Progress)과 곧 할 것(ToDo)만 담는 간이 칸반보드. 완료 항목은
-`board-archive.md`로 간다.
+A lightweight kanban board holding only what is being done now (In Progress) and what comes next
+(ToDo). Completed items go to `board-archive.md`.
 
-## 이슈가 먼저다
+## Issues Come First
 
-흐름은 `이슈 → 설계 → 구현 → 완료`다. 설계 문서(`docs/design/*`)는 이슈를 수행하는 과정에서
-나오는 **산출물**이지 이슈의 출처가 아니다.
+The flow is `issue → design → implementation → done`. A design document (`docs/design/*`) is an
+**artifact** produced while carrying out an issue, not the source of one.
 
-ToDo 항목은 이렇게 생긴다:
+A ToDo item comes into being like this:
 
-- **사용자·PM 판단** — 하고 싶은 것, 해야 하는 것. 주 출처
-- **선행 이슈에서 갈라진 후속 작업** — 구현하다 드러난 남은 일
-- **`docs/roadmap.md`** — 다음 마일스톤 후보. 착수 시 승격 (승격분은 roadmap.md에서 제거)
-- **`docs/backlog.md`** — 탈락·후순위 더미. 되살릴 때만 승격하고 승격분은 backlog.md에서 제거
+- **User and PM judgment** — what you want done, what must be done. The main source
+- **Follow-up work split off a prerequisite issue** — what implementation revealed was left
+- **`docs/roadmap.md`** — candidates for the next milestone. Promoted when started (remove what
+  was promoted from roadmap.md)
+- **`docs/backlog.md`** — the pile of dropped and deferred items. Promote only when reviving
+  something, and remove what was promoted from backlog.md
 
-## 규칙
+## Rules
 
-- 항목 ID는 kebab-case 슬러그이며 **한번 정하면 고정**한다. 브랜치 `feature/<id>`와 보고서
-  `docs/reports/feature-<id>.md`가 이 문자열로 묶여 있다
-- **카드는 한 줄이다** — `` **`<id>`** — 요약 ``. 배경·경위·결정·제약은 `docs/issues/<id>.md`에
-  쓴다. 상세가 생겼을 때만 만들고, 파일이 있으면 카드 끝에 `(상세: issues/)`. 착수 시 Dev에게 이
-  파일을 전달하고, 완료 시 핵심 결론을 아카이브 항목·설계 문서로 옮긴 뒤 파일은 지운다
-- **선행은 산문이 아니라 줄로 적는다** — 막혀 있는 카드에만 하위 불릿 하나:
-  `` - 선행: `<id>` `` (여럿이면 쉼표). 형식이 하나여야 `scripts/board-ready.sh`가 읽는다
-- In Progress로 올릴 때만 상태 줄(브랜치·보고서·시작일)을 붙인다
-- 이동할 때 항목 텍스트를 재작성하지 않는다. 상태 필드만 갱신한다
-- 그룹 헤더는 고정 카테고리명만 쓴다 — 이슈별 코멘트·순서 지시를 헤더에 달지 않는다
-- 문서는 main 직접 커밋이다. **고쳤으면 그 자리에서 바로 커밋한다** — 여러 세션이 공유하는
-  파일이라 미커밋 변경을 남겨두면 다른 세션의 수정과 충돌한다
+- An item ID is a kebab-case slug and is **fixed once chosen**. The branch `feature/<id>` and the
+  report `docs/reports/feature-<id>.md` are tied together by that string
+- **A card is one line** — `` **`<id>`** — summary ``. Background, provenance, decisions, and
+  constraints go in `docs/issues/<id>.md`. Create that file only once there is detail, and when
+  it exists put `(detail: issues/)` at the end of the card. Pass this file to Dev when the work
+  starts, and at completion move the key conclusions into the archive entry and the design
+  document, then delete the file
+- **Write a prerequisite as a line, not as prose** — one sub-bullet, only on a blocked card:
+  `` - prereq: `<id>` `` (comma-separated if several). The format must be the single one for
+  `scripts/board-ready.sh` to read it
+- Attach the status line (branch, report, start date) only when promoting to In Progress
+- Never rewrite an item's text when moving it. Update only the status fields
+- Group headers carry the fixed category name only — never hang a per-issue comment or an
+  ordering instruction on a header
+- Documents are committed directly on main. **Once you fix one, commit it right there** — the
+  file is shared by several sessions, and leaving the change uncommitted collides with another
+  session's edits
 
-카드 이동 주체:
+Who moves a card:
 
-| 이동 | 주체 | 시점 |
+| Move | Who | When |
 |---|---|---|
-| (신규) → ToDo | PM 또는 사용자 | 해야 할 일이 생겼을 때 |
-| roadmap → ToDo | PM | 다음 마일스톤에 착수할 때 |
-| backlog → ToDo | PM | 탈락 항목을 되살릴 때 |
-| ToDo → In Progress | PM | Dev에게 작업을 지시할 때 |
-| In Progress → 아카이브 | PM | `/merge-branch` 정리 단계 |
+| (new) → ToDo | PM or the user | when something to do comes up |
+| roadmap → ToDo | PM | when starting the next milestone |
+| backlog → ToDo | PM | when reviving a dropped item |
+| ToDo → In Progress | PM | when directing Dev to the work |
+| In Progress → archive | PM | the `/merge-branch` cleanup step |
 
-## 트랙 — ToDo의 고정 그룹
+## Tracks — Fixed Groups Within ToDo
 
-ToDo는 그룹으로 나눈다. **그룹은 분류이지 계획도 잠금도 아니다** — 빈 그룹은 적지 않는다.
+ToDo is split into groups. **A group is a classification, not a plan and not a lock** — do not
+write out an empty group.
 
-- **메인 라인 (v\<n\>)** — 현 마일스톤 완성 정의를 향한 축. 위에서부터 순서대로. **순차인
-  이유는 카드 사이에 선행 관계가 있기 때문이지 같은 영역을 만져서가 아니다**
-- **\<영역\>** — 나머지 카드. 영역은 코드 도메인 기준의 고정 목록이며 추가·변경은 이 표로만:
+- **Main line (v\<n\>)** — the axis toward the current milestone's definition of done, in order
+  from the top. **The reason it is sequential is a prerequisite relation between cards, not that
+  they touch the same area**
+- **\<area\>** — the remaining cards. Areas are a fixed list based on code domains, and additions
+  or changes go through this table only:
 
-| 영역 | 범위 |
+| Area | Scope |
 |---|---|
 | {AREA_1} | {AREA_1_SCOPE} |
-| 문서 | `docs/` 전용 — 코드 무변경 |
+| Docs | `docs/` only — no code change |
 
-배치: 새 카드는 **어느 코드 영역을 만지는가**로. 그룹 안에서는 위에서부터가 우선순위. 그룹을
-가로질러 시급한 카드가 있으면 그 카드 하나에만 `⚑`를 단다.
+Placement: a new card goes by **which code area it touches**. Within a group, higher is higher
+priority. If a card is urgent across groups, put a `⚑` on that one card alone.
 
-착수 — **같은 영역이라는 이유로 보류하지 않는다**:
+Starting work — **never hold a card because it is in the same area**:
 
-- 두 브랜치가 같은 파일을 만지는 것은 정상이다. 충돌하면 머지 커밋으로 해소한다
-- 순차로 둘 이유는 둘뿐이다: **선행 관계**(B가 A의 산출물을 쓴다 — 선행 줄로 적는다) ·
-  **설계 중복**(두 카드가 같은 서브시스템에 새 구조를 세운다 — 하나를 먼저 보내거나 범위를 갈라
-  준다)
-- 둘 중 어느 것도 아니면 겹치더라도 그대로 착수한다
+- Two branches touching the same file is normal. On conflict, resolve in the merge commit
+- There are only two reasons to serialize: a **prerequisite relation** (B uses A's output — write
+  it as a prereq line) · **duplicated design** (two cards raise new structure in the same
+  subsystem — send one first or split the scope)
+- If neither holds, start it even where they overlap
 
-## 선행 줄
+## Prerequisite Line
 
 ```markdown
-- **`feature-b`** — B 기능 (상세: issues/)
-  - 선행: `feature-a`
+- **`feature-b`** — feature B (detail: issues/)
+  - prereq: `feature-a`
 ```
 
-- **미해결 블로킹만 적는다.** 대상이 아카이브로 가면 그 줄을 지운다 — `/merge-branch` 정리
-  단계에 들어 있다. 남겨 두면 카드가 영원히 막힌 것처럼 읽힌다
-- 출처 서술(「`x`에서 분리」)은 선행이 아니다 — 역사이고 아무것도 막지 않는다
-- 「순서 확인」류도 선행이 아니다 — 꼭 표시하려면 `` - 인접: `<id>` ``
+- **Write only unresolved blocking.** When the target goes to the archive, delete that line — it
+  is part of the `/merge-branch` cleanup step. Left in place, the card reads as blocked forever
+- A provenance note ("split out of `x`") is not a prerequisite — it is history and blocks nothing
+- An "order check" is not one either — to mark it at all, use `` - adjacent: `<id>` ``
 
-`scripts/board-ready.sh`가 이 줄을 읽어 셋을 낸다 — **착수 가능한 카드** · **낡은 선행**(대상이
-이미 아카이브에 있음) · **깨진 참조**(대상이 어디에도 없음).
+`scripts/board-ready.sh` reads these lines and produces three things — **startable cards** ·
+**stale prerequisites** (the target is already in the archive) · **broken references** (the target
+matches no card anywhere).
 
-## 형식
+## Format
 
 ```markdown
 ## In Progress
 
-- **`scan-pipeline`** — 라이브러리 폴더 스캔 → DB 등록 (상세: issues/)
-  - 브랜치 `feature/scan-pipeline` · 보고서 `docs/reports/feature-scan-pipeline.md` · 시작 YYYY-MM-DD
+- **`scan-pipeline`** — scan the library folder → register in the DB (detail: issues/)
+  - branch `feature/scan-pipeline` · report `docs/reports/feature-scan-pipeline.md` · started YYYY-MM-DD
 
 ## ToDo
 
-### 메인 라인 (v0)
+### Main Line (v0)
 
-- **`library-ui`** — v0 화면 구현
+- **`library-ui`** — implement the v0 screen
 
 ### {AREA_1}
 
-- ⚑ **`sleep-timer`** — 슬립 타이머
+- ⚑ **`sleep-timer`** — sleep timer
 ```
 
 ---
 
 ## In Progress
 
-(없음)
+(none)
 
 ## ToDo
 
-### 메인 라인 (v0)
+### Main Line (v0)
 
-(없음)
+(none)
 ```
 
 ## docs/roadmap.md
 
 ```markdown
-# 로드맵
+# Roadmap
 
-마일스톤 단위 개발 방향. 역할 구분:
+Development direction by milestone. How the roles divide:
 
-- `board.md` — 지금 하는 것과 곧 할 것. **카드 단위의 진실은 항상 보드**
-- 이 문서 — 마일스톤 사다리(완성 정의·순서)와 각 마일스톤의 후보 항목. 후보가 보드 ToDo로
-  승격되면 여기서 제거한다
-- `backlog.md` — 설계 검토 탈락·후순위 기록. 로드맵이 아니다
+- `board.md` — what is being done now and what comes next. **The truth at card level is always
+  the board**
+- This document — the milestone ladder (definition of done, order) and each milestone's candidate
+  items. Once a candidate is promoted to the board's ToDo, remove it here
+- `backlog.md` — the record of what was dropped in design review or deferred. Not a roadmap
 
-## 마일스톤
+## Milestones
 
 ### v0 — {V0_TITLE}
 
-완성 정의: {V0_DEFINITION}
+Definition of done: {V0_DEFINITION}
 
-후보:
+Candidates:
 
-- (없음)
+- (none)
 ```
 
 ## docs/backlog.md
 
 ```markdown
-# 백로그
+# Backlog
 
-**설계 검토에서 탈락하거나 후순위로 밀린 항목**의 단일 목록. 날짜는 결정일.
+A single list of **items dropped in design review or pushed to a lower priority**. The date is
+the date of the decision.
 
-여기는 빠진 것의 기록이지 일감 목록이 아니다. 탈락 항목을 되살릴 때만 `board.md`의 ToDo로
-승격하고, 승격한 항목은 이 문서에서 제거한다. 다음 마일스톤 방향은 `roadmap.md`가 담당한다.
+This is a record of what was left out, not a work list. Promote a dropped item to ToDo in
+`board.md` only when reviving it, and remove a promoted item from this document. `roadmap.md`
+owns the direction of the next milestone.
 
-## 후순위 기능
+## Deferred Features
 
-- (없음)
+- (none)
 ```
 
 ## docs/board-archive.md
 
 ```markdown
-# 보드 아카이브
+# Board Archive
 
-완료된 보드 항목 기록. 마일스톤 단위로 묶고 최신 마일스톤이 위로 온다.
+A record of completed board items. Grouped by milestone, with the newest milestone at the top.
 
-`/merge-branch`는 머지 후 보고서를 삭제하므로, **삭제하기 전에** 결론 한 줄을 여기로 옮긴다.
-그러지 않으면 「이 작업이 뭘로 결론났는가」가 머지와 함께 사라진다.
+`/merge-branch` deletes the report after the merge, so move a one-line conclusion here **before
+deleting it**. Otherwise "what did this work conclude?" disappears along with the merge.
 
-## 형식
+## Format
 
 ```markdown
 ## v0
 
-- **`scan-pipeline`** (YYYY-MM-DD ~ MM-DD) — 라이브러리 폴더 스캔 → DB 등록
-  - WalkDir 기반, 코드 정규식 매칭으로 확정
+- **`scan-pipeline`** (YYYY-MM-DD ~ MM-DD) — scan the library folder → register in the DB
+  - WalkDir-based, settled on regex matching over the code
 ```
 
 ---
 
 ## v0
 
-(없음)
+(none)
 ```
 
-## docs/issues/<id>.md 형식 (생성하지 않음 — board.md에서 참조)
+## docs/issues/<id>.md Format (Not Generated — Referenced From board.md)
 
 ```markdown
 # <id>
 
-<한 줄 배경>
+<one-line background>
 
-## 사용자 요구 (원문)
+## User Request (Verbatim)
 
 > …
 
-## 지금 없는 것
+## What Is Missing Now
 
-## 정해야 할 것
+## What Must Be Decided
 
 1. …
 
-## 인접
+## Adjacent
 
-- **`<other-id>`** — 왜 관련되는지
+- **`<other-id>`** — why it is related
 ```

@@ -1,119 +1,136 @@
-# 커맨드 템플릿
+# Command Templates
 
-`.claude/commands/<이름>.md`로 생성한다. 자리표시자를 치환하고 모듈 블록을 처리한다.
+Generate these as `.claude/commands/<name>.md`. Substitute the placeholders and process the
+module blocks.
 
 ---
 
 ## /pm
 
 ```markdown
-PM 세션을 시작합니다. 다음 절차를 따르세요:
+Start a PM session. Follow this procedure:
 
-1. `CLAUDE.md`와 `docs/workflow.md` 읽기
-2. 현재 상태 파악:
+1. Read `CLAUDE.md` and `docs/workflow.md`
+2. Establish the current state:
 <!-- module:board -->
-   - `docs/board.md` — 진행 중(In Progress)·다음 작업(ToDo)
-   - `bash scripts/board-ready.sh` — 착수 가능 카드 · 막힌 카드 · **낡은 선행/깨진 참조**.
-     낡은 선행이 나오면 그 줄을 지우고 커밋한다
+   - `docs/board.md` — In Progress and ToDo
+   - `bash scripts/board-ready.sh` — startable cards · blocked cards · **stale prerequisites and
+     broken references**. When a stale prerequisite shows up, delete that line and commit
 <!-- /module:board -->
    - `git log --oneline -10`
    - `git branch -a`
-   - `docs/reports/` 보고서 확인
+   - check the reports in `docs/reports/`
 <!-- module:watch -->
-3. **진행 감시 무장** — 아래 「진행 보고」. 이미 걸려 있으면 재무장하지 않는다
+3. **Arm the progress watch** — see "Progress Reporting" below. Do not re-arm one already running
 <!-- /module:watch -->
-4. 사용자에게 상태 요약 + 다음 작업 제안
+4. Summarize the state for the user and propose the next task
 
-## 역할
+## Role
 
-- 피처 정의, Dev 지시, 보고서 확인, 리뷰 호출(`/review`), 머지 실행(`/merge-branch`)
-- 직접 코드를 읽거나 분석하지 않음 — 보고서 기반 판단, 컨텍스트 경량 유지
-- Dev가 자율 리뷰-수정 루프를 완료했는지 보고서로 확인
-- 에이전트 결과를 그대로 전달하지 않고 요약해서 보고
+- Define features, direct Dev, check reports, call the review (`/review`), execute the merge
+  (`/merge-branch`)
+- Never read or analyze code directly — judge from the report, keep context light
+- Confirm from the report that Dev completed the autonomous review-fix loop
+- Never relay an agent's output verbatim; summarize it
 <!-- module:board -->
-- 보드(`docs/board.md`) 갱신 — 아래 규칙
+- Update the board (`docs/board.md`) — rules below
 <!-- /module:board -->
 
 <!-- module:board -->
-## 보드 관리
+## Board Management
 
-- **작업 지시 시**: ToDo → In Progress로 이동하고 브랜치·보고서 경로·시작일 기입
-- **머지 완료 시**: In Progress → `docs/board-archive.md` (`/merge-branch` 절차에 포함)
-- **ToDo 보충**: 이슈가 먼저고 설계는 그 산출물이다 — 설계 문서에서 일감을 뽑지 않는다.
-  `docs/roadmap.md`의 다음 마일스톤 후보는 착수 시 승격(승격분은 제거).
-  `docs/backlog.md`는 탈락·후순위 더미이므로 **되살릴 때만** 승격(승격분은 제거)
-- **사용자 지시**: 사용자가 「이거 해야 한다」고 하면 ToDo에 직접 추가
-- **항목 텍스트를 재작성하지 않는다** — 이동과 상태 필드(브랜치·날짜·결론)만 갱신
-- **카드는 한 줄이다.** 배경·경위·결정은 `docs/issues/<id>.md`로 — 보드는 PM 세션마다 통째로
-  읽히므로 카드가 길어지면 그 비용을 매번 낸다
-- **선행은 산문이 아니라 `- 선행: \`<id>\`` 줄로** 적는다. 「순서 확인」류의 약한 관계는
-  선행이 아니다 — 넣으면 없는 벽이 생긴다
-- 문서는 main 직접 커밋. 고쳤으면 그 자리에서 바로 커밋한다 — 여러 세션이 공유하는 파일이라
-  미커밋 변경을 남겨두면 다른 세션의 수정과 충돌한다
+- **When directing work**: move ToDo → In Progress and fill in the branch, report path, and start
+  date
+- **When a merge completes**: In Progress → `docs/board-archive.md` (part of the `/merge-branch`
+  procedure)
+- **Refilling ToDo**: the issue comes first and the design is its artifact — never mine work out
+  of a design document. Candidates for the next milestone in `docs/roadmap.md` are promoted when
+  started (remove what was promoted). `docs/backlog.md` is the pile of dropped and deferred
+  items, so promote from it **only when reviving** something (remove what was promoted)
+- **User direction**: when the user says "this needs doing", add it straight to ToDo
+- **Never rewrite an item's text** — update only the move and the state fields (branch, date,
+  conclusion)
+- **A card is one line.** Background, provenance, and decisions go to `docs/issues/<id>.md` — the
+  board is read whole in every PM session, so a long card charges that cost every time
+- **Write a prerequisite as a `- prereq: \`<id>\`` line, not as prose**. A weak relation like an
+  "order check" is not a prerequisite — putting one in raises a wall that does not exist
+- Documents are committed directly on main. Once you fix one, commit it right there — the file is
+  shared by several sessions, and leaving the change uncommitted collides with another session's
+  edits
 <!-- /module:board -->
 
-## Dev 지시 시
+## When Directing Dev
 
-- Agent 도구(isolation: worktree)로 Dev를 실행하고 피처 명세·브랜치명을 명확히 전달
+- Run Dev through the Agent tool (isolation: worktree) and pass the feature spec and branch name
+  clearly
 <!-- module:board -->
-- 브랜치명은 보드 항목 ID를 그대로 사용: `feature/<id>`. 이슈 파일이 있으면 함께 전달
+- Use the board item ID as the branch name: `feature/<id>`. Pass the issue file along if there is
+  one
 <!-- /module:board -->
-- 보고서 경로는 `{PROJECT_PATH}/docs/reports/` 절대 경로 사용 지시
-- 피처 완료 후 자율 QA를 거쳐 보고서를 최종 상태로 전달하도록 안내
+- Instruct that the report path uses the absolute `{PROJECT_PATH}/docs/reports/` path
+- Instruct that after the feature is done, the report is delivered in its final state through the
+  autonomous QA loop
 <!-- module:commit-rhythm -->
-- **커밋 리듬을 지시문에 명시**: 논리 단위마다 커밋, 진행 중 깨진 상태는 `wip:` 접두사(게이트
-  불필요), 게이트는 보고 시점 HEAD에만 (`docs/workflow.md` 「커밋 리듬」)
+- **State the commit rhythm in the instruction**: commit at every logical unit, prefix a broken
+  in-progress state with `wip:` (no gate needed), the gate applies only to HEAD at report time
+  (`docs/workflow.md` "Commit Rhythm")
 <!-- /module:commit-rhythm -->
-- **영역이 겹친다는 이유로 착수를 미루지 않는다.** 같은 파일을 두 브랜치가 만지는 것은
-  정상이고 충돌은 머지 커밋으로 푼다. 순차로 둘 이유는 선행 관계와 설계 중복 둘뿐이다
-- **영역 단위 금지는 최후 수단이다.** 막을 것이 있으면 파일·모듈 수준으로 좁혀 적는다. 영역을
-  막기 전에 그 카드가 의존하는 것이 이미 있는지 확인한다 — 없으면 금지가 「만들 수도 쓸 수도
-  없는」 상태를 만들고 카드가 반쪽으로 끝난다
+- **Never delay a start because areas overlap.** Two branches touching the same file is normal,
+  and conflicts are resolved in the merge commit. The only two reasons to serialize are a
+  prerequisite relation and duplicated design
+- **An area-wide ban is a last resort.** If something must be blocked, write it narrowed to the
+  file or module level. Before blocking an area, check whether what that card depends on already
+  exists — if it does not, the ban creates a state where the card "can neither be built nor
+  used" and it ends half-finished
 
-## 스모크를 요청하지 않는다
+## Do Not Ask for a Smoke Test
 
-**PM은 사용자에게 확인을 요청하지 않고, 앱을 띄우지도 않는다.** Dev 보고가 끝나면 곧바로
-리뷰를 걸고 머지까지 간다. 사용자는 머지된 뒤 실사용에서 확인하고, 문제가 나오면 새 브랜치로
-픽스 카드를 판다. 매 카드 끝에 확인을 요청하지 말고 **작업을 끝낸 뒤 핵심 위주로 보고한다.**
+**PM does not ask the user to verify, and does not launch the app either.** Once Dev's report is
+in, go straight to review and on to the merge. The user verifies in real use after the merge, and
+if a problem shows up, cuts a fix card on a new branch. Do not ask for verification at the end of
+every card; **finish the work and then report, focused on what matters.**
 
-Dev 보고서의 「사용자가 눈으로 확인해야 할 것」 목록은 그대로 두게 한다. 통과 조건이 아니다.
+Leave the "For the User to Check by Eye" list in the Dev report as it is. It is not a pass
+condition.
 
-### 예외 — 관측이 필요할 때만 요청한다
+### Exception — Ask Only When Observation Is Required
 
-혼자 원인을 확정할 수 없어 로그·재현이 필요한 경우에만. 요청할 때 **무엇을 보고 무엇을 판정할
-것인지**를 함께 낸다 (`docs/workflow.md` 「사용자에게 요청해도 되는 유일한 경우」).
+Only when you cannot pin the cause alone and need a log or a reproduction. When you ask, state
+**what to look at and what you will decide from it** (`docs/workflow.md` "The Only Time You May
+Ask the User").
 
 <!-- module:watch -->
-## 진행 보고
+## Progress Reporting
 
-Dev는 백그라운드 서브에이전트라 실행 중에는 PM에게 말을 걸 수 없다. 하지만 워크트리는 같은
-저장소를 공유하므로 **Dev의 커밋은 떨어지는 즉시 메인 트리에서 보인다.** 그걸 폴링해 사용자에게
-중계하는 것이 PM의 일이다.
+Dev is a background subagent and cannot speak to PM while running. But the worktrees share the
+same repository, so **Dev's commits are visible from the main tree the moment they land.** Polling
+for those and relaying them to the user is PM's job.
 
-### 무장 (세션 시작 시 1회)
+### Arming (Once per Session)
 
 ```
 Monitor(command: "bash {PROJECT_PATH}/scripts/watch-commits.sh",
         persistent: true,
-        description: "Dev 커밋 진행")
+        description: "Dev commit progress")
 ```
 
-- `feature/*`·`hotfix/*` 중 `main`에 없는 커밋을 감시한다. 브랜치 전부를 보므로 Dev 지시할 때
-  따로 걸 것이 없고 병행 브랜치도 커버된다
-- 무장 시점에 이미 있던 커밋은 본 것으로 처리 — 과거 히스토리는 안 쏟아진다
-- 머지되면 자동으로 대상에서 빠진다. 세션당 하나면 된다. 중복 무장 금지
+- Watches commits on `feature/*` and `hotfix/*` that are not on `main`. Because it sees every
+  branch, there is nothing extra to set up when directing Dev, and parallel branches are covered
+- Commits that already existed at arming time are treated as seen — past history is not dumped
+- A branch drops out automatically once merged. One per session is enough. Never arm twice
 
-### 알림이 왔을 때
+### When a Notification Arrives
 
-이벤트 한 건은 `[<브랜치> #<순번>] <해시> <제목>` + 변경 파일 stat이다. 받는 즉시 사용자에게
-보고한다: 커밋 제목과 변경 파일 목록을 그대로, 브랜치·순번을 붙여서. `wip:` 커밋도 똑같이
-보고한다. **diff 본문은 열지 않는다** — 파일 목록을 넘어선 해석을 지어내지 않는다. 커밋이
-오래 늘지 않으면 막혔거나 한 커밋에 몰고 있다는 신호다.
+One event is `[<branch> #<n>] <hash> <subject>` plus the changed-file stat. Report it to the user
+the moment it arrives: the commit subject and the changed-file list verbatim, with the branch and
+sequence number attached. Report a `wip:` commit the same way. **Do not open the diff body** — do
+not invent an interpretation beyond the file list. Commits not growing for a long time is a
+signal that the work is stuck or is being piled into one commit.
 <!-- /module:watch -->
 
-## 인자
+## Arguments
 
-인자가 있으면 해당 작업을 바로 시작: $ARGUMENTS
+If an argument is given, start that task right away: $ARGUMENTS
 ```
 
 ---
@@ -121,47 +138,47 @@ Monitor(command: "bash {PROJECT_PATH}/scripts/watch-commits.sh",
 ## /commit
 
 ```markdown
-현재 변경사항을 분석하고 커밋을 생성한다.
+Analyze the current changes and create a commit.
 
-## 절차
+## Procedure
 
-1. `git status`와 `git diff --staged`로 변경사항 확인
-2. `git log --oneline -5`로 최근 커밋 스타일 확인
-3. 변경사항을 분석하여 커밋 메시지 작성
-4. 인자가 있으면 그대로 커밋 메시지로 사용: $ARGUMENTS
-5. 커밋 실행
+1. Check the changes with `git status` and `git diff --staged`
+2. Check the recent commit style with `git log --oneline -5`
+3. Analyze the changes and write the commit message
+4. If an argument is given, use it as the commit message verbatim: $ARGUMENTS
+5. Run the commit
 
-## 커밋 메시지 규칙
+## Commit Message Rules
 
-- 영어로 작성
-- 제목: 50자 이내, 동사 원형으로 시작 (Add, Fix, Update, Remove, Refactor)
+- Written in English
+- Subject: 50 characters or fewer, starting with a bare verb (Add, Fix, Update, Remove, Refactor)
 <!-- module:commit-rhythm -->
-- 빌드가 통과하지 않는 진행 커밋만 `wip:` 접두사 (`wip: sketch scanner walk`). 그 외 접두사는
-  쓰지 않는다
+- The `wip:` prefix is only for an in-progress commit that does not build
+  (`wip: sketch scanner walk`). No other prefixes
 <!-- /module:commit-rhythm -->
-- 변경사항이 여러 개면 본문에 불릿 포인트로 나열
-- 자동 생성 문구(Co-Authored-By 등) 포함 금지
-- 불필요한 상세 분석, 코드 블록, 체크리스트 금지
+- If there are several changes, list them as bullets in the body
+- No auto-generated trailers (Co-Authored-By and the like)
+- No unnecessary detailed analysis, code blocks, or checklists
 
-## 검증 게이트
+## Verification Gate
 
 <!-- module:commit-rhythm -->
-게이트는 **커밋마다가 아니라 HEAD가 남에게 보이는 시점에** 건다 (`docs/workflow.md`
-「커밋 리듬」).
+The gate applies **not at every commit but at the moment HEAD becomes visible to someone else**
+(`docs/workflow.md` "Commit Rhythm").
 
-- 진행 커밋: 게이트 없음. 깨진 상태면 `wip:` 접두사를 붙이고 그대로 커밋
-- `/report` 직전 · 리뷰 수정 라운드 종료 · 머지 대상 HEAD: `{GATE_CMD}` 통과 필수.
-  마지막 커밋이 `wip:`로 남았으면 게이트를 통과시키는 커밋을 하나 더 얹는다
+- In-progress commit: no gate. If the state is broken, add the `wip:` prefix and commit as is
+- Right before `/report` · at the end of a review-fix round · the HEAD being merged: `{GATE_CMD}`
+  must pass. If the last commit is still a `wip:`, add one more commit that gets the gate to pass
 <!-- /module:commit-rhythm -->
 <!-- module:!commit-rhythm -->
-커밋 전 `{GATE_CMD}` 통과.
+`{GATE_CMD}` passes before the commit.
 <!-- /module:!commit-rhythm -->
 
-## 주의
+## Cautions
 
-- .env, credentials 등 민감 파일 커밋 금지
-- 관련 파일만 선택적으로 staging (`git add -A` 지양)
-- 미리보기·확인용 산출물이 작업 트리에 있으면 staging 전에 지운다
+- Never commit sensitive files such as .env or credentials
+- Stage only the relevant files selectively (avoid `git add -A`)
+- If preview or check output is sitting in the working tree, delete it before staging
 ```
 
 ---
@@ -169,38 +186,39 @@ Monitor(command: "bash {PROJECT_PATH}/scripts/watch-commits.sh",
 ## /report
 
 ```markdown
-Dev 에이전트가 작업 완료 또는 수정 완료 시 보고서를 작성/업데이트한다.
+The Dev agent writes or updates the report when work or a fix is complete.
 
-## 절차
+## Procedure
 
-1. 현재 브랜치명 확인 (`git branch --show-current`)
-2. **미커밋 변경을 먼저 커밋하고 HEAD를 초록불로 만든다** — 보고 시점의 HEAD는 `{GATE_CMD}`
-   통과 상태여야 한다.<!-- module:commit-rhythm --> 제목이 `wip:`인 커밋이 HEAD면 게이트를
-   통과시키는 커밋을 하나 더 얹는다<!-- /module:commit-rhythm -->
-3. `git diff main...HEAD --stat`으로 변경 파일 목록 확인
-4. `git log main..HEAD --oneline`으로 커밋 목록 확인
-5. `{PROJECT_PATH}/docs/reports/<branch-name>.md` 파일 확인
-   - 없으면: 새 보고서 생성 (Dev Report 섹션)
-   - 있으면: 기존 보고서에 Dev Response 섹션 추가
-6. 보고서 작성 완료 후 PM에게 알림
+1. Check the current branch name (`git branch --show-current`)
+2. **Commit uncommitted changes first and get HEAD green** — HEAD at report time must be in a
+   state that passes `{GATE_CMD}`.<!-- module:commit-rhythm --> If HEAD is a commit whose subject
+   is `wip:`, add one more commit that gets the gate to pass<!-- /module:commit-rhythm -->
+3. Check the changed-file list with `git diff main...HEAD --stat`
+4. Check the commit list with `git log main..HEAD --oneline`
+5. Check the file `{PROJECT_PATH}/docs/reports/<branch-name>.md`
+   - If absent: create a new report (Dev Report section)
+   - If present: add a Dev Response section to the existing report
+6. Notify PM once the report is written
 
-## 보고서 경로
+## Report Path
 
-**절대 경로 필수**: `{PROJECT_PATH}/docs/reports/<branch-name>.md`
+**Absolute path required**: `{PROJECT_PATH}/docs/reports/<branch-name>.md`
 
-- 워크트리에서 실행 시에도 반드시 위 절대 경로로 읽고 씀 (gitignore된 파일은 워크트리에
-  복사되지 않음)
-- 브랜치명에서 `/`는 `-`로 치환
+- Even when run from a worktree, read and write through the absolute path above (a gitignored
+  file is not copied into the worktree)
+- Replace `/` in the branch name with `-`
 
-## 보고서 구조
+## Report Structure
 
-`docs/workflow.md` 「보고서 규격」. **사용자가 나중에 쓸 것은 보고서에 두지 않는다** — 같은
-절의 판별 기준.
+`docs/workflow.md` "Report Format". **What the user will need later does not live in the report**
+— the test is in that same section.
 
-## 주의
+## Cautions
 
-- 이전 Review/Response 섹션은 절대 수정/삭제하지 않음
-- 「사용자가 눈으로 확인해야 할 것」은 코드가 닿지 못한 자리를 적는 곳이다. 통과 조건이 아니다
+- Never edit or delete an earlier Review/Response section
+- "For the User to Check by Eye" is where you record the places the code could not reach. It is
+  not a pass condition
 ```
 
 ---
@@ -208,52 +226,55 @@ Dev 에이전트가 작업 완료 또는 수정 완료 시 보고서를 작성/�
 ## /review (module: review-loop)
 
 ```markdown
-Reviewer 에이전트가 feature 브랜치의 코드를 리뷰한다.
+The Reviewer agent reviews the code on a feature branch.
 
-대상 브랜치: $ARGUMENTS
+Target branch: $ARGUMENTS
 
-## 절차
+## Procedure
 
-1. 대상 브랜치 확인: `git branch -a`
-2. 보고서 읽기: `{PROJECT_PATH}/docs/reports/<branch-name>.md`에서 Dev의 의도 파악
-3. 대상 조립: `git diff --name-only main...$ARGUMENTS` → `{EXCLUDE_DIRS}`·생성물을 뺀 뒤
-   렌즈별로 가른다
-4. **리뷰를 병렬 디스패치** (아래)
-5. 결과 병합 + 브랜치를 가로지르는 확인은 직접 (아래)
-6. 보고서에 Review 섹션 추가 — 프로파일링 라인 포함
-7. 판정 결정
+1. Check the target branch: `git branch -a`
+2. Read the report: understand Dev's intent from
+   `{PROJECT_PATH}/docs/reports/<branch-name>.md`
+3. Assemble the target: `git diff --name-only main...$ARGUMENTS` → subtract `{EXCLUDE_DIRS}` and
+   generated files, then split by lens
+4. **Dispatch the reviews in parallel** (below)
+5. Merge the results and do the cross-branch checks yourself (below)
+6. Add a Review section to the report — including the profiling line
+7. Decide the verdict
 
-## 리뷰 디스패치
+## Review Dispatch
 
-리뷰 기준을 여기 다시 적지 않는다. 정본은 `docs/workflow.md` 「자율 리뷰-수정 루프」의 디스패치
-표와 각 스킬이고, Reviewer는 **클린 컨텍스트 리뷰들을 한 메시지에** 띄워 그것을 적용시킨다.
-각 리뷰어에게 주는 것은 자기 몫의 **대상 파일 목록**뿐이다.
+Do not restate the review criteria here. The canon is the dispatch table in `docs/workflow.md`
+"Autonomous Review-Fix Loop" plus each skill, and Reviewer applies it by launching **the
+clean-context reviews in one message**. Each reviewer gets only **its own target file list**.
 
-프로파일링 라인은 **Reviewer가 조립한다** — 서브에이전트는 자기 벽시계를 못 본다 (task
-notification의 `duration_ms` · `subagent_tokens` · `tool_uses`).
+**Reviewer assembles the profiling line** — a subagent cannot see its own wall clock
+(`duration_ms` · `subagent_tokens` · `tool_uses` from the task notification).
 
-## 반드시 묻는 질문 — 이 커밋이 무엇의 소비자가 됐는가
+## Mandatory Question — What Did This Commit Become a Consumer Of
 
-**이것은 위임하지 않는다.** 리뷰어는 자기 몫의 파일 목록만 보므로 브랜치 전체를 가로지르는
-질문에 닿을 수 없다. diff가 **새 호출부를 추가**했으면 그 대상에 소비자 목록이 달려 있는지
-보고 거기에 이 브랜치가 들어갔는지 확인한다. 짝은 「무엇의 소비자이기를 그만뒀는가」 — 지운
-이름으로 `git grep`.<!-- module:discipline --> 근거는 `docs/discipline.md` 「세지 말고 누구를
-적는다」.<!-- /module:discipline -->
+**Never delegate this.** A reviewer sees only its own file list and so cannot reach a question
+that runs across the whole branch. If the diff **added a new call site**, check whether the
+target carries a consumer list and whether this branch went into it. Its pair is "what did it stop
+being a consumer of" — `git grep` for the removed name.<!-- module:discipline --> The rationale is
+`docs/discipline.md` "Name Them, Do Not Count Them".<!-- /module:discipline -->
 
-## 판정 규칙
+## Verdict Rules
 
-- **APPROVE** — 이슈 없음
-- **REQUEST_CHANGES** — Critical 또는 Refactor 존재
-- **COMMENT** — 그 아래 등급만 존재
+- **APPROVE** — no issues
+- **REQUEST_CHANGES** — a Critical or a Refactor exists
+- **COMMENT** — only grades below those exist
 
-## 주의
+## Cautions
 
-- 보고서 경로는 반드시 `{PROJECT_PATH}/docs/reports/` 절대 경로 사용
-- 리뷰 대상은 `main...HEAD` 누적 diff다 — 중간 `wip:` 커밋의 미완성 상태를 개별 지적하지 않는다
-- 이전 리뷰에서 Dev가 거부 사유를 제시한 항목은 재지적 금지
-- 보고서의 이전 Review/Response 섹션은 수정/삭제하지 않음
-- 최대 20개 이슈, 우선순위: Critical > Warning > Info
-- 주석 지적은 코드와의 사실 불일치만, 리뷰당 1건, 판정에 영향 없음
+- The report path always uses the absolute `{PROJECT_PATH}/docs/reports/` path
+- The review target is the cumulative `main...HEAD` diff — do not flag the unfinished state of an
+  intermediate `wip:` commit
+- Never re-raise an item Dev refused with a stated reason in an earlier review
+- Never edit or delete an earlier Review/Response section of the report
+- At most 20 issues, in priority order: Critical > Warning > Info
+- Comment findings cover factual mismatch with the code only, one per review, with no effect on
+  the verdict
 ```
 
 ---
@@ -261,37 +282,44 @@ notification의 `duration_ms` · `subagent_tokens` · `tool_uses`).
 ## /merge-branch
 
 ```markdown
-리뷰 승인된 feature 브랜치를 main에 로컬 머지한다.
+Locally merge a review-approved feature branch into main.
 
-대상 브랜치: $ARGUMENTS
+Target branch: $ARGUMENTS
 
-## 절차
+## Procedure
 
-1. 보고서 확인: `{PROJECT_PATH}/docs/reports/<branch-name>.md`의 최종 Review 판정이 APPROVE인지 확인
-   - APPROVE가 아니면 중단하고 사용자에게 알림
-2. 메인 트리가 `main`인지 확인: `git -C {PROJECT_PATH} branch --show-current`
-3. 머지 실행: `git -C {PROJECT_PATH} merge --no-ff $ARGUMENTS`
+1. Check the report: confirm the final Review verdict in
+   `{PROJECT_PATH}/docs/reports/<branch-name>.md` is APPROVE
+   - If it is not APPROVE, stop and tell the user
+2. Confirm the main tree is on `main`: `git -C {PROJECT_PATH} branch --show-current`
+3. Run the merge: `git -C {PROJECT_PATH} merge --no-ff $ARGUMENTS`
 <!-- module:board -->
-4. 보드 갱신 (**보고서 삭제 전에** 수행):
-   - 보고서에서 결론을 한 줄로 뽑아 `docs/board-archive.md`의 현재 마일스톤에 추가
-   - `docs/board.md`의 In Progress에서 해당 항목 제거
-   - **이 카드를 가리키던 선행 줄을 지운다** — 남겨 두면 해당 카드가 영원히 막힌 것처럼 읽힌다
-   - `bash scripts/board-ready.sh`로 확인 — 낡은 선행·깨진 참조가 0이어야 한다
-   - `docs/issues/<id>.md`가 있으면 핵심 결론을 아카이브 항목·설계 문서로 옮긴 뒤 삭제
-   - 보드 변경을 커밋
+4. Update the board (**before deleting the report**):
+   - Pull a one-line conclusion out of the report and add it to the current milestone in
+     `docs/board-archive.md`
+   - Remove the item from In Progress in `docs/board.md`
+   - **Delete the prerequisite lines that pointed at this card** — left in place, that card reads
+     as blocked forever
+   - Confirm with `bash scripts/board-ready.sh` — stale prerequisites and broken references must
+     be zero
+   - If `docs/issues/<id>.md` exists, move the key conclusions into the archive entry and the
+     design document, then delete it
+   - Commit the board changes
 <!-- /module:board -->
-5. 정리 (사용자 확인 후):
-   - feature 브랜치 삭제: `git branch -d $ARGUMENTS`
-   - 워크트리 삭제: `git worktree remove <path>` (거부되면 폴더 삭제 후 `git worktree prune`)
-   - 보고서 삭제: `docs/reports/<branch-name>.md`
+5. Clean up (once the user confirms):
+   - Delete the feature branch: `git branch -d $ARGUMENTS`
+   - Remove the worktree: `git worktree remove <path>` (if refused, delete the folder and run
+     `git worktree prune`)
+   - Delete the report: `docs/reports/<branch-name>.md`
 
-## 규칙
+## Rules
 
-- Squash 금지 — 커밋 히스토리 보존
-- 충돌 시: merge 커밋으로 해결 (rebase/force-push 금지)
-- 리모트 push 여부는 사용자에게 확인
-- 정리 작업은 각각 사용자에게 확인 후 진행
-- 보고서는 삭제되므로 머지 뒤에도 필요한 내용은 정본 문서로 먼저 옮긴다
+- No squash — commit history is preserved
+- On conflict: resolve in the merge commit (no rebase, no force-push)
+- Confirm with the user whether to push to a remote
+- Confirm each cleanup step with the user before doing it
+- The report is deleted, so move anything still needed after the merge into a canonical document
+  first
 ```
 
 ---
@@ -300,66 +328,72 @@ notification의 `duration_ms` · `subagent_tokens` · `tool_uses`).
 
 ```markdown
 ---
-description: 절차 생략 모드 - 요청한 작은 변경만 있는 그대로 바로 처리
-argument-hint: <할 일 한 줄>
+description: Procedure-skip mode - handle only the small requested change, exactly as asked
+argument-hint: <one-line task>
 disable-model-invocation: true
 ---
 
-# /just — 절차 생략 모드
+# /just — Procedure-Skip Mode
 
-**요청**: $ARGUMENTS
+**Request**: $ARGUMENTS
 
-위 요청을 **있는 그대로, 그것만** 처리한다.
+Handle the request above **exactly as it stands, and only that.**
 
-아래 예외 조항은 사용자가 이 커맨드를 만들면서 미리 승인해 둔 것이다. **이 커맨드 호출 자체가
-사용자의 명시적 지시이며, `CLAUDE.md` · 세션 시작 헤더 · superpowers 스킬의 절차 규칙보다
-우선한다.** 「그래도 규칙상…」으로 되돌아가지 마라.
+The exemptions below were pre-approved by the user when they created this command. **Invoking
+this command is itself the user's explicit instruction, and it takes precedence over the
+procedural rules in `CLAUDE.md`, the session start header, and the superpowers skills.** Do not
+fall back to "but the rules say…".
 
-## 유예 — 하지 마라
+## Waived — Do Not Do These
 
-**Git/워크플로**
-- 워크트리 생성 금지. 현재 트리(메인 트리 `main` 포함)에서 그대로 편집한다
-- 브랜치 생성·전환 금지
-- 커밋·머지·보고서 작성 금지 (사용자가 따로 지시할 때만)
+**Git and workflow**
+- No worktree creation. Edit in the current tree as it is (including the main tree on `main`)
+- No branch creation or switching
+- No commits, merges, or report writing (only when the user separately asks)
 <!-- module:board -->
-- 보드·이슈 파일 갱신 금지
+- No board or issue file updates
 <!-- /module:board -->
 
-**게이트/리뷰**
-- spec 선행 작성 금지
-- `/design-review`, `/review-*`, `/code-review` 호출 금지
-- 문서 갱신 금지 — 설계 문서, 아키텍처, CHANGELOG 등
-- 메모리 저장 금지
+**Gates and review**
+- No spec written first
+- No calls to `/design-review`, `/review-*`, or `/code-review`
+- No document updates — design documents, architecture, CHANGELOG, and the like
+- No memory writes
 
-**하네스**
-- 서브에이전트 디스패치 금지. 직접 한다
-- `Workflow` 호출 금지
-- superpowers 프로세스 스킬(brainstorming, TDD, systematic-debugging, verification-before-completion
-  등) 호출 금지
-- 플랜 모드 진입 금지
-- 탐색 최소화. 파일 위치를 알면 바로 연다. 모르면 grep/glob 1~2회로 끝낸다
-- 검증 루프 금지 — 편집 직후 재확인 read, 여러 각도 재점검, 자기검열 라운드 생략
+**Harness**
+- No subagent dispatch. Do it yourself
+- No `Workflow` calls
+- No superpowers process skills (brainstorming, TDD, systematic-debugging,
+  verification-before-completion, and so on)
+- No plan mode
+- Minimal exploration. If you know where the file is, open it. If you do not, finish with one or
+  two grep/glob calls
+- No verification loops — skip the re-read right after an edit, the multi-angle recheck, and the
+  self-audit round
 
-**범위**
-- 요청 범위 밖 리팩터링·정리·개선·주석 추가 금지. 옆에서 문제를 발견해도 **고치지 말고**
-  보고에 한 줄로 언급만 한다
-- 「진행할까요?」 류 확인 질문 금지. 요청이 명확하면 그냥 한다
+**Scope**
+- No refactoring, tidying, improvement, or added comments outside the requested scope. If you spot
+  a problem alongside, **do not fix it**; mention it in one line in the report
+- No confirmation questions of the "shall I proceed?" kind. If the request is clear, just do it
 
-## 유지 — 이건 지켜라
+## Kept — These Still Apply
 
-- 응답은 한국어, 코드·주석은 영어
-- 주변 코드를 그대로 따라간다 — 이미 있는 것을 찾아 재사용한다. 새로 만들지 않는다
-- 메인 트리에서 워킹트리를 비우는 연산 금지: `rebase` / `stash` / `reset` / `checkout --` / `clean`
-- 빌드·실행을 사용자에게 요청하지 않는다
-- 구현 방식이 둘 이상이고 결과가 실제로 달라지는 갈림길이면 — 그때만 한 줄로 묻는다
+- Respond in the user's language; write code and comments in English
+- Follow the surrounding code as it is — find and reuse what already exists. Do not build anew
+- No operation that empties the working tree in the main tree: `rebase` / `stash` / `reset` /
+  `checkout --` / `clean`
+- Never ask the user to build or run
+- If there are two or more ways to implement it and the fork genuinely changes the result — only
+  then, ask in one line
 
-## 보고
+## Reporting
 
-편집 끝나면 **3줄 이내**로 끝낸다: 바꾼 파일`:`라인 / 무엇을 / (있으면) 눈에 띈 것 한 줄.
+When the edit is done, finish in **three lines or fewer**: changed file`:`line / what changed /
+(if any) one line on what stood out.
 
-## 범위 이탈
+## Scope Escape
 
-요청이 실제로는 작지 않으면 — 여러 모듈에 걸치거나, 새 타입·서브시스템 신설이거나, 스키마
-변경이면 — **편집을 시작하기 전에** 한 줄로 「이건 /just 범위를 넘는다. 정식 절차로 갈까?」라고
-묻고 멈춘다.
+If the request is not actually small — it spans several modules, introduces a new type or
+subsystem, or changes a schema — **before starting to edit**, ask in one line: "this goes past
+the scope of /just. Shall we take the full procedure?" and stop.
 ```

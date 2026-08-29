@@ -25,7 +25,7 @@
     ".claude/commands/*.md",
     "*/.claude/commands/*.md"
    ],
-   "message": "Instruction document: rules + symptoms only, no dated cases, no counts, one rule in one place, section titles not numbers. See docs/workflow.md (Authoring policy section) before editing."
+   "message": "Instruction document: rules + symptoms only, no dated cases, no counts, one rule in one place, section titles not numbers. See docs/workflow.md (Instruction Authoring Policy section) before editing."
   },
   {
    "id": "hook-config",
@@ -51,7 +51,7 @@
    "id": "board",
    "patterns": ["board.md", "board-archive.md"],
    "scopePath": ["docs/"],
-   "message": "Board: one-line cards, prerequisites as a '- 선행: `<id>`' line only, commit right after editing. Run bash scripts/board-ready.sh -- stale or broken edges must be zero."
+   "message": "Board: one-line cards, prerequisites as a '- prereq: `<id>`' line only, commit right after editing. Run bash scripts/board-ready.sh -- stale or broken edges must be zero."
   }
  ]
 }
