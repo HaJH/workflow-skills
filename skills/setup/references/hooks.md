@@ -58,7 +58,7 @@ Default rules in `file-pattern-map.json`:
 | id | Target | requires | Kept when |
 |---|---|---|---|
 | `source` | `{SOURCE_GLOB_LIST}` in `{SOURCE_DIRS}` | reads: `CLAUDE.md` (+ `docs/discipline.md`) | always. Without the `discipline` module, drop that path |
-| `instructions` | `CLAUDE.md`, `docs/workflow.md`, `docs/discipline.md`, the two header files, `.claude/skills/*`, `.claude/agents/*`, `.claude/commands/*` | none (message only) | always |
+| `instructions` | `CLAUDE.md`, `docs/workflow.md`, `docs/discipline.md`, the two header files, `.claude/skills/*`, `.claude/agents/*`, `.claude/commands/*` | none (message only) | always. Without the `doc-review` module, drop the `/doc-review` sentence from the message |
 | `hook-config` | `.claude/hooks/*.ps1` · `*.sh` · `*.py` · `file-pattern-map.json` | reads: `.claude/hooks/README.md` | always |
 | `specs` | `docs/specs/*.md` | none (message: `/design-review`) | `design-review` module |
 | `board` | `docs/board.md`, `docs/board-archive.md` | none (message: prereq lines, `board-ready.sh`) | `board` module |

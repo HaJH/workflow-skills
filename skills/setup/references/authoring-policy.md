@@ -170,6 +170,10 @@ write it at its place in the placement table and report where you put it.
 3. Write — directive + symptom.
 4. If an edit-time reminder is needed, add a file-pattern-map rule → verify.
 5. If there is a history of repeated violation, add one line to session-start-header.
+<!-- module:doc-review -->
+6. Once the section is written, run `/doc-review <path> section "<title>"` before committing. A
+   full run when the document is new or its frontmatter changed.
+<!-- /module:doc-review -->
 
 ## Companion Updates on Change or Deletion
 

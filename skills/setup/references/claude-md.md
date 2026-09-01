@@ -123,6 +123,16 @@ round's verdict. **Overriding a Blocker is the user's decision**, and an accepte
 recorded in the spec as an "Accepted Cost" → `docs/design-principles.md`
 <!-- /module:design-review -->
 
+<!-- module:doc-review -->
+## Instruction Document Review
+
+After rewriting a section of an instruction document (`CLAUDE.md`, anything under `docs/`, a skill
+or agent definition), run `/doc-review <path> section "<title>"` before committing. A full
+`/doc-review <path>` when the document was added or its frontmatter changed. **The review's
+deliverable stops at the defect list** — what gets fixed is your call
+→ `docs/authoring-policy.md`
+<!-- /module:doc-review -->
+
 <!-- module:discipline -->
 ## Development Discipline
 

@@ -53,4 +53,8 @@ leaves this list stale and still being injected._ Demote an item once the violat
 - **Design principles and design review** → `docs/design-principles.md` ·
   `.claude/skills/design-review/SKILL.md`
 <!-- /module:design-review -->
+<!-- module:doc-review -->
+- **Instruction authoring policy and document review** → `docs/authoring-policy.md` ·
+  `.claude/skills/doc-review/SKILL.md`
+<!-- /module:doc-review -->
 - **Adding and verifying hook rules** → `.claude/hooks/README.md`

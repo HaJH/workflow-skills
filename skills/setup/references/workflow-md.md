@@ -413,6 +413,9 @@ to back.
 
 - `{DISPATCH_TABLE}`: taken from "Dispatch Table" in `review-loop.md`, per the review mode.
 - `{AUTHORING_POLICY}`: move in the corresponding sections of `authoring-policy.md` verbatim.
+  **With the `doc-review` module on**, the policy is generated as `docs/authoring-policy.md`
+  instead and this placeholder becomes one pointer line — `→ docs/authoring-policy.md` — so the
+  coherence reviewer can be handed the policy by path.
 - `{RUN_NOTES}`: project-specific run information such as the dev server port, output locations,
   or the debug data root. Delete the line if there is none.
 - `<!-- module:!X -->` is a block kept **only when X was not selected**.

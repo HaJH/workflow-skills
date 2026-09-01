@@ -26,6 +26,7 @@ was not, delete the whole block. The marker lines themselves are always deleted)
 | `hooks` | Hooks (session injection + file-pattern gate + turn-end gate) | on | `.claude/settings.json` · `.claude/hooks/*` (`hooks.md`). The turn-end gate needs `python` on PATH | — |
 | `discipline` | Development discipline document | on | `docs/discipline.md` (`discipline-md.md`) | — |
 | `design-review` | Design review gate | off | `.claude/skills/design-review/*` · 3 agents · `docs/design-principles.md` · `docs/specs/` (`design-review.md`) | — |
+| `doc-review` | Instruction document review | off | `.claude/skills/doc-review/*` · 3 agents · `docs/authoring-policy.md` · `docs/reports/doc-review/` (`doc-review.md`) | — |
 
 If a dependency module is off while a module that depends on it is on, announce that the
 dependency is being turned on as well, and turn it on.

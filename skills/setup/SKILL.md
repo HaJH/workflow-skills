@@ -1,6 +1,6 @@
 ---
 name: setup
-description: "Use when initializing a new local project (no CI, no remote MR) with the PM-Dev-Reviewer workflow - CLAUDE.md, docs/workflow.md, commands, and selectable modules (autonomous review loop, commit rhythm, board, progress watch, /just, gate script, hooks, discipline doc, design-review gate). Also use to re-apply or update the workflow in an existing project. Not for GitLab/GitHub MR-based CI workflows."
+description: "Use when initializing a new local project (no CI, no remote MR) with the PM-Dev-Reviewer workflow - CLAUDE.md, docs/workflow.md, commands, and selectable modules (autonomous review loop, commit rhythm, board, progress watch, /just, gate script, hooks, discipline doc, design-review gate, instruction doc review). Also use to re-apply or update the workflow in an existing project. Not for GitLab/GitHub MR-based CI workflows."
 ---
 
 # Setup Project Workflow
@@ -35,8 +35,9 @@ When re-applying to an existing project, read the current `CLAUDE.md`, `docs/wor
 ### 2. Select modules
 
 Present the table in `references/modules.md` through AskUserQuestion (multiSelect). For modules
-on by default, ask what to turn off; for `design-review`, ask whether to turn it on. Turn
-dependency modules on together with their dependents.
+on by default, ask what to turn off; for the two that default to off — `design-review` and
+`doc-review` — ask whether to turn them on. Turn dependency modules on together with their
+dependents.
 
 If `review-loop` was selected, ask for the review mode: `mixed` (default) / `official` /
 `custom`. Then settle the round budget (default 3) and the `/code-review` effort (default
@@ -66,6 +67,7 @@ was not. Always delete the marker lines themselves).
 | [gate-script] `scripts/check.ps1` | `references/scripts/check.ps1` (keep only the language block) |
 | [hooks] `.claude/settings.json` · `.claude/hooks/*` | `references/hooks.md` · `references/scripts/` |
 | [design-review] skill · 3 agents · design principles · `docs/specs/` | `references/design-review.md` · `references/design-review/` |
+| [doc-review] skill · 3 agents · `docs/authoring-policy.md` · `docs/reports/doc-review/` | `references/doc-review.md` · `references/doc-review/` |
 
 Every generated document follows the voice in `references/authoring-policy.md` — even when
 writing project-specific sections, no anecdotes, dates, or counted values.
@@ -116,6 +118,6 @@ git commit -m "Add project workflow setup"
 | `references/claude-md.md` · `workflow-md.md` · `discipline-md.md` | Document templates |
 | `references/commands.md` | The 6 commands |
 | `references/review-loop.md` | 3 review modes · dispatch table · skill and agent skeletons |
-| `references/board.md` · `hooks.md` · `design-review.md` | Module detail |
+| `references/board.md` · `hooks.md` · `design-review.md` · `doc-review.md` | Module detail |
 | `references/scripts/` | Scripts, hooks, and settings to copy |
 | `references/review-rules-*.md` | Per-language review lenses (`custom` only) |

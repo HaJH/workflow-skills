@@ -26,7 +26,7 @@
     ".claude/commands/*.md",
     "*/.claude/commands/*.md"
    ],
-   "message": "Instruction document: rules + symptoms only, no dated cases, no counts, one rule in one place, section titles not numbers. See docs/workflow.md (Instruction Authoring Policy section) before editing."
+   "message": "Instruction document: rules + symptoms only, no dated cases, no counts, one rule in one place, section titles not numbers. See docs/workflow.md (Instruction Authoring Policy section) before editing. Once a section is rewritten, run /doc-review <path> section \"<title>\" before committing."
   },
   {
    "id": "hook-config",
