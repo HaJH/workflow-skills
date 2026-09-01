@@ -45,7 +45,7 @@
    "id": "specs",
    "patterns": ["*.md"],
    "scopePath": ["docs/specs/"],
-   "message": "Spec: if it contains code-structure design (types, modules, interfaces, dependencies), run /design-review before committing. Blockers are the user's call; accepted violations go in the spec's intentional-exceptions table."
+   "message": "Spec: if it contains code-structure design (types, modules, interfaces, dependencies), run /design-review before starting implementation. The gate blocks implementation, not the commit -- commit each round and let the head Status line carry its verdict. Blockers are the user's call; accepted decisions go in the spec's Accepted Costs table."
   },
   {
    "id": "board",

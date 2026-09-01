@@ -19,6 +19,9 @@ the source of truth is each instruction document._ Demote an item once the viola
   Verification Happens After Merge"
 - **🚫 Never re-measure a fact established in this session** → `docs/workflow.md` "Facts
   Established in This Session"
+- **Batch the edits to one file into one response** — decide every place to fix first, then issue
+  the non-overlapping `Edit` calls together → `docs/workflow.md` "Batch the Edits to One File into
+  One Response"
 - **🚫 No anecdotes, dates, or counted values in instructions and documents** →
   `docs/workflow.md` "Instruction Authoring Policy"
 <!-- module:commit-rhythm -->

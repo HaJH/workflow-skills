@@ -1,6 +1,6 @@
 ---
 name: design-review
-description: "Use when a spec contains code-structure design (new/changed types, modules, interfaces, dependencies) and is not yet committed, or when a design decision is about to shape code structure - before any implementation. Not for specs without code design content, and not for code that already exists (use /refactor-review). Invoke with /design-review [spec-path]."
+description: "Use when a spec contains code-structure design (new/changed types, modules, interfaces, dependencies) and implementation has not started, or when a design decision is about to shape code structure - before any implementation. Not for specs without code design content, and not for code that already exists (use /refactor-review). Invoke with /design-review [spec-path]."
 ---
 
 # Design Review
@@ -113,7 +113,7 @@ Review Log.
 
 ### Handle the result
 
-- **PASS** — proceed to spec commit / implementation
+- **PASS** — proceed to implementation
 - **INCOMPLETE** — not a pass. Report the unsettled claims; ask the user whether to dispatch a
   follow-up scoped to just those or accept the gap
 - **Notes** — fold into the spec at your discretion, no user gate
@@ -121,10 +121,11 @@ Review Log.
   carrying the alternatives and the option to keep the original. **Translate out of review
   vocabulary**: the modal names the decision and what is at stake, never a round code, a judge's
   phrasing, or a section number without the content it points at. The reader has not read the spec
-  and did not see the rounds. **The agent cannot dismiss a Blocker.** Committing or implementing
-  before the user decides is a workflow violation
+  and did not see the rounds. **The agent cannot dismiss a Blocker.** Implementing before the user
+  decides is a workflow violation. Commit the round anyway, and put the standing Blocker into the
+  `Status` line at the head of the spec
 - **Blocker accepted as-is** — record it in the spec's Accepted Costs table (decision, what
-  degrades, why it is accepted, approval) **before** committing
+  degrades, why it is accepted, approval) in the same commit as the revision
 
 ### Re-review rounds
 
@@ -147,11 +148,32 @@ correction that changed no structure.
 weight fails to fall below the last, or its findings cut as deep, stop dispatching and put the
 non-convergence to the user as a finding in its own right.
 
-### Record
+### Record and commit
 
 Append a Design Review Log entry to the spec: per round, its date, weight, verdict, how each Blocker
 was resolved, and **the round's Profiling numbers — total wall clock, total tokens, and the Scale
-line**. One line per round. Then delete the ledger.
+line**. One line per round.
+
+**Commit the round before the next one starts** — the revision, its Design Review Log entry, and
+any Accepted Costs row in one commit, straight to `main` (a spec carries no code, so no worktree).
+The gate holds implementation, never the commit.
+
+The head `Status` line carries that round's verdict, so whoever opens the committed spec next
+reads what may be acted on:
+
+| Verdict | Status line |
+|---|---|
+| not reviewed yet | `Design review pending` |
+| Blocker outstanding | `Design review R<n> — <n> Blocker(s) outstanding, implementation blocked` |
+| PASS | `Design review complete (R1–R<n>) — implementation may start` |
+
+The profiling row is why this skill pins no baseline of its own. A number written into this
+document is one measurement frozen at one moment; a column of rounds across several specs is a
+trend you can read a regression off. Keep it to one line per round — the full per-stage table
+belongs in the report, not the record.
+
+Then delete the ledger. It bridges rounds; past that it is stale-in-waiting, and a stale ledger is
+worse than none.
 
 ## Fact Ledger
 
@@ -212,3 +234,4 @@ verdict is PASS.
 | Writing TRUE claims as full prose ledger rows | Budget spent on text no later round reads |
 | Leaving the ledger in place after the review closes | A future review reads it as current |
 | Running another round on a design that is not converging | Rounds cannot fix a spec that is too large or too unsettled |
+| Holding the spec uncommitted until the review passes | The gate blocks implementation, not the commit. Rounds pile up unpublished, and whichever session commits next publishes an intermediate draft under a `Status` line that has outrun it |

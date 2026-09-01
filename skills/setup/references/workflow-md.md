@@ -317,11 +317,17 @@ write a spec in `docs/specs/YYYY-MM-DD-<topic>.md` before implementing. Trivial 
 bugfixes are exempt.
 
 If the spec contains **code structure design** (new or changed types, modules, interfaces,
-dependencies), run `/design-review` before committing — a clean-context pipeline inspects it
-against `docs/design-principles.md` plus general design principles. The same applies to a
-structural design decision made without a spec. **Overriding a Blocker is the user's decision —
-an agent must never pass one on its own. An accepted decision must be recorded in the spec as an
-"Accepted Cost".**
+dependencies), run `/design-review` **before starting implementation** — a clean-context pipeline
+inspects it against `docs/design-principles.md` plus general design principles. The same applies
+to a structural design decision made without a spec. **Overriding a Blocker is the user's
+decision — an agent must never pass one on its own. An accepted decision must be recorded in the
+spec as an "Accepted Cost".**
+
+**The gate blocks implementation, not the commit.** Commit the spec on `main` after every review
+round, and let the `Status` line at the head of the document carry that round's verdict — whoever
+opens the committed spec next then reads what may be acted on. Symptom: rounds pile up uncommitted
+until the review passes, and `main` is left holding an outdated intermediate draft that still says
+implementation may start.
 
 ### Writing a Spec
 
@@ -367,6 +373,40 @@ decisions the user answered, the conclusions reached in earlier turns.
 know the target moved (you edited it afterwards / a notification said it changed) · external
 state (things that change over time, such as a build or another session's commits) · the original
 text is gone to a context summary and you need the exact value.
+
+## Session Length — When to Suggest a Handoff
+
+Context accumulates every turn and is re-read whole every turn. The cost of a session grows with
+the square of its length, so cutting late costs more.
+
+**Signals to suggest a handoff at the next natural boundary** — any one of them is enough.
+
+- Two or more design review rounds have run.
+- Two or more commits have piled up in this session.
+- A context-remaining warning has appeared.
+
+**Natural boundary** — the end of a review round, right after a commit, the moment a spec section
+is closed. Those are the places with the least to re-read on the way back in. A signal is not a
+reason to cut in the middle of the work.
+
+**Never judge by the phase alone.** Finishing a spec draft is not itself a reason to hand off —
+work that converges in one more round is cheaper carried straight through.
+
+**Keep the handoff note light.** Work location (path, branch), current state, next thing to do.
+Never copy file contents into it — the new session reads what it needs for itself. A heavy handoff
+starts the new session on that much base context and the split earns nothing.
+
+**Cutting is the user's call** — only suggest, and never act as though the session ended without
+the user's answer.
+
+Symptom: one session carries a spec draft, several review rounds, the implementation, and the
+merge all together. A handoff note has the body of a spec pasted into it.
+
+## Batch the Edits to One File into One Response
+
+Decide every place to fix first, then issue the non-overlapping `Edit` calls together. Split them
+only when re-fixing a sentence you just wrote. Symptom — `Edit` calls to the same file go out back
+to back.
 ```
 
 ## Substitution Notes

@@ -19,6 +19,12 @@ module blocks. Do not duplicate rules the user's global `~/.claude/CLAUDE.md` al
 - **Never re-measure a fact established in this session** — files read, command output, and user
   answers from this session are used as they are
   → `docs/workflow.md` "Facts Established in This Session"
+- **Batch the edits to one file into one response** — decide every place to fix first, then issue
+  the non-overlapping `Edit` calls together. Symptom: `Edit` calls to the same file go out back to
+  back
+- **Suggest a handoff once the session gets long** — at the next natural boundary, hand the work
+  to a new session with a light note. Cutting is the user's call; suggest, and never act as though
+  the session ended without an answer → `docs/workflow.md` "Session Length"
 
 ## Git
 
@@ -32,7 +38,8 @@ module blocks. Do not duplicate rules the user's global `~/.claude/CLAUDE.md` al
   sharing that working tree onto that branch
 - **Documentation work with no code change is committed directly on main** (all of `docs/`,
   `*.md`). Documents that change together with code ride that code's branch
-- No `cd` pattern → use `git -C`
+- **Pass the path as an option** — `git -C` and the like. Then a call that moves between worktrees
+  needs no tracking of the working directory. This is the default, not a prohibition
 - Detailed procedure: `docs/workflow.md`
 
 <!-- module:board -->
@@ -110,8 +117,10 @@ decision. The `/review-*` skills are **for targeted ad-hoc checks only** (argume
 
 For a change of size (structural change, new subsystem, interface change), write a spec in
 `docs/specs/` before implementing, and if the spec contains code structure design, run
-`/design-review` before committing. **Overriding a Blocker is the user's decision**, and an
-accepted decision is recorded in the spec as an "Accepted Cost" → `docs/design-principles.md`
+`/design-review` before starting implementation. **The gate blocks implementation, not the
+commit** — commit the spec after every round, and the `Status` line at its head carries that
+round's verdict. **Overriding a Blocker is the user's decision**, and an accepted decision is
+recorded in the spec as an "Accepted Cost" → `docs/design-principles.md`
 <!-- /module:design-review -->
 
 <!-- module:discipline -->

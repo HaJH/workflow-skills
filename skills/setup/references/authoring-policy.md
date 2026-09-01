@@ -46,6 +46,21 @@ go wrong on a single change. Updating them is not the fix.
 Symptom: the count in the document differs from reality. "Both", "the only", "all of them" have
 become false.
 
+## Folding an In-Work Discovery into the Instructions
+
+Writing it down the moment you find it drags the circumstances of that moment in with it, and a
+later round trip has to strip them back out.
+
+- **Write it once the work is finished.** Hold the discovery as a note and move it at tidy-up time.
+- Put it through two tests before moving it.
+  1. **Does it generalize** — is this peculiar to this piece of work, or will it catch the next
+     one too? Peculiar to this one, and it stays in the spec or the commit message.
+  2. **Is it recognizable from the rule alone** — can the situation be identified from the
+     directive plus the symptom, with no evidence attached? If not, rewrite the symptom.
+- Write only what passed, as **rule plus symptom**. The finding process does not come along.
+- Editing the same document again at short intervals is the signal that a voice rule was missed.
+  Rewrite that section rather than appending to it.
+
 ## One Rule, One Place
 
 Writing the same rule in two places means only one gets fixed, and the other goes stale into an
