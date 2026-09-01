@@ -196,6 +196,27 @@ with a concrete code sketch.
 
 ### 3. Review Categories
 
+<!-- module:design-review -->
+The canon is `docs/design-principles.md`, and every axis there applies to written code as well.
+The categories below are a lens — they name the shapes those axes take in code that already
+exists, and they do not replace the canon. Where a category would allow what the canon forbids, or
+the reverse, the canon wins; detection conditions the canon does not carry still apply as written.
+**CX has no matching axis** — it sees what only shows up once the code is written, so its own
+section is its warrant, and being absent from the canon is not grounds to drop a CX finding.
+<!-- /module:design-review -->
+
+**Never write a finding as a category name.** Write it as **what gets worse** — what breaks, what
+now has to change together with it, what the next person will no longer see. A sentence that just
+restates a detection condition is not a finding.
+
+**The extensibility gate outranks every category's prescription.** Whatever category a finding
+comes from, never propose a generalization, an extension point, or an intermediate layer before a
+second case already exists in the code. With no second case, write only what the current shape
+makes hard, and stop there. **The exception is an abstraction that inverts a dependency**: remove
+it in your head, and if the upper layer would then have to know the lower one's type, it is
+inversion — propose it even with a single implementor. If removing it changes nothing, it is
+speculation and the gate holds.
+
 #### DUP: Code Duplication
 - Identical or near-identical blocks (3+ lines)
 - Same pattern with only data/names varying → data-driven approach
@@ -227,8 +248,9 @@ with a concrete code sketch.
 
 **Never report**: speculative extension suggestions of the "likely extension point" kind,
 purposeless wrapping or intermediate layers, generalization with no second case. Conversely,
-**speculative generality already in the code** (an abstraction with a single use site) is a
-**Consider**.
+**speculative generality already in the code** is a **Consider** — an abstraction with a single
+use site that fails the removal test above, meaning nothing about the dependency direction changes
+when it is taken away.
 
 ### 4. Severity
 
@@ -313,10 +335,14 @@ judgment takes reading the code as a whole and holding several files in mind at 
 
 1. `.claude/skills/refactor-review/SKILL.md` — the procedure, the 5 categories, severity
    definitions, output format, scope boundary. Follow it exactly.
-2. {ARCH_DOC} — the **canon** for the layer graph and boundaries every DEP judgment rests on.
-3. `CLAUDE.md` — project conventions. Subagents do not inherit it; read it.
+1. {ARCH_DOC} — the **canon** for the layer graph and boundaries every DEP judgment rests on.
+<!-- module:design-review -->
+1. `docs/design-principles.md` — the **canon** the categories are a lens onto. Where a category
+   and an axis disagree, the axis wins.
+<!-- /module:design-review -->
+1. `CLAUDE.md` — project conventions. Subagents do not inherit it; read it.
 <!-- module:discipline -->
-4. `docs/discipline.md` — "Name Them, Do Not Count Them" and "Comments" govern what counts as a
+1. `docs/discipline.md` — "Name Them, Do Not Count Them" and "Comments" govern what counts as a
    documentation finding.
 <!-- /module:discipline -->
 
@@ -339,8 +365,12 @@ Both are invisible line by line. Both are why this agent reads whole files.
 **Prioritize changed and new lines.** Pre-existing problems in untouched code are context, not
 this change's debt — report them at lower severity.
 
-**Do not propose a generalization before its second case exists.** Speculative generality
-**already in the code** — an abstraction with exactly one implementor — is worth a **Consider**.
+**The extensibility gate in `SKILL.md` §3 outranks every category's prescription**, including the
+removal test that exempts an abstraction placed to invert a dependency. Apply it to your own
+suggestions before you write them down.
+
+**Write every finding as what gets worse**, never as a category name — what breaks, what now has
+to change together with it, what the next person will no longer see.
 
 **A finding needs a concrete alternative.** "This module does too much" is not a finding; "these
 two fields and the three functions that read them belong in X" is. If you cannot name where the
@@ -377,6 +407,9 @@ does not move the verdict.
 Exactly the report format in `SKILL.md` §5, including the summary table. Omit files with no
 findings. Prose in the user's language; code identifiers and code blocks stay as-is.
 ```
+
+The "Load first" list is written with repeated `1.` on purpose — module blocks are dropped at
+generation time, and markdown renumbers whatever is left.
 
 Substitution: `{ARCH_DOC}` — the path of the architecture canon (`docs/design/architecture.md`).
 If there is none, delete that line and replace it with "the structure section of CLAUDE.md".

@@ -37,24 +37,27 @@ module dependency running against the existing direction.
 
 ## Domain Neutrality of Shared Surfaces
 
-A widely derived or widely called base type, shared function, or shared interface holds no logic
-or state belonging to one domain. Domain capability belongs to the type that implements that
-domain, or to a dedicated unit.
+A widely derived or widely called base type, shared function, or shared interface holds no state,
+logic, or function declaration that only some of its derivatives or call sites use. That belongs
+to the derivative that actually uses it, or to a type or function split out to do only that job.
+What every derivative and call site uses is the base's responsibility.
 
-**What gets worse**: every derivative and call site that does not use that domain carries the
-knowledge anyway. The shared surface grows with each added domain, until it is no longer possible
-to tell by reading which consumer actually uses what. Domain members attached to a base type and
-domain branches inside a general-purpose function are where it starts.
+**What gets worse**: every derivative and call site that does not use it carries it anyway, and
+reading the base no longer tells you which consumer actually uses which member. A member on a base
+class for one derivative, a function on an interface only some implementors fill in, and a branch
+inside a general-purpose function for one call site are the first shapes of the violation.
 
 ## Separate Instead of Branching
 
 A new use site is not a reason to add a use-site-specific branch to something that already has
-derivatives or instances. Extract the common part and let the new use site compose it on its own
-side.
+derivatives or instances. Pull the overlapping part out of the existing thing and let the existing
+use site and the new one each take it from there. Stacking one more base class on top of the
+existing thing is not extraction.
 
-**Whether to keep it one or split it is decided by the exposed surface.** Same surface with only
-the values changed means the same thing plus an instance; a different surface means a different
-thing.
+**Whether to keep it one or split it is decided by the exposed surface — the methods, settings,
+and data columns that callers and tools touch.** Using the same surface with only the values
+changed means the same thing, and you make one more instance. A surface that differs even in part
+means a different thing, and the overlap is what gets extracted.
 
 **What gets worse**: as branches pile up, options grow faster than use sites and nobody knows
 which combinations are actually used. It reaches a state where fixing one use site requires
@@ -63,10 +66,48 @@ nobody fixes it at all. One line of this-task-specific branching in a widely inh
 method is the most common start, and an instance inheriting more than half its settings from
 things unrelated to it means it is already well along.
 
+## A Single Site of Handling
+
+A new entry goes where existing entries of the same kind are already handled. When that site
+cannot take the new entry's shape, extend the site rather than moving the handling elsewhere. The
+site is not the table the entries are listed in — it is the code that reads and handles them.
+
+**Extending means changing the site, not wedging in a condition for the new entry.** A site that
+cannot take the new entry may have been built looking only at the first one. If only the values
+differ, add it in the same shape. If the site has hardened around the first entry's circumstances,
+fix the site so both go down the same path. If handling itself differs per entry, they are not
+entries of the same kind and this is not their site.
+
+**What gets worse**: once two places do the same job, nothing tells you which one already handled
+it. A reader has to open both; a fixer fixes one. Whoever adds the next entry attaches it to
+whichever place they saw first, so the two keep growing apart. Piling entries in the same shape
+onto a hardened assumption produces a list that is uniform only on the surface — some entries are
+read on one path only, and some do nothing at all when added, with no error. Confirming that the
+existing site cannot take the new entry and concluding "let's handle it somewhere else" is the
+most common start; if every other entry in a function has one shape and only this one is an
+exception, or the conditions that make an entry valid differ per entry, it is already there.
+
+## A Single Source of Truth
+
+One state is kept in one place, and that place is the canon. Anywhere else that needs the state
+reads the canon. When a copy is unavoidable — for performance, or because the value at some moment
+has to be held — put one function that fills the copy from the canon, and let calling it be the
+moment the copy is filled. Nothing outside that function writes to the copy, and the copy is never
+written back to the canon.
+
+**What gets worse**: when the two disagree, the code does not say which one is right. The
+disagreement raises no error and flows on as a wrong value — the same amount added twice, or a
+calculation run on a stale one. Adding a function that reconciles the two, or an "already applied"
+flag to stop that, makes the two places something that must be fixed together from then on.
+Keeping a second copy next to a consumer so it can use a value it does not own is the most common
+start.
+
 ## Single Responsibility
 
-A type has one reason to change. When state and logic that change for different reasons sit in
-one place, split them. Where each part goes follows whoever actually uses that data.
+A type has one reason to change. Reasons are counted from the side that demands the change —
+whatever changes together under one demand is one reason. When state and logic that change for
+different reasons sit in one place, split them. Where each part goes follows whoever actually
+reads and writes that state.
 
 **What gets worse**: with several reasons, touching it for one need puts the rest at risk
 together, and because the scope of a change cannot be stated in advance, review does not hold up.
@@ -81,14 +122,18 @@ extension points, settings, and branches**.
 
 **Not targets**: names, boundaries, and abstractions themselves. Giving an implementation a name
 and a place even with a single consumer, or introducing an abstraction to invert a dependency, is
-not caught here. Burying something where it cannot be found is not simplicity but concealment, and
-the next person builds the same thing again without even knowing it exists.
+not caught here. Whether an abstraction is there for inversion or for speculation is settled by
+removing it — if the base would then have to know its derivatives it was inversion, and if nothing
+changes it was speculation. Spilling an implementation into its call site with no name of its own
+is not simplicity but concealment, and the next person builds the same thing again without even
+knowing it exists.
 
 **What gets worse**: unused flexibility sits unverified and usually does not fit at its first
-real use. Meanwhile every reader has to read that branch and dismiss it. Virtual functions,
-callbacks, and settings with a single consumer, and wrapping layers with no purpose, are its
-shape. Opening things up in advance "to make it easy to extend later" is the most common route,
-whereas the way to prepare for extension is not to dig extension points in advance but to keep
-things separated so a new use site can compose its own.
+real use. Meanwhile every reader has to read that branch and dismiss it. A virtual function with
+one override, a callback with one subscriber, a setting only ever used at one value, and a
+wrapping layer that only passes the call through are its shape. Opening things up in advance "to
+make it easy to extend later" is the most common route, whereas the way to prepare for extension
+is not to dig extension points in advance but to keep things separated ("Separate Instead of
+Branching").
 
 <!-- Attach project-specific axes below. For example: layer rules ("core is ignorant of the UI"), process boundaries -->
