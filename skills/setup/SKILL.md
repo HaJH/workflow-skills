@@ -103,6 +103,9 @@ git commit -m "Add project workflow setup"
   and the hook injects the header
 - **A rule that goes unread is a rule that keeps getting violated.** The file-pattern gate forces
   a Read before an edit
+- **A promise is not progress.** A turn ending on "I'll continue from here" with no resume
+  condition stops the loop silently and the user has to prod it back; the turn-end gate makes that
+  ending cost one line instead
 
 ## References
 

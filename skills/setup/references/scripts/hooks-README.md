@@ -6,6 +6,11 @@
 
 - **Always (main + sub)**: `session-start-header.md` — repeat-violation traps + index of detailed
   documents
+- **Main session only — user gates**: `main-session-header.md` — permission to start,
+  AskUserQuestion, turn-end reporting, resume condition. A subagent neither sees the user nor
+  holds the question tool, so it cannot run these rules. Injected into one, it appends a turn-end
+  block after that agent's own output format and corrupts whatever downstream stage parses the
+  output
 - **Main session only, additionally**: `docs/workflow.md` — excluded for subagents, which do no
   git or report workflow
 - **On demand (not injected)**: the remaining documents the header index points at. Read them
@@ -99,12 +104,53 @@ On a match with requirements unfulfilled, `permissionDecision: deny` JSON. Re-ru
 Remove-Item "$env:TEMP\claude-code-hook-state\*-test.txt" -ErrorAction SilentlyContinue
 ```
 
+## Stop — Turn-End Gate
+
+`stop-turn-end-gate.py` runs on every turn end, with no matcher. When the last assistant message
+**promises a next action but writes no resume condition**, it exits 2 to hold the turn open and
+returns in stderr what to write instead. The canon for the rule is
+`main-session-header.md` "Resume Condition".
+
+**It catches only a promise phrase together with a missing resume condition.** A line naming one
+of `a user message` / `a background completion notification` / `a registered wakeup` (the last two
+only after actually registering one), or a sentence asking the user something, passes. A turn that
+legitimately ends escapes with one line.
+
+**The words "resume condition" alone do not pass** — that line has to name `user` / `background` /
+`wakeup` / `Monitor` / `Cron`. A line that names nothing and promises again ("Resume condition:
+I'll check next turn") still trips.
+
+| False-positive containment | What it prevents |
+|---|---|
+| Reads `last_assistant_message` only, never the transcript | The transcript is written asynchronously and may not hold the current turn yet |
+| Code fences, backticks, double quotes, table rows, and blockquote lines are stripped before matching | A turn that quotes this very rule tripping it |
+| Only the tail of the message is scanned | A mid-message promise the turn then immediately carries out |
+| English past tense uses different words; Korean past-tense endings are excluded by lookahead | A turn reporting work already done |
+| One block per `prompt_id` | An infinite loop. A false positive costs exactly one turn |
+| A missing `prompt_id`, a parse failure, or any exception exits 0 | A broken hook blocking the work |
+
+Every block appends one line to `~/.claude/logs/stop-turn-end-gate.jsonl`. If false positives get
+frequent, **report that log's `pattern` distribution to the user** — change `PROMISE_PATTERNS`
+only when the user says to.
+
+Patterns cover English and Korean. Adding a language means appending to `PROMISE_PATTERNS`,
+`RESUME_RE`, and `ASK_PATTERNS` **together** — a promise pattern with no matching escape hatch
+blocks every turn written in that language.
+
+Verification:
+
+```bash
+echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p1","last_assistant_message":"Committed the fix. I will check the build output next."}' | python .claude/hooks/stop-turn-end-gate.py; echo "exit=$?"
+```
+
+`exit=2` plus the reason. Called again with the same `prompt_id`, `exit=0`.
+
 ## File Encoding
 
 - `*.ps1`: **ASCII characters only** (PowerShell 5.1 defaults to cp949 — a non-ASCII literal
   without a BOM is corrupted)
-- `*.json` rule files, `*.md` headers: UTF-8 (the scripts load them with an explicit
-  `-Encoding UTF8`)
+- `*.json` rule files, `*.md` headers, `*.py` hooks: UTF-8 (the PowerShell scripts load them with
+  an explicit `-Encoding UTF8`; the Python hook decodes stdin as UTF-8 itself)
 
 ## Registering in settings
 

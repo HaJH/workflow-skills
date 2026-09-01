@@ -33,6 +33,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-turn-end-gate.py\"",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

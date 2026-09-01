@@ -134,16 +134,21 @@ A hook is a device that keeps you from forgetting, not a device that teaches.
 - Notification is once per rule per session.
 - Scripts keep exit 0 (fail-open) on exceptions.
 
-## session-start-header Promotion Criteria
+## Header Promotion Criteria
 
-It is injected whole into every session and every subagent. One added line = a standing cost on
-every session.
+Two headers are injected whole, so one added line is a standing cost on every session that gets it.
 
+- **Which header** — `session-start-header.md` reaches every session and every subagent, so it
+  holds only what a subagent can actually act on. A rule that faces the user (asking permission,
+  AskUserQuestion, turn-end reporting) goes in `main-session-header.md`; a subagent sees no user
+  and holds no question tool, and injecting one there corrupts the output a downstream stage parses.
 - Promote: an item already in the instructions that is violated repeatedly.
 - Do not promote: a freshly written rule, or a rule limited to one domain (→ a file-pattern-map
   rule).
 - Form: one-line summary + `→ canonical-document.md "Section"`. Do not move the original text.
 - Demote it once the violations stop.
+- If the header's wording and the canonical document diverge, follow the document and **report the
+  mismatch to the user**. Quietly doing it the canonical way leaves the stale line being injected.
 
 ## Line Numbers: Never in Committed Documents
 

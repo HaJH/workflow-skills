@@ -18,6 +18,10 @@ $projRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 
 # Tiered injection (token efficiency).
 # - Always (main + sub): the header (repeat-violation traps + on-demand doc index).
+# - Main session only: the user-gate header. Those rules all face the user, and a
+#   subagent neither sees the user nor holds AskUserQuestion. Injected into one, it
+#   appends a turn-end block after its own output format and corrupts whatever
+#   downstream stage parses that output.
 # - Main session only: the workflow doc. Subagents do not run the git/report workflow.
 # - On demand (NOT injected): everything the header index points at.
 if ($HookEventName -eq 'SubagentStart') {
@@ -27,6 +31,7 @@ if ($HookEventName -eq 'SubagentStart') {
 } else {
     $files = @(
         '.claude\hooks\session-start-header.md',
+        '.claude\hooks\main-session-header.md',
         'docs\workflow.md'
     )
 }

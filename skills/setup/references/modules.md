@@ -23,7 +23,7 @@ was not, delete the whole block. The marker lines themselves are always deleted)
 | `watch` | PM progress watch | on | `scripts/watch-commits.sh` | `commit-rhythm` |
 | `just` | `/just` procedure-skip command | on | `.claude/commands/just.md` | — |
 | `gate-script` | Gate script | on | `scripts/check.ps1` (Windows) or `scripts/check.sh` | — |
-| `hooks` | Hooks (file-pattern gate + session injection) | on | `.claude/settings.json` · `.claude/hooks/*` (`hooks.md`) | — |
+| `hooks` | Hooks (session injection + file-pattern gate + turn-end gate) | on | `.claude/settings.json` · `.claude/hooks/*` (`hooks.md`). The turn-end gate needs `python` on PATH | — |
 | `discipline` | Development discipline document | on | `docs/discipline.md` (`discipline-md.md`) | — |
 | `design-review` | Design review gate | off | `.claude/skills/design-review/*` · 3 agents · `docs/design-principles.md` · `docs/specs/` (`design-review.md`) | — |
 

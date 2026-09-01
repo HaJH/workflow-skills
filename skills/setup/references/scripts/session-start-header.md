@@ -7,13 +7,13 @@ detailed rules under "Detailed Documents" below when entering the work.
 ## Repeat-Violation Traps — Re-registered Every Session
 
 Only items already in the instructions that are violated repeatedly go here. _This is emphasis;
-the source of truth is each instruction document._ Demote an item once the violations stop.
+the source of truth is each instruction document. If the wording here differs from the document,
+follow the document and report the mismatch to the user — quietly doing it the canonical way
+leaves this list stale and still being injected._ Demote an item once the violations stop.
 
 - **🚫 The main tree is always on `main`** — code work happens in a worktree, without exception.
   Switching branches in the main tree drags along uncommitted changes from other sessions and
   editors → `CLAUDE.md` "Git"
-- **🚫 Investigating is not starting** — the output of a question turn is a report plus a proposed
-  direction. Change files only after the user permits it → `CLAUDE.md` "Agent Behavior"
 - **🚫 Never ask the user to build, run, or verify** — verification happens in real use after the
   merge. The one exception is when observation is required → `docs/workflow.md` "User
   Verification Happens After Merge"
