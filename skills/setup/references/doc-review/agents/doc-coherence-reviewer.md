@@ -1,8 +1,8 @@
 ---
 name: doc-coherence-reviewer
 description: Reads one instruction document whole and judges conflicts, overlap and boundaries between sections, whether the document's opening declaration matches its body, voice consistency, and candidates for sections that are missing. The whole-document coherence layer of /doc-review.
-model: opus
-effort: xhigh
+model: fable
+effort: medium
 tools: Read, Grep
 color: red
 ---

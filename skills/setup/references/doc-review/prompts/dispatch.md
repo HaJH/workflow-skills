@@ -33,9 +33,9 @@ the prompt. The one "Biggest problem" slot in the agent definition carries the v
 
 ---
 
-## Coherence Layer — `doc-coherence-reviewer`, two (one opus, one second model)
+## Coherence Layer — `doc-coherence-reviewer`, two (one fable, one second model)
 
-Dispatch **twice** with the same prompt. Name `model: opus` on one and the second model on the
+Dispatch **twice** with the same prompt. Name `model: fable` on one and the second model on the
 other. This is not two models doing different things but the same thing read twice, so the prompt
 is identical.
 
@@ -79,7 +79,7 @@ The shape of the review-results file:
 ## Whole Document
 
 ### Coherence A
-<opus reviewer output verbatim>
+<fable reviewer output verbatim>
 
 ### Coherence B
 <second-model reviewer output verbatim>

@@ -1,8 +1,8 @@
 ---
 name: design-claim-extractor
 description: Reads a design spec and extracts its structural decisions and its factual claims about existing code. Never opens source. Stage 1 of /design-review.
-model: sonnet
-effort: medium
+model: fable
+effort: low
 tools: Read, Write, Glob, Bash
 color: cyan
 ---

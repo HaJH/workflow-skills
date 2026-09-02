@@ -21,7 +21,7 @@ user only.
 
 Why `mixed` is the default: rule conformance is covered by `/code-review` plus the CLAUDE.md
 conventions section, and the maintenance burden of a language rules file disappears. Structural
-judgment stays custom because the value is in the **pinned model** (opus even when the session is
+judgment stays custom because the value is in the **pinned model** (fable even when the session is
 sonnet) and in the judgment criteria (no generalization before the second case · no finding
 without an alternative).
 
@@ -33,7 +33,7 @@ without an alternative).
 | Lens | Call | Tier | Target |
 |---|---|---|---|
 | Correctness and rule conformance | `Skill: code-review {REVIEW_EFFORT} main...HEAD` | session model / {REVIEW_EFFORT} | the whole branch |
-| Structural judgment | `Agent(subagent_type: "{PREFIX}-refactor-reviewer")` | opus / xhigh | target file list matching `{SOURCE_GLOB}` |
+| Structural judgment | `Agent(subagent_type: "{PREFIX}-refactor-reviewer")` | fable / medium | target file list matching `{SOURCE_GLOB}` |
 
 - **State the effort every time** for `/code-review` — omit it and it reuses the level typed last,
   so the bar wobbles from round to round
@@ -64,14 +64,14 @@ without an alternative).
 ```markdown
 | Skill | `subagent_type` | Tier | Character |
 |---|---|---|---|
-| `/refactor-review` | `{PREFIX}-refactor-reviewer` | opus / xhigh | structural judgment |
-| `/review-code` | `{PREFIX}-code-reviewer` | sonnet / medium | rule conformance |
+| `/refactor-review` | `{PREFIX}-refactor-reviewer` | fable / medium | structural judgment |
+| `/review-code` | `{PREFIX}-code-reviewer` | fable / low | rule conformance |
 
 - Never launch as `general-purpose` — it inherits the session effort, and because the Agent tool
   has no `effort` parameter, the `subagent_type` name is the only way to pin the tier. The
   dispatch prompt passes **the target file list and nothing else**
 - Add one row per additional lens. A mixed lens (many conformance items plus one judgment item)
-  is sonnet / high
+  is fable / medium
 ```
 
 ## Three Things Every Custom Review Skill Has
@@ -140,7 +140,7 @@ judges the code they wrote themselves.
 ## Dispatch
 
 When this review runs as a subagent — the normal case in the feature completion flow — dispatch
-it as `subagent_type: "{PREFIX}-refactor-reviewer"` (opus / xhigh), never `general-purpose`.
+it as `subagent_type: "{PREFIX}-refactor-reviewer"` (fable / medium), never `general-purpose`.
 
 The tier is deliberately the high one and is pinned rather than inherited: structural judgment
 cannot be pattern-matched, so it must not drop when the session effort does. `general-purpose`
@@ -156,7 +156,7 @@ orchestrator assembles this** — a subagent cannot see its own wall clock. The 
 carries `duration_ms`, `subagent_tokens`, and `tool_uses`.
 
 ```
-Profiling: <s> (<min>) · <tok> · tools <n> · opus/xhigh
+Profiling: <s> (<min>) · <tok> · tools <n> · fable/medium
 Scale: <n> files / <total lines> lines · <n> findings
 ```
 
@@ -317,8 +317,8 @@ ignorant of the UI"), one line each. Delete it if there are none. `{SCOPE_OWNER}
 ---
 name: {PREFIX}-refactor-reviewer
 description: Reviews written {LANG} for structural defects - duplication, complexity, responsibility, coupling, extensibility - against {PROJECT_NAME}'s architecture. Design-level judgment on code that already exists. Dispatched by /refactor-review and the autonomous review loop.
-model: opus
-effort: xhigh
+model: fable
+effort: medium
 tools: Read, Grep, Glob, Bash
 color: magenta
 ---
@@ -440,7 +440,7 @@ Analyze {LANG} code against project rules and report violations.
 
 ## Dispatch
 
-Dispatch as `subagent_type: "{PREFIX}-code-reviewer"` (sonnet / medium), never `general-purpose`.
+Dispatch as `subagent_type: "{PREFIX}-code-reviewer"` (fable / low), never `general-purpose`.
 Conformance checking against a written rule set does not need the top tier; structural judgment
 does, and that is `/refactor-review`'s job at its own tier. The dispatch prompt only needs the
 target files.
@@ -448,7 +448,7 @@ target files.
 ### Profiling — report it with the results
 
 ```
-Profiling: <s> (<min>) · <tok> · tools <n> · sonnet/medium
+Profiling: <s> (<min>) · <tok> · tools <n> · fable/low
 Scale: <n> files / <total lines> lines · <n> findings
 ```
 
@@ -526,8 +526,8 @@ was not run, and the right output is one note saying so.
 ---
 name: {PREFIX}-code-reviewer
 description: Reviews changed {LANG} against {PROJECT_NAME}'s review rules and reports violations by category and severity. Convention conformance, not design judgment. Dispatched by /review-code and the autonomous review loop.
-model: sonnet
-effort: medium
+model: fable
+effort: low
 tools: Read, Grep, Glob, Bash
 color: yellow
 ---

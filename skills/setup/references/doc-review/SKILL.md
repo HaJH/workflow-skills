@@ -86,7 +86,7 @@ dispatch one and say so in the report.
 
 Collect the reviewers' output **verbatim** into `docs/reports/doc-review/<basename>.reviews.md` —
 under `## Sections`, a `###` per section title; under `## Whole Document`, `### Coherence A`
-(opus) and `### Coherence B` (the second model). Never summarize or select.
+(fable) and `### Coherence B` (the second model). Never summarize or select.
 
 Dispatch `doc-review-synthesizer` with that file path, the document path, and the repo root — do
 not pass it the mode. Synthesis decides what to emit from whether the review-results file has a

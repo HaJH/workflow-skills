@@ -1,8 +1,8 @@
 ---
 name: design-structure-judge
 description: Judges a code design's structure against the project's design principles, working from a pre-verified fact table. Produces Blockers and Notes. Stage 3 of /design-review.
-model: opus
-effort: xhigh
+model: fable
+effort: medium
 tools: Read, Grep, Glob, Bash
 color: red
 ---

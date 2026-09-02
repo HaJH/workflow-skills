@@ -35,12 +35,12 @@ dependency is being turned on as well, and turn it on.
 
 | Value | Rule-conformance and correctness lens | Structural judgment lens | Generates |
 |---|---|---|---|
-| `mixed` (default) | built-in `/code-review <effort>` | custom `{PREFIX}-refactor-reviewer` (opus/xhigh) | `refactor-review` skill + agent |
+| `mixed` (default) | built-in `/code-review <effort>` | custom `{PREFIX}-refactor-reviewer` (fable/medium) | `refactor-review` skill + agent |
 | `official` | built-in `/code-review <effort>` | none (the same review also produces simplification suggestions) | — |
-| `custom` | custom `{PREFIX}-code-reviewer` (sonnet/medium) + language rules file | custom `{PREFIX}-refactor-reviewer` (opus/xhigh) | two skills + two agents + `review-rules-*.md` |
+| `custom` | custom `{PREFIX}-code-reviewer` (fable/low) + language rules file | custom `{PREFIX}-refactor-reviewer` (fable/medium) | two skills + two agents + `review-rules-*.md` |
 
 If the project has further lenses (a frontend, say), build one more skill-and-agent pair from the
-`custom` skeleton. Tier it by "mixed lens = middle (sonnet/high)".
+`custom` skeleton. Tier it by "mixed lens = middle (fable/medium)".
 
 ## Placeholders
 

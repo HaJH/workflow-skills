@@ -1,8 +1,8 @@
 ---
 name: doc-review-synthesizer
 description: Merges the section reviewers' output and the coherence reviewers' output (one set or two) into a single defect list. Checks quotations and section titles against the document, ranks by classification axis, filters addition-suggestions, and settles delete/merge suggestions by grepping for references first. The synthesis stage of /doc-review.
-model: opus
-effort: high
+model: fable
+effort: medium
 tools: Read, Grep
 color: green
 ---

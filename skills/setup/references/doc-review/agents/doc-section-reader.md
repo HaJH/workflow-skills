@@ -1,8 +1,8 @@
 ---
 name: doc-section-reader
 description: Takes the text of a single section cut out of an instruction document and judges whether that section stands on its own and whether anything that is not a rule got mixed in - restatement, two-way readings, nouns with no referent, traces of the event, misapplication paths. Opens no files. The section-standalone layer of /doc-review.
-model: opus
-effort: xhigh
+model: fable
+effort: medium
 tools: Glob
 color: cyan
 ---

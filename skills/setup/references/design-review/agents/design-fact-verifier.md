@@ -1,7 +1,7 @@
 ---
 name: design-fact-verifier
 description: Settles a batch of factual claims about existing code against the source and returns TRUE/FALSE/PARTIAL with file:line evidence. No design judgment. Stage 2 of /design-review.
-model: sonnet
+model: fable
 effort: low
 tools: Read, Grep, Glob, Bash
 color: green

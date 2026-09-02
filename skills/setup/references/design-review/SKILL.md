@@ -49,7 +49,7 @@ One round is three stages. Stage 2 fans out; stages run in order.
 | | Stage 1 — Extract | Stage 2 — Verify | Stage 3 — Judge |
 |---|---|---|---|
 | Agent | `design-claim-extractor` | `design-fact-verifier` x N | `design-structure-judge` |
-| Tier | sonnet / medium | sonnet / low | opus / xhigh |
+| Tier | fable / low | fable / low | fable / medium |
 | Count | 1 | 3-5 (parallel) | 1 |
 | Input | the spec | claims file + row range | spec + decision list + fact table + design principles |
 | Output | claims file (decisions + claims) | ledger rows (TRUE/FALSE/PARTIAL) | Blockers + Notes |
@@ -99,9 +99,9 @@ assembles this** from each task notification's `duration_ms`, `subagent_tokens`,
 
 | Stage | Wall clock | Tokens | Tools | Tier |
 |---|---|---|---|---|
-| S1 extract | <s> | <tok> | <n> | sonnet/medium |
-| S2 verify xN | <s> (sum <s>) | <tok> | <n> | sonnet/low |
-| S3 judge | <s> | <tok> | <n> | opus/xhigh |
+| S1 extract | <s> | <tok> | <n> | fable/low |
+| S2 verify xN | <s> (sum <s>) | <tok> | <n> | fable/low |
+| S3 judge | <s> | <tok> | <n> | fable/medium |
 | Total | <s> (<min>) | <tok> | <n> | |
 
 Scale: <spec lines> lines · decisions <n> · claims <n> (completeness <n>) · <round and weight>
