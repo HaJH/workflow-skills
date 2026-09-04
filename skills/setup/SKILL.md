@@ -1,6 +1,6 @@
 ---
 name: setup
-description: "Use when initializing a new local project (no CI, no remote MR) with the PM-Dev-Reviewer workflow - CLAUDE.md, docs/workflow.md, commands, and selectable modules (autonomous review loop, commit rhythm, board, progress watch, /just, gate script, hooks, discipline doc, design-review gate, instruction doc review). Also use to re-apply or update the workflow in an existing project. Not for GitLab/GitHub MR-based CI workflows."
+description: "Use when initializing a new local project (no CI, no remote MR) with the PM-Dev-Reviewer workflow - CLAUDE.md, docs/workflow.md, commands, and selectable modules (autonomous review loop, commit rhythm, board, progress watch, /just, gate script, hooks, discipline doc, comment audit, design-review gate, instruction doc review). Also use to re-apply or update the workflow in an existing project. Not for GitLab/GitHub MR-based CI workflows."
 ---
 
 # Setup Project Workflow
@@ -27,6 +27,11 @@ Confirm with the user (`references/modules.md` "Placeholders"):
 - Hosting (GitHub private / fully local)
 - Source directories · source glob · directories excluded from review (vendor, generated)
 - Gate commands (formatter, linter, test, build)
+- [hooks] Anything that is *always* wrong to write into a source file here — a character the
+  toolchain misreads, a comment form the project bans (`references/hooks.md` "The Two Rule Files
+  That Ship With an Example")
+- [hooks] Any command that must go through a slash command rather than be typed raw, and any MCP
+  tool call that must carry a field
 - Additional conventions
 
 When re-applying to an existing project, read the current `CLAUDE.md`, `docs/workflow.md`, and
@@ -66,6 +71,7 @@ was not. Always delete the marker lines themselves).
 | [just] `.claude/commands/just.md` | `references/commands.md` "/just" |
 | [gate-script] `scripts/check.ps1` | `references/scripts/check.ps1` (keep only the language block) |
 | [hooks] `.claude/settings.json` · `.claude/hooks/*` | `references/hooks.md` · `references/scripts/` |
+| [comment-audit] `.claude/agents/{PREFIX}-comment-auditor.md` · the `/commit` audit block | `references/comment-audit.md` |
 | [design-review] skill · 3 agents · design principles · `docs/specs/` | `references/design-review.md` · `references/design-review/` |
 | [doc-review] skill · 3 agents · `docs/authoring-policy.md` · `docs/reports/doc-review/` | `references/doc-review.md` · `references/doc-review/` |
 
@@ -80,6 +86,8 @@ writing project-specific sections, no anecdotes, dates, or counted values.
 - [board] `bash scripts/board-ready.sh` exits 0
 - [gate-script] `scripts/check.ps1` passes on the current tree, or the failure is confirmed to be
   the project state (unfinished code) and not the script
+- [hooks] Leftover example-rule check: `grep -rn '"example-' .claude/hooks` returns none — either
+  the project's own rules replaced them or the file and its `settings.json` entry are gone
 - Leftover placeholder check: `grep -rn '{[A-Z_]*}' CLAUDE.md docs .claude scripts` returns none
 - Leftover module marker check: `grep -rn 'module:' CLAUDE.md docs .claude` returns none
 
@@ -105,6 +113,15 @@ git commit -m "Add project workflow setup"
   and the hook injects the header
 - **A rule that goes unread is a rule that keeps getting violated.** The file-pattern gate forces
   a Read before an edit
+- **Reading the rule does not stop the violation from being typed.** Mechanical violations are
+  denied at write time by the content lint; the ones that have to be weighed go to the comment
+  audit at commit time, where a wrong call costs one line instead of a permanently blocked file.
+  Neither half is allowed to grow into the other
+- **A rule only reaches an autonomous flow if a hook carries it.** When a command or an MCP call is
+  made mid-flow, the slash-command file holding its required arguments is not in context, and the
+  argument goes missing silently — that is what the command and MCP gates are for
+- **A signal the agent has to remember is gone when it matters.** Session length is measured from
+  the transcript because compaction drops the count and a large-context model never warns
 - **A promise is not progress.** A turn ending on "I'll continue from here" with no resume
   condition stops the loop silently and the user has to prod it back; the turn-end gate makes that
   ending cost one line instead
@@ -118,6 +135,6 @@ git commit -m "Add project workflow setup"
 | `references/claude-md.md` · `workflow-md.md` · `discipline-md.md` | Document templates |
 | `references/commands.md` | The 6 commands |
 | `references/review-loop.md` | 3 review modes · dispatch table · skill and agent skeletons |
-| `references/board.md` · `hooks.md` · `design-review.md` · `doc-review.md` | Module detail |
+| `references/board.md` · `hooks.md` · `comment-audit.md` · `design-review.md` · `doc-review.md` | Module detail |
 | `references/scripts/` | Scripts, hooks, and settings to copy |
 | `references/review-rules-*.md` | Per-language review lenses (`custom` only) |

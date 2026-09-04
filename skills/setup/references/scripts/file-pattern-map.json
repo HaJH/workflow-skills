@@ -32,6 +32,8 @@
    "id": "hook-config",
    "patterns": [
     "file-pattern-map.json",
+    "content-lint.json",
+    "command-gate.json",
     ".claude/hooks/*.ps1",
     "*/.claude/hooks/*.ps1",
     ".claude/hooks/*.sh",

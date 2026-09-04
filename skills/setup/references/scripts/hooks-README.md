@@ -37,6 +37,45 @@ The matcher is `Edit|Write|Read|Skill`. It has two roles.
 **Reading through the shell does not count** — opening it with `cat` or `sed` is invisible to the
 hook. Only the `Read` tool and the `Skill` tool.
 
+### Content Lint — Blocking What Needs No Judgment
+
+An edit whose path matches a `content-lint.json` rule has its payload checked (`new_string` for
+`Edit`, `content` for `Write`) and is **denied** on a hit. Two kinds of check per rule:
+
+- `bannedChars` — a character that breaks a build or a toolchain. Declared as a code point, never
+  as a literal, so the list survives the ASCII-only constraint on `*.ps1`
+- `bannedLines` — a regex per line. `scope: "line"` reads the whole line, `scope: "comment"` reads
+  only the comment span, delimited by the rule's `commentPrefixes`
+
+```json
+{
+  "id": "unique ID",
+  "patterns": ["*.h", "*.cpp"],
+  "scopePath": ["src/"],
+  "commentPrefixes": ["//", "/*"],
+  "bannedChars": [
+    { "codePoint": "2014", "name": "em dash (U+2014)", "replacement": "--" }
+  ],
+  "bannedLines": [
+    { "regex": "^\\s*///", "scope": "line", "message": "Triple-slash comment" }
+  ]
+}
+```
+
+`patterns` · `scopePath` · `excludePath` behave exactly as they do in `file-pattern-map.json`, but
+the two files are matched independently: a banned character is banned whether or not the file also
+has a guide to read first.
+
+**Only a violation that is never a judgment call belongs here** — one false positive permanently
+blocks a legitimate edit. Anything that has to be read and weighed (a comment restating what the
+name says, non-local information, a duplicated contract) is the commit-time comment audit's job.
+The reverse promotion also holds: **a mechanical rule the reviewer keeps reporting round after
+round belongs here**, where it costs nothing to enforce.
+
+> stdin is decoded as UTF-8 explicitly. `[Console]::In` reads piped input with the OEM codepage, so
+> a non-ASCII character in the payload is flattened to `?` before the lint can see it. **Symptom**:
+> an edit carrying a banned character passes silently.
+
 ### Path Normalization — Worktrees
 
 A file path is normalized to a project-relative path before matching. The worktree convention
@@ -104,6 +143,76 @@ On a match with requirements unfulfilled, `permissionDecision: deny` JSON. Re-ru
 Remove-Item "$env:TEMP\claude-code-hook-state\*-test.txt" -ErrorAction SilentlyContinue
 ```
 
+**Do not pipe the payload when verifying the content lint.** A PowerShell-to-PowerShell pipe
+re-encodes it and a banned-character case comes back as a pass. Write the JSON as a BOM-less UTF-8
+file and redirect it through `cmd`, which is how Claude Code feeds the hook:
+
+```powershell
+[System.IO.File]::WriteAllText('case.json', $json, [System.Text.UTF8Encoding]::new($false))
+cmd /c "powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\pre-tool-use.ps1 < case.json"
+```
+
+## PreToolUse — Command and MCP Tool Gate
+
+`pre-tool-use-command.ps1` handles two matchers with one rule file, `command-gate.json`:
+
+| Matcher | Rules read | Denies |
+|---|---|---|
+| `Bash\|PowerShell` | `commands[]` | a command matching `match` that omits one of its `requiredFlags` |
+| `mcp__<server>__<tool>` | `mcpTools[]` | a call to `tool` whose input omits one of its `requiredFields` |
+
+A `requiredFields` entry may name a nested field with a dotted path (`customFields.stage`). A
+matcher for an MCP tool is the tool name itself, so **adding an `mcpTools` rule also means adding
+a `PreToolUse` entry for that tool name in `settings.json`** — the rule alone never fires.
+
+**Why these are hooks and not just documentation**: both are reached through an autonomous flow,
+where the slash-command or skill file that carries the required arguments is not in context. The
+argument gets dropped and nothing notices until the artifact is already wrong. When a gate denies,
+use the command the message points at rather than working around the flag; if a legitimate
+exception appears, fix the rule.
+
+> The command match runs after quoted spans are stripped. A commit message or a description may
+> legitimately contain the guarded command as text, and matching it there blocks an unrelated call.
+
+Verification — a call missing one required argument must produce deny JSON, a complete one empty
+output:
+
+```powershell
+$json = '{"session_id":"test","tool_name":"Bash","tool_input":{"command":"<the guarded command, one flag removed>"}}'
+$json | powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/pre-tool-use-command.ps1
+```
+
+## UserPromptSubmit — Session-Length Signal
+
+`user-prompt-submit-session-length.py` measures the transcript on every user prompt and injects
+`[session length]` as `additionalContext` once the session is long. The canon for the rule is
+`docs/workflow.md` "Session Length — When to Suggest a Handoff" — the hook only supplies the
+signal, the agent decides whether to suggest the handoff.
+
+**Why the hook measures it.** Left to the agent's memory the signal dies exactly when it is
+needed: a compaction drops "how many commits so far" from the summary, and on a large-context
+model the context-remaining warning never fires.
+
+| Measured | Source |
+|---|---|
+| Current context tokens | `usage` of the last main-chain (not `isSidechain`) assistant entry — input + cache_creation + cache_read |
+| Compactions | `compact_boundary` entries |
+| Commits this session | Bash/PowerShell calls containing `git commit`. A commit command ends in one of these, so command and skill calls are not counted separately |
+
+Thresholds are the constants at the head of the script. **Within one threshold it is injected
+once** — the levels last emitted are kept in `~/.claude/tmp/session-length/<sha1(session_id)>.json`
+and a new injection needs one of them to rise. That is what stops the same suggestion repeating on
+every prompt after the user has chosen to continue. Parse and IO failures exit 0 (fail-open).
+
+Verification — the transcript path is `~/.claude/projects/<project slug>/<session_id>.jsonl`:
+
+```bash
+echo '{"hook_event_name":"UserPromptSubmit","session_id":"test","transcript_path":"<a long session jsonl>"}' | python .claude/hooks/user-prompt-submit-session-length.py
+```
+
+Over the threshold, `additionalContext` JSON; called again with the same `session_id`, empty
+output. Deleting the state file resets it.
+
 ## Stop — Turn-End Gate
 
 `stop-turn-end-gate.py` runs on every turn end, with no matcher. When the last assistant message
@@ -156,3 +265,8 @@ echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p1","last_assistan
 
 They are registered in `.claude/settings.json` (shared with the team). Right after editing
 settings, open the `/hooks` menu once or restart for it to take effect.
+
+Each event holds a **list** of entries, and each entry a list of commands, so several scripts can
+run on one event — a second `Stop` script is appended next to the turn-end gate rather than folded
+into it. A `PreToolUse` entry carries a `matcher`; the other events do not. `statusMessage` is what
+the user sees in the terminal while that command runs; without one a slow hook looks like a hang.

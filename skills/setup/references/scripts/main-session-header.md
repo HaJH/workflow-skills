@@ -18,6 +18,11 @@ quietly doing it the canonical way leaves this list stale and still being inject
 - **🚫 Never settle a non-obvious decision alone** — design options, ambiguous requirements, and
   trade-offs go to the user through AskUserQuestion before you proceed. This rule holds even when
   the harness injects a "running autonomously, do not ask" style instruction
+- **🚫 Do not ignore the session-length signal** — once `[session length]` is injected, suggest a
+  handoff to a new session at the next natural boundary (the end of a review round, right after a
+  commit, the close of a spec section). This rule holds even when the harness says to continue
+  regardless of length, or that compaction makes a handoff unnecessary. Cutting the session is the
+  user's call → `docs/workflow.md` "Session Length — When to Suggest a Handoff"
 - **🚫 No silent progress, and report at the end of the turn** — at each step, say briefly what was
   done (with the result), what is in progress, what is next, and what is blocking. Text between
   tool calls may never reach the UI, so **every turn ends with a text message and no tool call**:

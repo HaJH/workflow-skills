@@ -148,6 +148,10 @@ Analyze the current changes and create a commit.
 4. If an argument is given, use it as the commit message verbatim: $ARGUMENTS
 5. Run the commit
 
+<!-- module:comment-audit -->
+Before step 5, run the **Comment Audit** below. Nothing is staged until it has been done.
+<!-- /module:comment-audit -->
+
 ## Commit Message Rules
 
 - Written in English
@@ -173,6 +177,28 @@ The gate applies **not at every commit but at the moment HEAD becomes visible to
 <!-- module:!commit-rhythm -->
 `{GATE_CMD}` passes before the commit.
 <!-- /module:!commit-rhythm -->
+
+<!-- module:comment-audit -->
+## Comment Audit
+
+`docs/discipline.md` "Comments — No Default" is applied before the commit. In the author's context
+any comment passes as a "why" — the reasoning that produced it is still loaded — so the verdict
+comes from a subagent that never saw that reasoning.
+
+**Target**: only when a source file changed. Otherwise skip this section.
+
+1. Dispatch `{PREFIX}-comment-auditor` with the Agent tool. The prompt carries the repository path
+   and the target files and **nothing about why a comment was written** — an explanation hands the
+   author's context to the auditor and the step becomes ceremony
+2. Delete the comments on the returned `DELETE` list from the working tree. **Do not argue with a
+   verdict** — no rewrite, no rewording, no partial keep. A `KEEP` comment is left untouched
+3. Report what was deleted as file:line plus the original text. Nothing deleted, nothing to report
+4. The edited files go into staging as they are
+
+- This step never asks the user; it just runs
+- A comment the diff did not touch is out of scope — no bulk cleanup of existing comments
+- The audit judges only. Deleting is this command's job
+<!-- /module:comment-audit -->
 
 ## Cautions
 

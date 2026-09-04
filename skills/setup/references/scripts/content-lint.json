@@ -1,0 +1,29 @@
+{
+ "version": 1,
+ "rules": [
+  {
+   "id": "example-cpp",
+   "patterns": ["*.h", "*.hpp", "*.cpp", "*.inl"],
+   "scopePath": ["src/"],
+   "commentPrefixes": ["//", "/*"],
+   "bannedChars": [
+    { "codePoint": "2014", "name": "em dash (U+2014)", "replacement": "--" },
+    { "codePoint": "2013", "name": "en dash (U+2013)", "replacement": "-" },
+    { "codePoint": "2192", "name": "right arrow (U+2192)", "replacement": "->" },
+    { "codePoint": "00A7", "name": "section sign (U+00A7)", "replacement": "Section" }
+   ],
+   "bannedLines": [
+    {
+     "regex": "^\\s*///",
+     "scope": "line",
+     "message": "Triple-slash comment, use /** Brief. */ instead"
+    },
+    {
+     "regex": "[A-Z]+-[0-9]+",
+     "scope": "comment",
+     "message": "Issue ID in a comment -- work history belongs in the commit message, and git blame reaches it from the line"
+    }
+   ]
+  }
+ ]
+}

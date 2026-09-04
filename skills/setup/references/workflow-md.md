@@ -384,6 +384,11 @@ the square of its length, so cutting late costs more.
 - Two or more design review rounds have run.
 - Two or more commits have piled up in this session.
 - A context-remaining warning has appeared.
+<!-- module:hooks -->
+- A `[session length]` line has been injected. That one is measured from the transcript rather
+  than remembered, because a compaction drops the commit count from the summary and a
+  large-context model never reaches the context-remaining warning at all.
+<!-- /module:hooks -->
 
 **Natural boundary** — the end of a review round, right after a commit, the moment a spec section
 is closed. Those are the places with the least to re-read on the way back in. A signal is not a

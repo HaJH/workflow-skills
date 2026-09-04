@@ -1,0 +1,25 @@
+{
+ "version": 1,
+ "commands": [
+  {
+   "id": "example-pr-create",
+   "match": "gh\\s+pr\\s+create",
+   "requiredFlags": [
+    { "flag": "--base", "why": "a PR opened against the wrong default branch has to be recreated" },
+    { "flag": "--repo", "why": "do not depend on the current directory" }
+   ],
+   "message": "Prefer the /merge-branch command -- it carries the full flag set."
+  }
+ ],
+ "mcpTools": [
+  {
+   "id": "example-issue-create",
+   "tool": "mcp__tracker__issue_create",
+   "requiredFields": [
+    { "field": "sprint", "why": "an issue with no sprint never appears on the board, so planning cannot see it" },
+    { "field": "customFields.stage", "why": "the board groups by stage; an issue without one lands nowhere" }
+   ],
+   "message": "Rules: docs/workflow.md \"Work Board\"."
+  }
+ ]
+}

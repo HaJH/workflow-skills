@@ -22,6 +22,17 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/user-prompt-submit-session-length.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write|Read|Skill",
@@ -29,6 +40,26 @@
           {
             "type": "command",
             "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use-command.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__tracker__issue_create",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use-command.ps1\"",
             "timeout": 10
           }
         ]
@@ -40,7 +71,8 @@
           {
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-turn-end-gate.py\"",
-            "timeout": 10
+            "timeout": 15,
+            "statusMessage": "Checking the turn-end report..."
           }
         ]
       }
