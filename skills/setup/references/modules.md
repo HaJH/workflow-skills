@@ -72,7 +72,7 @@ are subject to the leftover check after generation.
 |---|---|---|
 | `{ONE_LINE_DESCRIPTION}` · `{LANG_CONVENTIONS}` · `{SKILL_LIST}` | `claude-md.md` | One-line description · language conventions section · skill list |
 | `{DISPATCH_TABLE}` · `{AUTHORING_POLICY}` · `{RUN_NOTES}` · `{FORMAT_CMD}` | `workflow-md.md` | Dispatch table · instruction authoring policy section · run info · format command |
-| `{SCOPE_OWNER}` · `{LANG_FENCE}` · `{DEP_PROJECT_RULES}` · `{ARCH_DOC}` · `{WHERE_THE_VALUE_IS}` · `{WHERE_THE_VALUE_IS_CONFORMANCE}` | `review-loop.md` | Out-of-scope owner · code fence tag · layer rules · architecture canon · highest-value category |
+| `{SCOPE_OWNER}` · `{LANG_FENCE}` · `{DEP_PROJECT_RULES}` · `{ARCH_DOC}` | `review-loop.md` | Out-of-scope owner · code fence tag · layer rules · architecture canon |
 | `{AREA_1}` · `{AREA_1_SCOPE}` · `{V0_TITLE}` · `{V0_DEFINITION}` | `board.md` | First area group · first milestone |
 | `{SOURCE_GLOB_LIST}` · `{SOURCE_SAMPLE}` | `hooks.md` · `scripts/file-pattern-map.json` | Hook rule patterns array (per extension, as `"*.rs"`, `"*.ts"`) · one source file for verification |
 | the `example-` rules | `scripts/content-lint.json` · `scripts/command-gate.json` | Worked examples, replaced by the project's own rules or deleted with their file (`hooks.md` "The Two Rule Files That Ship With an Example") |

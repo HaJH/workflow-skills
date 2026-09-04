@@ -48,9 +48,17 @@ If `review-loop` was selected, ask for the review mode: `mixed` (default) / `off
 `custom`. Then settle the round budget (default 3) and the `/code-review` effort (default
 `high`).
 
-If `review-loop` is `mixed` or `custom`, ask **"Where the value is"** — the one or two structural
-defects in that project that pass both the compiler and the gate and still cause incidents. With
-no answer, fall back to the language default (layer boundary violations).
+If `review-loop` is `custom`, ask whether the gate has a known hole — a lint the config leaves
+off, a check the toolchain does not ship. Those become the "What the Gate Does Not Catch" section
+of `references/rules.md`, written as missing checks rather than as a ranking
+(`references/review-loop.md` "The Gate-Hole Section"). With no hole to name, leave the section
+out.
+
+**Never ask which defects the review should focus on.** The categories, the design principles, and
+the layer graph already cover every structural defect and are declared to outrank anything below
+them, so a focus list can only duplicate them or read as a filter over them. At setup there is
+also no history to answer from, and an answer frozen into an agent file does not move when the
+risky area does.
 
 ### 3. Generate files
 

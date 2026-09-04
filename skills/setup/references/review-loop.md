@@ -93,9 +93,12 @@ without an alternative).
 - Do not copy rules into the body. Point at the skill and the canonical documents, and state
   which one wins when the two disagree. A subagent does not inherit CLAUDE.md, so write the paths
   of the canonical documents to read
-- **A "Where the value is" section** — pick the one or two categories in that project that
-  **tools cannot reach** and run them first. They are the places that compile and lint clean and
-  still cause incidents. Write alongside them that cheap findings must not crowd them out
+- **No section naming which defects to look for first.** The categories and the canonical
+  documents already cover them and are declared to outrank anything below them, so a favoured list
+  either duplicates the canon or reads as a filter over it. A defect the canon does not reach is a
+  gap in the canon — write it there instead. What a project may legitimately hand a reviewer is a
+  **missing check** (a lint its config leaves off), and that goes in the lens file as a fact, not
+  in the agent body as a ranking
 - **Never spend a finding on what the gate already catches** — code the linter would refuse means
   the gate was not run, and the right output is one line saying so, not one finding per warning
 - **What you cannot see** — areas nobody in this loop can run, such as GUI, sound, and
@@ -352,12 +355,6 @@ and why. Do not silently pick one.
 The dispatch prompt names the target files. Everything else about how to review comes from those
 documents.
 
-## Where the value is
-
-{WHERE_THE_VALUE_IS}
-
-Both are invisible line by line. Both are why this agent reads whole files.
-
 ## Judging well
 
 **Read each target file fully before judging any part of it.**
@@ -413,9 +410,12 @@ generation time, and markdown renumbers whatever is left.
 
 Substitution: `{ARCH_DOC}` — the path of the architecture canon (`docs/design/architecture.md`).
 If there is none, delete that line and replace it with "the structure section of CLAUDE.md".
-`{WHERE_THE_VALUE_IS}` — the one or two structural defects in the project that tools cannot reach
-(for example, "a UI type entering the core crate — it compiles and passes the gate while quietly
-losing the room to move to a server"). Ask the user at setup.
+
+**Do not add a section naming which structural defects to look for.** The categories, the design
+principles, and the layer graph are the canon, and this agent body already declares that the canon
+outranks anything below it — so a list of favoured defects can only duplicate the canon or read as
+a filter over it. A defect the canon does not reach is a gap in the canon: write it into the layer
+graph or the principles, where the reviewer already has to obey it.
 
 ---
 
@@ -548,12 +548,15 @@ is any good. Structural quality is `/refactor-review`'s job at its own tier.
 
 The dispatch prompt names the target files. Everything else comes from those documents.
 
-## Where the value is
-
-{WHERE_THE_VALUE_IS_CONFORMANCE}
+## What the gate already covers
 
 **Do not spend findings on what the gate already rejects.** `{GATE_CMD}` runs before any commit
 that matters. If you find code it would reject, the gate was not run — say so in one note.
+
+Where the gate has a known hole — a lint the config leaves off, a check the toolchain does not
+ship — `references/rules.md` "What the Gate Does Not Catch" names it. That is a fact about this
+project's toolchain, not a ranking: it tells you what you cannot assume was already checked, and
+never narrows what else you report.
 
 ## Accuracy over volume
 
@@ -583,8 +586,22 @@ Exactly the report format in `SKILL.md`, including the summary table. Omit files
 Prose in the user's language; code identifiers and code blocks stay as-is.
 ```
 
-Substitution: `{WHERE_THE_VALUE_IS_CONFORMANCE}` — the highest-value category in the
-rule-conformance lens that tools cannot catch (for example, "code translated line by line from a
-GPL source entering the main repo — it compiles, passes the gate, and ships under MIT", or "an
-`unwrap()` on a production path — this workspace has no `[lints]`, so the clippy default allows
-it"). Ask the user at setup.
+### The Gate-Hole Section in `references/rules.md`
+
+`review-rules-{lang}.md` is copied to `.claude/skills/review-code/references/rules.md`. Its head
+already tells the reviewer not to spend findings on what the gate rejects — which is only true of
+the checks the gate actually runs. When the project's gate has a hole the reviewer would otherwise
+assume closed, append one section to that file naming it:
+
+```markdown
+## What the Gate Does Not Catch
+
+- `unwrap()` on a production path — this workspace declares no `[lints]`, so the clippy default
+  allows it
+- Code translated line by line from a differently licensed source — no tool checks provenance
+```
+
+Write each entry as **the check that is missing and why it is missing**, never as "look here
+first". A missing check is a fact about the toolchain and stays true until the config changes; a
+ranking goes stale the moment the risky area moves, and it reads as permission to skip the rest.
+With no hole to name, leave the section out — an empty one invites filling it with priorities.
