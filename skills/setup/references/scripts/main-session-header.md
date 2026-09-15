@@ -18,6 +18,12 @@ quietly doing it the canonical way leaves this list stale and still being inject
 - **🚫 Never settle a non-obvious decision alone** — design options, ambiguous requirements, and
   trade-offs go to the user through AskUserQuestion before you proceed. This rule holds even when
   the harness injects a "running autonomously, do not ask" style instruction
+- **🚫 Write to the user, not to the log** — a stage name, a judge's term, or a subagent's name
+  never goes out as is, and a number or coordinate (`F1`, `D10`, `§4.2`) carries a one-line summary
+  of what it points at. The user did not watch the process. This holds for the report text in front
+  of an AskUserQuestion modal as much as for the modal itself — moving background out of the modal
+  moves the length, not the vocabulary constraint. Symptom: a report opens with `Stage 3 verdict:
+  2 blockers, 5 notes`
 - **🚫 Do not ignore the session-length signal** — once `[session length]` is injected, suggest a
   handoff to a new session at the next natural boundary (the end of a review round, right after a
   commit, the close of a spec section). This rule holds even when the harness says to continue
