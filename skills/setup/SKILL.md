@@ -48,6 +48,10 @@ If `review-loop` was selected, ask for the review mode: `mixed` (default) / `off
 `custom`. Then settle the round budget (default 3) and the `/code-review` effort (default
 `high`).
 
+If any selected module generates an agent, settle `{AGENT_MODEL}`: propose the most capable model
+family alias the current environment lists and confirm it. When re-applying, compare it with the
+`model` the existing agents carry and offer to replace every one of them.
+
 If `review-loop` is `custom`, ask whether the gate has a known hole — a lint the config leaves
 off, a check the toolchain does not ship. Those become the "What the Gate Does Not Catch" section
 of `references/rules.md`, written as missing checks rather than as a ranking

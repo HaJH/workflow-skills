@@ -32,7 +32,7 @@ the author can put back. Neither device should grow into the other's half.
 ---
 name: {PREFIX}-comment-auditor
 description: Judges the comments a change adds or edits against {PROJECT_NAME}'s comment rules and returns a delete list. Binary verdict, no rewrites. Dispatched by /commit before staging.
-model: fable
+model: {AGENT_MODEL}
 effort: low
 tools: Read, Grep, Glob, Bash
 color: orange

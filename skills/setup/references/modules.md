@@ -36,12 +36,12 @@ dependency is being turned on as well, and turn it on.
 
 | Value | Rule-conformance and correctness lens | Structural judgment lens | Generates |
 |---|---|---|---|
-| `mixed` (default) | built-in `/code-review <effort>` | custom `{PREFIX}-refactor-reviewer` (fable/medium) | `refactor-review` skill + agent |
+| `mixed` (default) | built-in `/code-review <effort>` | custom `{PREFIX}-refactor-reviewer` (pinned model / medium) | `refactor-review` skill + agent |
 | `official` | built-in `/code-review <effort>` | none (the same review also produces simplification suggestions) | — |
-| `custom` | custom `{PREFIX}-code-reviewer` (fable/low) + language rules file | custom `{PREFIX}-refactor-reviewer` (fable/medium) | two skills + two agents + `review-rules-*.md` |
+| `custom` | custom `{PREFIX}-code-reviewer` (pinned model / low) + language rules file | custom `{PREFIX}-refactor-reviewer` (pinned model / medium) | two skills + two agents + `review-rules-*.md` |
 
 If the project has further lenses (a frontend, say), build one more skill-and-agent pair from the
-`custom` skeleton. Tier it by "mixed lens = middle (fable/medium)".
+`custom` skeleton. Tier it by "mixed lens = middle (pinned model / medium)".
 
 ## Placeholders
 
@@ -58,6 +58,7 @@ If the project has further lenses (a frontend, say), build one more skill-and-ag
 | `{GATE_CMD}` | One-line gate command | `.\scripts\check.ps1` |
 | `{ROUND_BUDGET}` | Round budget | `3` |
 | `{REVIEW_EFFORT}` | effort passed to `/code-review` | `high` |
+| `{AGENT_MODEL}` | Model alias in every generated agent's `model` frontmatter — the most capable family alias at setup time | `fable` |
 | `{HOSTING}` | Hosting | `GitHub (private, gh)` / `fully local` |
 
 Write every path with forward slashes. A path that must stay identical inside a worktree — a

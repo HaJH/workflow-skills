@@ -42,6 +42,8 @@ go wrong on a single change. Updating them is not the fix.
 - Instead of a number, write the **means to recount** — a command, a script, a search term.
 - What the decision needs is usually not the number but the **property** ("most of them are X").
 - The exception is a record fixed to a point in time — commit message, report, spec.
+- Model names go wrong the same way, on a release instead of an edit. Name a model only in an
+  agent's `model` frontmatter; prose and tables say "the pinned model" and state the effort.
 
 Symptom: the count in the document differs from reality. "Both", "the only", "all of them" have
 become false.
