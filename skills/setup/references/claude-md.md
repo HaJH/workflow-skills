@@ -2,7 +2,7 @@
 
 Generate the following as `{PROJECT_PATH}/CLAUDE.md`. Substitute the placeholders and process the
 module blocks. Do not duplicate rules the user's global `~/.claude/CLAUDE.md` already carries
-(end-of-turn reporting, AskUserQuestion confirmation, no auto-generated commit message trailers).
+(end-of-turn reporting, confirming decisions with the user, no auto-generated commit message trailers).
 
 ```markdown
 # {PROJECT_NAME}
@@ -58,10 +58,14 @@ module blocks. Do not duplicate rules the user's global `~/.claude/CLAUDE.md` al
 ## Agent Behavior
 
 - **Start gate — investigating is not starting**: the output of a turn that asks a question or
-  raises a problem is an investigation report plus a proposed direction. Change files only after
-  the user permits it. The exception is a precisely specified trivial single fix
+  raises a problem is an investigation report plus a proposed direction. Moving the work forward
+  — changing files, giving work instructions — starts only after the user permits it. When you
+  cannot tell whether a message is a question or an instruction to proceed, take it as a question:
+  answer it and ask whether to proceed. The exception is a precisely specified trivial single fix the user asked for
 - Feature branch work proceeds without confirmation. **Always confirm**: merging to main, design
-  changes
+  changes. An instruction to "proceed on your own" does not shorten the procedure — follow it and
+  pass without asking only where no user decision is needed; decisions and the confirmations the
+  procedure sets still go to the user
 <!-- module:commit-rhythm -->
 - **Dev commits at every logical unit.** Commit a broken in-progress state with a `wip:` prefix
   and do not demand a gate for it. The gate applies only to HEAD at report, review, and merge
