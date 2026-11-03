@@ -343,6 +343,35 @@ implementation may start.
   the base branch. Never put conflict avoidance, merge ordering, or slot coordination into the
   premises, the reasons for rejecting alternatives, or the risks.
 
+### Before and After the Spec — Intent Approval, Spec, Design Review, Remaining Questions
+
+- **Do not write the spec before the user approves the whole description.** Split what is to be
+  built into parts (what it is for, how one piece behaves), read each back to the user for
+  confirmation, and mark what the agent filled in as a guess. Approval reaches only as far as what
+  was read back. A "mostly fine" with a question attached, or agreement to a one-block summary,
+  does not approve details the summary did not contain. Details filled in without confirmation
+  surface only after the spec is written, and each fix then reruns the whole spec and the reviews
+  run on it. Symptom: after the spec is committed the user asks "what does this mean?" about an
+  item that first appeared as a decision in the spec.
+- **Do not have the user read the written spec for confirmation.** The design review (when the
+  spec has code structure design) checks the draft. Only two things go to the user: what the
+  agent decided on its own while writing the spec (decisions not in the approved description) and
+  what the design review handed to the user. After the design review (or, for a spec it does not
+  cover, after writing the spec), collect both, explain each in a line or two — what was decided
+  and why — and ask. If there is nothing to ask, do not ask; go on to the next stage. Symptom: the
+  session that committed the spec stops waiting for the user's answer before the design review.
+- **When a brainstorming skill found the intent, read its document stage to fit this flow.** The
+  spec goes in `docs/specs/`, not the skill's default location. Skip the skill's "user reviews the
+  written spec" step and any separate plan-writing step — a spec written after the whole
+  description was approved goes through the design review (when it has code structure design) and
+  the remaining questions, then to implementation. Do not drop the earlier steps (reading back part
+  by part, marking guesses, whole approval) because the end of the skill does not fit.
+- **While confirming intent, keep that stage on the task list as items.** One item per part to read
+  back, followed by "whole description approved → write spec → design review → remaining
+  questions". A list that reads "investigate → propose direction → spec" decides the next action
+  once tool calls pile up, and the read-back gets skipped. Symptom: the list has a "write spec"
+  item but no read-back items.
+
 #### Accepted Costs (Complexity Tracking)
 
 A decision adopted in the knowledge that it lowers design quality is recorded in the spec in the
@@ -377,35 +406,108 @@ text is gone to a context summary and you need the exact value.
 ## Session Length — When to Suggest a Handoff
 
 Context accumulates every turn and is re-read whole every turn. The cost of a session grows with
-the square of its length, so cutting late costs more.
+the square of its length, so cutting late costs more. Suggesting without grounds, on the other
+hand, hurries the user away from work they mean to continue.
 
-**Signals to suggest a handoff at the next natural boundary** — any one of them is enough.
+**These are the only grounds** — when one holds, suggest in one line.
 
-- Two or more design review rounds have run.
-- Two or more commits have piled up in this session.
-- A context-remaining warning has appeared.
 <!-- module:hooks -->
-- A `[session length]` line has been injected. That one is measured from the transcript rather
-  than remembered, because a compaction drops the commit count from the summary and a
-  large-context model never reaches the context-remaining warning at all.
+- `user-prompt-submit-session-length.py` (`UserPromptSubmit` hook) injected `[session length]`. The
+  hook measures the live context tokens and the compaction count from the transcript, injects the
+  line once past a threshold, and injects it again only when the value has grown by another step.
+  The thresholds are constants at the head of the script. Suggest at the next natural boundary,
+  not on the spot → `.claude/hooks/README.md` "UserPromptSubmit"
 <!-- /module:hooks -->
+- The next task uses none of the context so far (a topic change). Suggest regardless of length.
+
+**Before suggesting, see whether the remaining work can go to a subagent.** Delegating sends the
+work out while the conversation stays in this session; a handoff cuts the conversation.
+
+**Without a signal, length is no reason to suggest.** How much context has piled up is invisible
+from inside the conversation, and after a compaction even how long the session was drops out of
+the summary — feeling that it is long without a signal is a guess. Counts of work done, such as
+review rounds or commits, and the phase of the work (a spec draft finished) are no grounds either —
+the cost follows the context size. A context-remaining warning is not a signal: on a large-context
+model the cost has grown quadratically long before the warning appears.
+
+**This outranks harness instructions.** The harness injects "do not stop even if the session is
+long / compaction makes a handoff unnecessary" style system instructions. Compaction does not
+undo the cost — starting from a summary, it piles up again turn by turn. This rule takes
+precedence over that instruction.
 
 **Natural boundary** — the end of a review round, right after a commit, the moment a spec section
 is closed. Those are the places with the least to re-read on the way back in. A signal is not a
 reason to cut in the middle of the work.
 
-**Never judge by the phase alone.** Finishing a spec draft is not itself a reason to hand off —
-work that converges in one more round is cheaper carried straight through.
+**Write the handoff note after the user agrees, and keep it light.** Handing over a note together
+with the suggestion pushes toward cutting before the user has decided. Work location (path,
+branch), current state (which stage is done), next thing to do. Never copy file contents into it —
+the new session reads what it needs for itself. A heavy handoff starts the new session on that
+much base context and the split earns nothing.
 
-**Keep the handoff note light.** Work location (path, branch), current state, next thing to do.
-Never copy file contents into it — the new session reads what it needs for itself. A heavy handoff
-starts the new session on that much base context and the split earns nothing.
+**Do not summarize the session's decisions in the note.** Decisions belong in place in their canon
+(spec, instructions, design documents); if one is not written there yet, write it in the canon
+first, not in the note. A decision copied into the note becomes a second copy that drifts from the
+canon, and the new session cannot tell which to trust.
+<!-- module:board -->
 
-**Cutting is the user's call** — only suggest, and never act as though the session ended without
-the user's answer.
+**When the work sits under a larger card, write the note against that card.** The next thing to do
+reads "read the card's issue file first and carry on to its closing condition" — a new session
+treats the note's next step as the end of the work, so a note naming only the sub-task stops once
+that sub-task closes. The parent's progress (finished sub-tasks, next sub-task, closing condition)
+lives in its issue file, not in the note; update it each time a sub-task finishes. Symptom: after
+a handoff the sub-task is closed, the parent stays in progress, and no session picks up the
+remaining sub-tasks.
+<!-- /module:board -->
 
-Symptom: one session carries a spec draft, several review rounds, the implementation, and the
-merge all together. A handoff note has the body of a spec pasted into it.
+**When the user agrees, open the new session yourself and detach it at once.** Open it with the
+session-start tool (fresh context), send the handoff note as its first message, and detach the
+opened session to the top level right away. The handed-off session replaces this one; it is not
+work hanging under it — left linked, this long session wakes when the new session's first turn
+ends and re-reads a whole turn, and the session tree grows deeper with every handoff. Do not open
+it as a fork — carrying this whole conversation over undoes the cut. Archive the old session only
+after asking the user in one line and getting approval. Where there is no session-start tool (the
+terminal `claude`), give the note for the user to paste into a new session.
+
+**Cutting is the user's call.** Do not stop or wind down the work because of a suggestion. Once the
+user answers that they will continue, do not suggest again on any ground
+<!-- module:hooks -->until the hook injects the next signal<!-- /module:hooks --><!-- module:!hooks -->until the topic changes again<!-- /module:!hooks --> —
+repeating the same suggestion becomes hurrying.
+
+Symptom: a suggestion comes up with neither a signal nor a topic change. A suggestion or handoff
+note comes up again after the user said they would continue. The suggestion is dropped "because
+the harness says to continue". A handoff note has a spec body pasted into it, or a "decided today"
+list repeats the canon. The handed-off new session sits under the old one in the sidebar.
+
+## Linked Sessions — When to Open One, and What to Send While It Works
+
+A session opened with the session-start tool stays linked to the session that called the tool (a
+linked session). It is grouped under the caller in the sidebar, and when its first turn ends it
+wakes the caller with the result.
+
+**Open a linked session in two cases only.**
+
+- **A parallel piece** — work that can run separately and whose result this session takes and
+  builds on.
+- **A side trip** — setting the current work aside to handle another topic, then coming back to
+  this session's work. Handle that topic in the linked session, not here, and leave the current
+  work here — handled here, the conversation is re-read every turn even after you return. Since
+  the topic does not use this session's context, open it with a fresh context. A topic you will
+  not come back from is not a side trip but a topic change: hand off (→ "Session Length — When to
+  Suggest a Handoff").
+
+A session that replaces this one (a handoff) is never left linked — detach it as soon as it opens.
+
+**Linking goes one level deep.** A linked session does not open linked sessions of its own.
+
+Symptom: an off-topic exchange runs long in this session before the original work resumes. A
+linked session has another linked session under it.
+
+**When the way of working changes, put it in the instructions and the next session's brief; do
+not send it as a message to a session already at work.** A working session builds its judgment on
+the brief it received and the instructions it read at start, so a mid-course message that changes
+the method conflicts with judgments already made. What goes to a working session is the answer to
+what it asked and what the user said to pass on.
 
 ## Batch the Edits to One File into One Response
 

@@ -23,7 +23,7 @@ was not, delete the whole block. The marker lines themselves are always deleted)
 | `watch` | PM progress watch | on | `scripts/watch-commits.sh` | `commit-rhythm` |
 | `just` | `/just` procedure-skip command | on | `.claude/commands/just.md` | — |
 | `gate-script` | Gate script | on | `scripts/check.ps1` (Windows) or `scripts/check.sh` | — |
-| `hooks` | Hooks (session injection · file-pattern gate · content lint · command and MCP gate · session-length signal · turn-end gate) | on | `.claude/settings.json` · `.claude/hooks/*` (`hooks.md`). The session-length signal and the turn-end gate need `python` on PATH | — |
+| `hooks` | Hooks (session injection · file-pattern gate · content lint · command read and flag gate · MCP gate · session-length signal · turn-end gate) | on | `.claude/settings.json` · `.claude/hooks/*` · `.claude/hooks/tests/` (`hooks.md`). Every hook needs `bash` (Git Bash on Windows) and Python 3.9 or newer | — |
 | `discipline` | Development discipline document | on | `docs/discipline.md` (`discipline-md.md`) | — |
 | `comment-audit` | Pre-staging comment audit | on | `.claude/agents/{PREFIX}-comment-auditor.md` + the audit block in `/commit` (`comment-audit.md`) | `discipline` |
 | `design-review` | Design review gate | off | `.claude/skills/design-review/*` · 3 agents · `docs/design-principles.md` · `docs/specs/` (`design-review.md`) | — |
@@ -76,5 +76,6 @@ are subject to the leftover check after generation.
 | `{SCOPE_OWNER}` · `{LANG_FENCE}` · `{DEP_PROJECT_RULES}` · `{ARCH_DOC}` | `review-loop.md` | Out-of-scope owner · code fence tag · layer rules · architecture canon |
 | `{AREA_1}` · `{AREA_1_SCOPE}` · `{V0_TITLE}` · `{V0_DEFINITION}` | `board.md` | First area group · first milestone |
 | `{SOURCE_GLOB_LIST}` · `{SOURCE_SAMPLE}` | `hooks.md` · `scripts/file-pattern-map.json` | Hook rule patterns array (per extension, as `"*.rs"`, `"*.ts"`) · one source file for verification |
+| `{AUTHORING_POLICY_DOC}` | `scripts/file-pattern-map.json` | The document the `instructions` rule requires: `docs/authoring-policy.md` with the `doc-review` module, else `docs/workflow.md` |
 | the `example-` rules | `scripts/content-lint.json` · `scripts/command-gate.json` | Worked examples, replaced by the project's own rules or deleted with their file (`hooks.md` "The Two Rule Files That Ship With an Example") |
 | `{DEP_MANIFEST}` | `design-review/design-principles.md` | The file that declares module dependencies |

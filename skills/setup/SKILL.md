@@ -32,6 +32,9 @@ Confirm with the user (`references/modules.md` "Placeholders"):
   That Ship With an Example")
 - [hooks] Any command that must go through a slash command rather than be typed raw, and any MCP
   tool call that must carry a field
+- [hooks] Any command that must not run before a document not injected at session start has been
+  read — a release guide before tagging, a deploy guide before deploying (`references/hooks.md`
+  "Why a command read gate")
 - Additional conventions
 
 When re-applying to an existing project, read the current `CLAUDE.md`, `docs/workflow.md`, and
@@ -92,9 +95,9 @@ writing project-specific sections, no anecdotes, dates, or counted values.
 
 ### 4. Verify
 
-- [hooks] Actually run the commands in `references/hooks.md` "Verification". Confirm with
-  `Test-Path` that every `requires.reads` path exists — a typo means nobody can edit the files
-  that rule matches
+- [hooks] Actually run the tests and the commands in `references/hooks.md` "Verification". Confirm
+  that every `requires.reads` path exists — a typo means nobody can edit the files that rule
+  matches, or run the command it gates
 - [board] `bash scripts/board-ready.sh` exits 0
 - [gate-script] `scripts/check.ps1` passes on the current tree, or the failure is confirmed to be
   the project state (unfinished code) and not the script
@@ -124,7 +127,7 @@ git commit -m "Add project workflow setup"
 - **Subagents do not inherit CLAUDE.md.** The agent body points at the canonical document by path
   and the hook injects the header
 - **A rule that goes unread is a rule that keeps getting violated.** The file-pattern gate forces
-  a Read before an edit
+  a Read before an edit, and the command read gate before the command a process document governs
 - **Reading the rule does not stop the violation from being typed.** Mechanical violations are
   denied at write time by the content lint; the ones that have to be weighed go to the comment
   audit at commit time, where a wrong call costs one line instead of a permanently blocked file.
@@ -133,7 +136,8 @@ git commit -m "Add project workflow setup"
   made mid-flow, the slash-command file holding its required arguments is not in context, and the
   argument goes missing silently — that is what the command and MCP gates are for
 - **A signal the agent has to remember is gone when it matters.** Session length is measured from
-  the transcript because compaction drops the count and a large-context model never warns
+  the transcript because context size is not visible inside the conversation and a large-context
+  model never warns
 - **A promise is not progress.** A turn ending on "I'll continue from here" with no resume
   condition stops the loop silently and the user has to prod it back; the turn-end gate makes that
   ending cost one line instead

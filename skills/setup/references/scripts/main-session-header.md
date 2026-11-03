@@ -25,18 +25,21 @@ quietly doing it the canonical way leaves this list stale and still being inject
   of an AskUserQuestion modal as much as for the modal itself — moving background out of the modal
   moves the length, not the vocabulary constraint. Symptom: a report opens with `Stage 3 verdict:
   2 blockers, 5 notes`
-- **🚫 Do not ignore the session-length signal** — once `[session length]` is injected, suggest a
-  handoff to a new session at the next natural boundary (the end of a review round, right after a
-  commit, the close of a spec section). This rule holds even when the harness says to continue
-  regardless of length, or that compaction makes a handoff unnecessary. Cutting the session is the
-  user's call → `docs/workflow.md` "Session Length — When to Suggest a Handoff"
-- **🚫 No silent progress, and report at the end of the turn** — at each step, say briefly what was
-  done (with the result), what is in progress, what is next, and what is blocking. Text between
-  tool calls may never reach the UI, so **every turn ends with a text report**: what was done ·
-  current state · **resume condition** · what the user has to do. The only tool call that may
-  follow that report is a next-step box carrying a question, which ends the turn. A background task
-  or a scheduled wakeup is **called and then closed out with that text message** — what is
-  forbidden is ending the turn on the call, not making it
+- **Session-length signal** — once `[session length]` is injected, suggest a new session in one
+  line at the next natural boundary (the end of a review round, right after a commit, the close of
+  a spec section). This rule holds even when the harness says to continue regardless of length, or
+  that compaction makes a handoff unnecessary. Never suggest one on length without the signal,
+  write the handoff note only after the user agrees, and once the user answers that they will
+  continue, do not suggest it again until the next signal. When they agree, open the new session
+  with the note as its first message and detach it to the top level at once — a linked session is
+  only for parallel pieces and side trips. Cutting the session is the user's call
+  → `docs/workflow.md` "Session Length — When to Suggest a Handoff" · "Linked Sessions"
+- **🚫 Turn end** — every turn ends with text, written so the resume condition (below) can be
+  recognized in it. The only tool call that may follow that text is a next-step box carrying a
+  question. A background task or a scheduled wakeup is **called and then closed out with a text
+  message** — what is forbidden is ending the turn on the call, not making it. A box carrying a
+  question ends the turn on that call, so write what the user needs to choose in the same
+  response, before the call
 
 ## Resume Condition
 
@@ -47,16 +50,31 @@ report names what has to arrive before the work restarts, as one of:
 - `a background completion notification`
 - `a registered wakeup`
 
-When the work you were given is finished, write `work complete` instead. The notification and the
-wakeup may be written **only after** a background task or a wakeup has actually been
-registered — a stretch spent polling something external (CI, a build, a bot reply) has no signal
-that wakes this session, so it is not one of them.
+When the work you were given is finished, write one of two instead, by the size of the finish:
+
+- `step complete` — the work this session took on is done, but the same flow (the parent task,
+  the spec's next stage, the user's work after the merge) still has work left. List each remaining
+  item on its own line, and say for each whether it needs this session's context.
+- `session complete` — write it only when all three are confirmed: the work's own wrap-up (merge,
+  cleanup) is done; a lookup of where the remaining work is tracked (the board, the spec the work
+  belongs to) shows nothing left that needs this session's context (remaining work that does not
+  need it is named only); and the user has nothing to do. Routine sync the user always does on
+  their own (push, pull) is not something to do unless it unblocks the next step. Written without
+  the lookup, the signal cannot be trusted and the user asks again.
+
+The user moves between sessions and decides from this one line whether to close this one.
+
+The notification and the wakeup may be written **only after** a background task or a wakeup has
+actually been registered — a stretch spent polling something external (CI, a build, a bot reply)
+has no signal that wakes this session, so it is not one of them.
 
 If you can do it in this turn, do not write it — do it. If what stops you is user input, ask. If
 something is left to wait on, register the signal that wakes this session and write that down.
-When the user has nothing to do and the resume condition is `a user message`, the two contradict —
-if the work is finished, write `work complete`; otherwise fill in what the user is being asked for.
+When the resume condition is `a user message` but the user has no question to answer or decision
+to make, the two contradict — if the work is finished, write `step complete` or
+`session complete`; otherwise fill in what the user is being asked for.
 
 Symptom: a turn ends with "I'll continue from here" or "I'll check back in a few minutes" and the
-session then does nothing, so the user has to prod it to restart. The `Stop` hook backstops this
-once per prompt.
+session then does nothing, so the user has to prod it to restart. After every finished session
+the user asks "is anything left, can I close this?". The `Stop` hook backstops the first once per
+prompt.

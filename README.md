@@ -14,10 +14,12 @@ Set up a local PM-Dev-Reviewer development workflow for a project: CLAUDE.md, wo
 |---|---|
 | `SessionStart` · `SubagentStart` | Project context injection, layered so a subagent gets the header a subagent can act on |
 | `PreToolUse` (`Edit\|Write\|Read\|Skill`) | File-pattern gate (forces the canonical Read before an edit) + content lint (denies a write carrying a mechanical violation) |
-| `PreToolUse` (`Bash\|PowerShell`) | Command gate — denies a raw command that omits a required flag |
+| `PreToolUse` (`Bash\|PowerShell`) | Command gate — denies a command run before the process document that governs it was read, or a raw command that omits a required flag |
 | `PreToolUse` (`mcp__<server>__<tool>`) | MCP tool gate — denies a call that omits a required field |
 | `UserPromptSubmit` | Session-length signal, measured from the transcript |
 | `Stop` | Turn-end gate — blocks a turn that promises a next action but names no resume condition |
+
+The hooks are Python, launched through bash, so they run the same on Windows (Git Bash) and macOS/Linux. They need Python 3.9 or newer.
 
 ## Install
 

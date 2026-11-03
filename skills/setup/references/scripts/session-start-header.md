@@ -41,7 +41,9 @@ leaves this list stale and still being injected._ Demote an item once the violat
 
 ## Detailed Documents — Read When Entering the Work (Not Injected Whole Every Session)
 
-- **Workflow, roles, loop, reports, merge** → `docs/workflow.md` _(injected for the main session)_
+- **Workflow, roles, loop, reports, merge** → `docs/workflow.md` _(not injected — the hooks ask
+  for a `Read` of it before a commit, worktree, or merge command and before a spec or design
+  document edit; read it yourself when entering a review round, a report, or a handoff)_
 <!-- module:discipline -->
 - **Development discipline (observation, tests, prose, comments)** → `docs/discipline.md`
 <!-- /module:discipline -->

@@ -1,5 +1,15 @@
 {
  "version": 1,
+ "commandRules": [
+  {
+   "id": "git-write",
+   "commands": ["git commit", "git worktree add", "git merge"],
+   "requires": {
+    "reads": ["docs/workflow.md"]
+   },
+   "message": "Commit, worktree, merge: branch strategy, worktree path convention, commit rhythm, and merge rules are in the loaded docs/workflow.md."
+  }
+ ],
  "rules": [
   {
    "id": "source",
@@ -26,7 +36,10 @@
     ".claude/commands/*.md",
     "*/.claude/commands/*.md"
    ],
-   "message": "Instruction document: rules + symptoms only, no dated cases, no counts, one rule in one place, section titles not numbers. See docs/workflow.md (Instruction Authoring Policy section) before editing. Once a section is rewritten, run /doc-review <path> section \"<title>\" before committing."
+   "requires": {
+    "reads": ["{AUTHORING_POLICY_DOC}"]
+   },
+   "message": "Instruction document: the authoring policy is in the loaded {AUTHORING_POLICY_DOC}. Once a section is rewritten, run /doc-review <path> section \"<title>\" before committing."
   },
   {
    "id": "hook-config",
@@ -34,8 +47,6 @@
     "file-pattern-map.json",
     "content-lint.json",
     "command-gate.json",
-    ".claude/hooks/*.ps1",
-    "*/.claude/hooks/*.ps1",
     ".claude/hooks/*.sh",
     "*/.claude/hooks/*.sh",
     ".claude/hooks/*.py",
@@ -50,7 +61,19 @@
    "id": "specs",
    "patterns": ["*.md"],
    "scopePath": ["docs/specs/"],
-   "message": "Spec: if it contains code-structure design (types, modules, interfaces, dependencies), run /design-review before starting implementation. The gate blocks implementation, not the commit -- commit each round and let the head Status line carry its verdict. Blockers are the user's call; accepted decisions go in the spec's Accepted Costs table."
+   "requires": {
+    "reads": ["docs/workflow.md"]
+   },
+   "message": "Spec: the order around a spec (intent approval, spec, design review, remaining questions) and the writing rules are in the loaded docs/workflow.md. Code-structure design runs /design-review before implementation starts."
+  },
+  {
+   "id": "design-docs",
+   "patterns": ["*.md"],
+   "scopePath": ["docs/design/"],
+   "requires": {
+    "reads": ["docs/workflow.md"]
+   },
+   "message": "Design document: one per subsystem, edited by follow-up issues, status line draft/settled/implemented -- canon in the loaded docs/workflow.md \"Design Documents\"."
   },
   {
    "id": "board",

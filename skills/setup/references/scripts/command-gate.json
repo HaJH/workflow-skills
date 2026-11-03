@@ -3,7 +3,7 @@
  "commands": [
   {
    "id": "example-pr-create",
-   "match": "gh\\s+pr\\s+create",
+   "commands": ["gh pr create"],
    "requiredFlags": [
     { "flag": "--base", "why": "a PR opened against the wrong default branch has to be recreated" },
     { "flag": "--repo", "why": "do not depend on the current directory" }

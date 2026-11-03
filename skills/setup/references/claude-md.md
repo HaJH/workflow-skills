@@ -13,6 +13,15 @@ module blocks. Do not duplicate rules the user's global `~/.claude/CLAUDE.md` al
 
 - Respond and plan in the user's language. Write code, comments, and documents in English
 - Windows is the baseline
+- **Make no exceptions**: whether it is a plan or code, build the new thing along the one path the
+  existing rules already cover. An exception is a branch that applies a rule differently to only
+  some paths or cases among the things the rule covers — a change that applies equally to
+  everything the rule covers is not an exception but a fix to that rule, made in its canon or its
+  shared handling. When the one-path result fails to preserve something or looks at odds with the
+  intent, do not block it with an exception branch; **ask the user, with the impact, whether to
+  accept it as a cost or to change the rule**. Exceptions, as they pile up, make behavior
+  unpredictable from the rules alone and become grounds for the next exception; closing an
+  off-target result alone as "per the rules" buries the gap in the rule
 - **Instruction and skill documents carry directives and symptoms only.** No anecdotes tied to a
   date or issue ID, no measurements, no provenance. Never pin a counted value
   → `docs/workflow.md` "Instruction Authoring Policy"
@@ -22,9 +31,21 @@ module blocks. Do not duplicate rules the user's global `~/.claude/CLAUDE.md` al
 - **Batch the edits to one file into one response** — decide every place to fix first, then issue
   the non-overlapping `Edit` calls together. Symptom: `Edit` calls to the same file go out back to
   back
-- **Suggest a handoff once the session gets long** — at the next natural boundary, hand the work
-  to a new session with a light note. Cutting is the user's call; suggest, and never act as though
-  the session ended without an answer → `docs/workflow.md` "Session Length"
+- **Suggest a new session only when the topic changes<!-- module:hooks --> or the length signal
+  appears<!-- /module:hooks -->, and when the user agrees, open it yourself and detach it** — when
+  the next task uses none of the context so far, suggest one regardless of length<!-- module:hooks -->;
+  once the `UserPromptSubmit` hook injects `[session length]`, suggest one at the next natural
+  boundary (end of a review round, right after a commit, close of a spec section), not on the
+  spot<!-- /module:hooks -->. Context size is invisible from inside the conversation, so never
+  suggest one because the session feels long — the number of review rounds is no ground either.
+  Before suggesting, see whether the remaining work can go to a subagent — delegating keeps the
+  conversation in one session, a handoff cuts it. **Write the handoff note only after the user
+  agrees**, light enough to paste as the new session's first message (work location, current
+  state, next thing to do). Once the user answers that they will continue, do not suggest it again
+  <!-- module:hooks -->until the hook injects the next signal<!-- /module:hooks --><!-- module:!hooks -->unless the topic changes again<!-- /module:!hooks -->.
+  Cutting is the user's call → `docs/workflow.md` "Session Length — When to Suggest a Handoff" ·
+  "Linked Sessions". Symptom: one short edit carries the whole context of an earlier topic; a
+  suggestion or handoff note comes up again after the user said they would continue
 
 ## Git
 
@@ -120,7 +141,11 @@ decision. The `/review-*` skills are **for targeted ad-hoc checks only** (argume
 ## Design Review Gate
 
 For a change of size (structural change, new subsystem, interface change), write a spec in
-`docs/specs/` before implementing, and if the spec contains code structure design, run
+`docs/specs/` before implementing. **Write the spec only after the user approves the whole
+description, and do not have the user read the written spec for confirmation** — the design review
+checks the draft, and the user is asked only about what the agent decided on its own and what the
+review handed over → `docs/workflow.md` "Before and After the Spec". If the spec contains code
+structure design, run
 `/design-review` before starting implementation. **The gate blocks implementation, not the
 commit** — commit the spec after every round, and the `Status` line at its head carries that
 round's verdict. **Overriding a Blocker is the user's decision**, and an accepted decision is
