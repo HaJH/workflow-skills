@@ -145,7 +145,10 @@ follow-up plans, commented-out code.
 Three questions right before writing one:
 
 1. **Does this comment go wrong when another file changes?** Then do not write it. If that "why"
-   is genuinely needed, move it into code (a name, an extracted function, an assertion)
+   is genuinely needed, move it into code (a name, an extracted function, an assertion). The fixed
+   `Consumers:` notation ("Name Them, Do Not Count Them") is outside this question — it goes wrong
+   when a call site elsewhere changes, but it is a list one `grep` reproduces, and review reconciles
+   it against that `grep`
 2. **Is it answering a review finding?** That rationale belongs in the report's Response. Written
    into the code as well, there are now two canons
 3. **Is it because everything around it has one?** That is not a reason to comply

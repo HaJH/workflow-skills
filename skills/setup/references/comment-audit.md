@@ -76,7 +76,8 @@ Three checks catch what the categories let through. Apply all three to every com
 
 1. **Does it go wrong when another file changes?** Then delete. A "why" that reaches across files
    is exactly the comment that rots first. If that "why" is genuinely needed it belongs in the
-   code - a name, an extracted function, an assertion - not in a comment.
+   code - a name, an extracted function, an assertion - not in a comment. The fixed `Consumers:`
+   notation is outside this check - the canon section says why.
 2. **Is it answering a review finding?** Then delete. That reasoning already has a home in the
    report's Response.
 3. **Is the surrounding code commented the same way?** That is not a reason to keep. Neighbouring
