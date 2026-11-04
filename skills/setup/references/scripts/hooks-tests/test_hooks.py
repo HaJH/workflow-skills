@@ -59,10 +59,12 @@ GATE = {
 }
 
 
-@unittest.skipUnless(BASH and LAUNCHER, 'bash and scripts/run-python.sh are required to run the hooks the way '
-                                        'settings.json does')
+@unittest.skipUnless(BASH, 'bash is required to run the hooks the way settings.json does')
 class HookTests(unittest.TestCase):
     def setUp(self):
+        # A missing launcher is a broken install, not an unsupported environment: every
+        # settings.json command runs through it, so fail instead of skipping.
+        self.assertIsNotNone(LAUNCHER, 'scripts/run-python.sh is missing -- every hook command runs through it')
         self.tmp = tempfile.TemporaryDirectory(prefix='hook 한글 space ')
         self.addCleanup(self.tmp.cleanup)
         self.base = Path(self.tmp.name)

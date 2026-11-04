@@ -85,7 +85,7 @@ was not. Always delete the marker lines themselves).
 | [watch] `scripts/watch-commits.sh` | `references/scripts/watch-commits.sh` |
 | [just] `.claude/commands/just.md` | `references/commands.md` "/just" |
 | [gate-script] `scripts/check.ps1` | `references/scripts/check.ps1` (keep only the language block) |
-| [hooks] `.claude/settings.json` · `.claude/hooks/*` | `references/hooks.md` · `references/scripts/` |
+| [hooks] `.claude/settings.json` · `.claude/hooks/*` · `scripts/run-python.sh` | `references/hooks.md` · `references/scripts/` |
 | [comment-audit] `.claude/agents/{PREFIX}-comment-auditor.md` · the `/commit` audit block | `references/comment-audit.md` |
 | [design-review] skill · 3 agents · design principles · `docs/specs/` | `references/design-review.md` · `references/design-review/` |
 | [doc-review] skill · 3 agents · `docs/authoring-policy.md` · `docs/reports/doc-review/` | `references/doc-review.md` · `references/doc-review/` |

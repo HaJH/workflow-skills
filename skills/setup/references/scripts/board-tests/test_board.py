@@ -193,6 +193,19 @@ class ReadyCliTests(BoardTestCase):
         self.assertIn(b'board-archive.md', result.stderr)
         self.assertEqual(result.stdout, b'')
 
+    def test_non_utf8_board_exits_2_naming_the_file(self):
+        root = make_repo(self.tmp / 'repo')
+        legacy = BOARD_MD.replace('sleep timer', '수면 타이머').encode('cp949', errors='replace')
+        (root / 'docs' / 'board.md').write_bytes(legacy)
+        for command in (('ready',), ('view', '--no-open', '--out', str(self.tmp / 'out.html'))):
+            with self.subTest(command=command[0]):
+                result = run_cli(root, *command)
+                self.assertEqual(result.returncode, 2, result.stderr.decode('utf-8', 'replace'))
+                self.assertIn(b'board.md', result.stderr)
+                self.assertIn(b'not UTF-8', result.stderr)
+                self.assertNotIn(b'Traceback', result.stderr)
+                self.assertEqual(result.stdout, b'')
+
     def test_ready_in_unicode_path_under_ascii_locale(self):
         root = make_repo(self.tmp / '작업 폴더 space')
         env = dict(os.environ, PYTHONIOENCODING='ascii', PYTHONDONTWRITEBYTECODE='1')

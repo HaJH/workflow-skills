@@ -170,6 +170,8 @@ def load_board(repo: Path) -> Board:
             texts.append(path.read_text(encoding='utf-8-sig'))
         except OSError as error:
             raise BoardError(f'board: cannot read {path} ({error.strerror})') from None
+        except UnicodeDecodeError:
+            raise BoardError(f'board: cannot read {path} (not UTF-8 -- save it as UTF-8)') from None
     return parse_board(*texts)
 
 
