@@ -22,6 +22,14 @@ For a local project with no external issue tracker. Files generated:
 Windows. If either is missing, say so at setup and leave the `board` module off — `/pm` and
 `/merge-branch` would call a script that cannot run.
 
+**A board in the project's language**: the words `board.py` reads — the prerequisite and adjacent
+labels, the status line's branch/report/started words, the `(detail: issues/)` suffix — come from
+its `VOCABULARY` table, one row per language, and every row is read on every board. When the
+project writes its documents in another language, write those words from that language's row. A
+language with no row gets one in the same change that writes the board in it; never edit an
+existing row. Symptom: `scripts/board ready` reports no blocked cards on a board whose cards carry
+prerequisite lines.
+
 ## Re-Applying to a Project That Already Has a Board
 
 The board documents are the project's progress — cards, archive entries, milestones, issue

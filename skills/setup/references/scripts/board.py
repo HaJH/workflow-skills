@@ -11,8 +11,9 @@ the temp directory and opens it in the browser. The page is a snapshot: run it a
 later changes.
 
 Edges live in one place and one format -- a `- prereq: `<id>`` bullet directly under a card
-(docs/board.md, "Prerequisite Line"). Everything else about a card is prose for humans; the
-verdict reads only that bullet.
+(docs/board.md, "Prerequisite Line"), or the same bullet in the board's own language
+(VOCABULARY). Everything else about a card is prose for humans; the verdict reads only that
+bullet.
 
   ready   -- cards nothing is blocking, so a session can pick one right now
   blocked -- cards waiting on a card that is still in ToDo or In Progress
@@ -38,11 +39,31 @@ import webbrowser
 
 DEFAULT_REPO = '{PROJECT_PATH}'
 
+# The words the parser reads, one row per language. Every row is read on every board, so a board
+# written in the project's language parses without configuration. Add a language by appending a
+# row; editing an existing row stops the boards already written with it from parsing.
+VOCABULARY = (
+    {'prereq': 'prereq', 'adjacent': 'adjacent', 'branch': 'branch', 'report': 'report',
+     'started': 'started', 'detail': '(detail: issues/)'},
+    {'prereq': '선행', 'adjacent': '인접', 'branch': '브랜치', 'report': '보고서',
+     'started': '시작', 'detail': '(상세: issues/)'},
+)
+
+
+def any_word(key: str) -> str:
+    return '(?:' + '|'.join(re.escape(row[key]) for row in VOCABULARY) + ')'
+
+
+EDGE_KIND = {row[kind]: kind for row in VOCABULARY for kind in ('prereq', 'adjacent')}
+
 CARD_RE = re.compile(r'^- (⚑ )?\*\*`([a-z0-9-]+)`\*\*(.*)$')
-EDGE_RE = re.compile(r'^\s+-\s*(prereq|adjacent):(.*)$')
-STATUS_RE = re.compile(r'^\s+-\s*branch\b')
+EDGE_RE = re.compile(r'^\s+-\s*(' + '|'.join(map(re.escape, EDGE_KIND)) + r'):(.*)$')
+STATUS_RE = re.compile(r'^\s+-\s*' + any_word('branch') + r'\b')
+BRANCH_RE = re.compile(any_word('branch') + r' `([^`]+)`')
+REPORT_RE = re.compile(any_word('report') + r' `([^`]+)`')
+STARTED_RE = re.compile(any_word('started') + r' (\d{4}-\d{2}-\d{2})')
 ID_RE = re.compile(r'`([a-z0-9-]+)`')
-DETAIL_SUFFIX = '(detail: issues/)'
+DETAIL_SUFFIXES = tuple(row['detail'] for row in VOCABULARY)
 
 
 class BoardError(Exception):
@@ -111,21 +132,22 @@ def parse_card(match: re.Match) -> Card:
     summary = match.group(3).strip()
     if summary.startswith('—'):
         summary = summary[1:].strip()
-    if summary.endswith(DETAIL_SUFFIX):
-        summary = summary[:-len(DETAIL_SUFFIX)].strip()
+    for suffix in DETAIL_SUFFIXES:
+        if summary.endswith(suffix):
+            summary = summary[:-len(suffix)].strip()
     return Card(id=match.group(2), summary=summary, flag=bool(match.group(1)))
 
 
 def apply_sub_bullet(card: Card, line: str) -> None:
     edge = EDGE_RE.match(line)
     if edge:
-        target = card.prereqs if edge.group(1) == 'prereq' else card.adjacent
+        target = card.prereqs if EDGE_KIND[edge.group(1)] == 'prereq' else card.adjacent
         target.extend(ID_RE.findall(edge.group(2)))
         return
     if STATUS_RE.match(line):
-        branch = re.search(r'branch `([^`]+)`', line)
-        report = re.search(r'report `([^`]+)`', line)
-        started = re.search(r'started (\d{4}-\d{2}-\d{2})', line)
+        branch = BRANCH_RE.search(line)
+        report = REPORT_RE.search(line)
+        started = STARTED_RE.search(line)
         card.branch = branch.group(1) if branch else None
         card.report = report.group(1) if report else None
         try:
