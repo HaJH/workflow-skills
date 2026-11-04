@@ -39,6 +39,9 @@ Confirm with the user (`references/modules.md` "Placeholders"):
 
 When re-applying to an existing project, read the current `CLAUDE.md`, `docs/workflow.md`, and
 `.claude/` first and preserve project-specific sections (conventions, run info, domain rules).
+The board documents hold the project's progress and are never regenerated — with the `board`
+module, follow `references/board.md` "Re-Applying to a Project That Already Has a Board" before
+touching anything under `docs/`.
 
 ### 2. Select modules
 
@@ -81,7 +84,7 @@ was not. Always delete the marker lines themselves).
 | `.gitignore` | add `docs/reports/` · `.claude/settings.local.json` |
 | [discipline] `docs/discipline.md` | `references/discipline-md.md` |
 | [review-loop] skills and agents | `references/review-loop.md` (+ for `custom`, `review-rules-{lang}.md` → `references/rules.md`) |
-| [board] 4 board documents · `docs/issues/` · `scripts/board` · `scripts/board.cmd` · `scripts/board.py` · `scripts/board-view.html` · `scripts/tests/test_board.py` · `scripts/run-python.sh` · `.claude/commands/board.md` | `references/board.md` · `references/scripts/board` · `references/scripts/board.cmd` · `references/scripts/board.py` · `references/scripts/board-view.html` · `references/scripts/board-tests/test_board.py` · `references/scripts/run-python.sh` · `references/commands.md` "/board" |
+| [board] 4 board documents (re-applying: only the missing ones) · `docs/issues/` · `scripts/board` · `scripts/board.cmd` · `scripts/board.py` · `scripts/board-view.html` · `scripts/tests/test_board.py` · `scripts/run-python.sh` · `.claude/commands/board.md` | `references/board.md` · `references/scripts/board` · `references/scripts/board.cmd` · `references/scripts/board.py` · `references/scripts/board-view.html` · `references/scripts/board-tests/test_board.py` · `references/scripts/run-python.sh` · `references/commands.md` "/board" |
 | [watch] `scripts/watch-commits.sh` | `references/scripts/watch-commits.sh` |
 | [just] `.claude/commands/just.md` | `references/commands.md` "/just" |
 | [gate-script] `scripts/check.ps1` | `references/scripts/check.ps1` (keep only the language block) |
@@ -100,6 +103,8 @@ writing project-specific sections, no anecdotes, dates, or counted values.
   matches, or run the command it gates
 - [board] `bash scripts/board ready` exits 0, and
   `python -m unittest discover -s scripts/tests -v` passes
+- [board] When re-applying: `bash scripts/board ready` prints the first line recorded before,
+  and `git diff -- docs/` changes only the lines a migration names
 - [gate-script] `scripts/check.ps1` passes on the current tree, or the failure is confirmed to be
   the project state (unfinished code) and not the script
 - [hooks] Leftover example-rule check: `grep -rn '"example-' .claude/hooks` returns none — either
