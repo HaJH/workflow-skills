@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Open the work board. With no arguments, the read-only kanban page (board.py view);
+# with arguments, board.py <arguments> -- for example "scripts/board ready".
+
+here="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)" || exit 2
+[ $# -gt 0 ] || set -- view
+exec bash "$here/run-python.sh" "$here/board.py" "$@"
