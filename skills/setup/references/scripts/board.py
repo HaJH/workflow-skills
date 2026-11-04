@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Read docs/board.md and report what its prerequisite lines imply.
+"""Read docs/board.md and report what its prerequisite lines imply, or show it as a page.
 
     bash scripts/run-python.sh scripts/board.py ready
+    bash scripts/run-python.sh scripts/board.py view
+
+`view` renders the board as a read-only kanban page (scripts/board-view.html), writes it to
+the temp directory and opens it in the browser. The page is a snapshot: run it again to see
+later changes.
 
 Edges live in one place and one format -- a `- prereq: `<id>`` bullet directly under a card
 (docs/board.md, "Prerequisite Line"). Everything else about a card is prose for humans; the
@@ -20,10 +25,13 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
+import html
 from pathlib import Path
 import re
 import sys
+import tempfile
+import webbrowser
 
 
 DEFAULT_REPO = '{PROJECT_PATH}'
@@ -208,11 +216,261 @@ def format_ready(board: Board, verdict: Verdict) -> str:
     return '\n'.join(lines) + '\n'
 
 
+TEMPLATE = Path(__file__).with_name('board-view.html')
+MARKERS = ('title', 'header', 'in-progress', 'todo', 'details')
+HEADING_RE = re.compile(r'^(#{1,3})\s+(.*)$')
+BULLET_RE = re.compile(r'^[-*]\s+(.*)$')
+NUMBERED_RE = re.compile(r'^\d+\.\s+(.*)$')
+QUOTE_RE = re.compile(r'^>\s?(.*)$')
+
+
+def esc(text: str) -> str:
+    return html.escape(text, quote=True)
+
+
+def inline(text: str) -> str:
+    text = re.sub(r'`([^`]+)`', r'<code>\1</code>', esc(text))
+    return re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+
+
+def render_issue(markdown: str) -> str:
+    """The subset of Markdown an issue file uses: headings, lists, quotes, fences, paragraphs,
+    inline code and bold. Everything is escaped first; anything else stays as plain text."""
+    out: list[str] = []
+    paragraph: list[str] = []
+    quote: list[str] = []
+    items: list[str] = []
+    list_tag = ''
+    code: list[str] | None = None
+
+    def flush() -> None:
+        nonlocal list_tag
+        if paragraph:
+            out.append(f'<p>{" ".join(paragraph)}</p>')
+            paragraph.clear()
+        if quote:
+            out.append(f'<blockquote>{" ".join(quote)}</blockquote>')
+            quote.clear()
+        if items:
+            out.append(f'<{list_tag}>' + ''.join(f'<li>{item}</li>' for item in items) + f'</{list_tag}>')
+            items.clear()
+        list_tag = ''
+
+    for line in markdown.lstrip('﻿').replace('\r\n', '\n').split('\n'):
+        if code is not None:
+            if line.startswith('```'):
+                out.append(f'<pre>{esc(chr(10).join(code))}</pre>')
+                code = None
+            else:
+                code.append(line)
+            continue
+        heading, bullet = HEADING_RE.match(line), BULLET_RE.match(line)
+        numbered, quoted = NUMBERED_RE.match(line), QUOTE_RE.match(line)
+        if line.startswith('```'):
+            flush()
+            code = []
+        elif heading:
+            flush()
+            level = len(heading.group(1)) + 2
+            out.append(f'<h{level}>{inline(heading.group(2).strip())}</h{level}>')
+        elif bullet or numbered:
+            tag = 'ul' if bullet else 'ol'
+            if tag != list_tag:
+                flush()
+                list_tag = tag
+            items.append(inline((bullet or numbered).group(1).strip()))
+        elif quoted:
+            if items or paragraph:
+                flush()
+            quote.append(inline(quoted.group(1).strip()))
+        elif not line.strip():
+            flush()
+        else:
+            if items or quote:
+                flush()
+            paragraph.append(inline(line.strip()))
+    if code is not None:
+        out.append(f'<pre>{esc(chr(10).join(code))}</pre>')
+    flush()
+    return '\n'.join(out)
+
+
+def blocked_ids(verdict: Verdict) -> set[str]:
+    return {card_id for card_id, _ in verdict.blocked}
+
+
+def edges_of(pairs: list[tuple[str, str]], card_id: str) -> list[str]:
+    return [dep for owner, dep in pairs if owner == card_id]
+
+
+def progress_meta(card: Card, now: datetime) -> str:
+    parts = [card.branch] if card.branch else []
+    if card.started:
+        parts += [f'started {card.started:%m-%d}', f'day {(now.date() - card.started).days + 1}']
+    return ' · '.join(parts)
+
+
+def card_html(card: Card, classes: str, head: str, badges: list[str], meta: str = '') -> str:
+    parts = [f'<article class="{classes}" data-card="{esc(card.id)}">',
+             f'<div class="card-head">{head}<span class="id">{esc(card.id)}</span></div>',
+             f'<p class="summary">{esc(card.summary)}</p>']
+    if meta:
+        parts.append(f'<p class="meta">{esc(meta)}</p>')
+    if badges:
+        parts.append(f'<div class="badges">{"".join(badges)}</div>')
+    parts.append('</article>')
+    return '\n'.join(parts)
+
+
+def detail_badge(card: Card, issues: dict[str, str]) -> list[str]:
+    return ['<span class="badge detail">detail</span>'] if card.id in issues else []
+
+
+def todo_badges(card: Card, verdict: Verdict, issues: dict[str, str]) -> list[str]:
+    waiting = edges_of(verdict.blocked, card.id)
+    badges = ([f'<span class="badge blocked">blocked ← {esc(", ".join(waiting))}</span>'] if waiting
+              else ['<span class="badge ready">ready</span>'])
+    if edges_of(verdict.stale, card.id) or edges_of(verdict.broken, card.id):
+        badges.append('<span class="badge cleanup">needs cleanup</span>')
+    return badges + detail_badge(card, issues)
+
+
+def render_todo(board: Board, verdict: Verdict, issues: dict[str, str]) -> str:
+    if not board.groups:
+        return '<p class="empty">none</p>'
+    waiting = blocked_ids(verdict)
+    sections = []
+    for group in board.groups:
+        parts = ['<section class="group">']
+        if group.name is not None:
+            parts.append(f'<h3>{esc(group.name)}</h3>')
+        for rank, card in enumerate(group.cards, 1):
+            head = f'<span class="rank">{rank}</span>' + ('<span class="flag">⚑</span>' if card.flag else '')
+            classes = 'card blocked' if card.id in waiting else 'card'
+            parts.append(card_html(card, classes, head, todo_badges(card, verdict, issues)))
+        if not group.cards:
+            parts.append('<p class="empty">none</p>')
+        parts.append('</section>')
+        sections.append('\n'.join(parts))
+    return '\n'.join(sections)
+
+
+def render_in_progress(board: Board, issues: dict[str, str], now: datetime) -> str:
+    if not board.in_progress:
+        return '<p class="empty">none</p>'
+    return '\n'.join(card_html(card, 'card', '', detail_badge(card, issues), progress_meta(card, now))
+                     for card in board.in_progress)
+
+
+def edge_list(ids: list[str]) -> str:
+    return ', '.join(f'<code>{esc(card_id)}</code>' for card_id in ids)
+
+
+def render_detail(card: Card, place: str, verdict: Verdict, issues: dict[str, str]) -> str:
+    rows = []
+    for label, ids in (('waiting on', edges_of(verdict.blocked, card.id)),
+                       ('stale prerequisite (already archived)', edges_of(verdict.stale, card.id)),
+                       ('broken prerequisite (no such card)', edges_of(verdict.broken, card.id)),
+                       ('adjacent', card.adjacent)):
+        if ids:
+            rows.append(f'<dt>{label}</dt><dd>{edge_list(ids)}</dd>')
+    parts = [f'<template id="detail-{esc(card.id)}">', f'<h2>{esc(card.id)}</h2>',
+             f'<p class="meta">{esc(place)}</p>', f'<p class="summary">{esc(card.summary)}</p>']
+    if rows:
+        parts.append(f'<dl>{"".join(rows)}</dl>')
+    if card.id in issues:
+        parts.append(f'<div class="issue">{render_issue(issues[card.id])}</div>')
+    else:
+        parts.append('<p class="empty">no issue file</p>')
+    parts.append('</template>')
+    return '\n'.join(parts)
+
+
+def render_details(board: Board, verdict: Verdict, issues: dict[str, str], now: datetime) -> str:
+    waiting = blocked_ids(verdict)
+    parts = []
+    for card in board.in_progress:
+        meta = progress_meta(card, now)
+        parts.append(render_detail(card, 'in progress' + (f' · {meta}' if meta else ''), verdict, issues))
+    for group in board.groups:
+        for rank, card in enumerate(group.cards, 1):
+            state = 'blocked' if card.id in waiting else 'ready'
+            place = f'{group.name or "ToDo"} · #{rank} · {state}'
+            parts.append(render_detail(card, place, verdict, issues))
+    return '\n'.join(parts)
+
+
+def cleanup_line(verdict: Verdict) -> str:
+    if not (verdict.stale or verdict.broken):
+        return ''
+    return (f'needs cleanup: {len(verdict.stale)} stale, {len(verdict.broken)} broken edges '
+            f'-- run board.py ready for the list')
+
+
+def render_header(board: Board, verdict: Verdict, project: str, now: datetime) -> str:
+    parts = [f'<h1>{esc(project)}</h1>',
+             f'<p class="meta">generated {now:%Y-%m-%d %H:%M} · ready {len(verdict.ready)} · '
+             f'blocked {len(blocked_ids(verdict))} · in progress {len(board.in_progress)}</p>']
+    notice = cleanup_line(verdict)
+    if notice:
+        parts.append(f'<p class="notice">{esc(notice)}</p>')
+    return '\n'.join(parts)
+
+
+def render_view(board: Board, verdict: Verdict, issues: dict[str, str], project: str, now: datetime) -> str:
+    page = TEMPLATE.read_text(encoding='utf-8-sig')
+    fills = {
+        'title': esc(project),
+        'header': render_header(board, verdict, project, now),
+        'in-progress': render_in_progress(board, issues, now),
+        'todo': render_todo(board, verdict, issues),
+        'details': render_details(board, verdict, issues, now),
+    }
+    for name in MARKERS:
+        marker = f'<!--BOARD:{name}-->'
+        if page.count(marker) != 1:
+            raise ValueError(f'{TEMPLATE.name}: marker {marker} must appear exactly once')
+        page = page.replace(marker, fills[name])
+    return page
+
+
+def read_issues(repo: Path, board: Board) -> dict[str, str]:
+    issues = {}
+    for card in board.in_progress + todo_cards(board):
+        path = repo / 'docs' / 'issues' / f'{card.id}.md'
+        try:
+            issues[card.id] = path.read_text(encoding='utf-8-sig', errors='replace')
+        except OSError:
+            continue
+    return issues
+
+
+def default_output(project: str) -> Path:
+    return Path(tempfile.gettempdir()) / f'board-view-{re.sub(r"[^A-Za-z0-9._-]", "_", project)}.html'
+
+
 def run_ready(repo: Path) -> int:
     board = load_board(repo)
     verdict = judge(board)
     sys.stdout.write(format_ready(board, verdict))
     return 1 if verdict.stale or verdict.broken else 0
+
+
+def run_view(repo: Path, out: Path | None, open_browser: bool) -> int:
+    board = load_board(repo)
+    verdict = judge(board)
+    project = repo.resolve().name or str(repo)
+    path = out or default_output(project)
+    page = render_view(board, verdict, read_issues(repo, board), project, datetime.now())
+    path.write_bytes(page.encode('utf-8'))
+    lines = [f'board view: {path}',
+             f'{counts_line(board)} -- ready {len(verdict.ready)}, blocked {len(blocked_ids(verdict))}']
+    if cleanup_line(verdict):
+        lines.append(cleanup_line(verdict))
+    sys.stdout.write('\n'.join(lines) + '\n')
+    if open_browser:
+        webbrowser.open(path.resolve().as_uri())
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -223,8 +481,13 @@ def main(argv: list[str] | None = None) -> int:
                         help='project root holding docs/board.md (default: the main tree)')
     commands = parser.add_subparsers(dest='command', required=True)
     commands.add_parser('ready', help='startable, blocked, stale and broken cards')
+    view = commands.add_parser('view', help='open the board as a read-only kanban page')
+    view.add_argument('--out', type=Path, help='write the page here instead of the temp directory')
+    view.add_argument('--no-open', action='store_true', help='write the page without opening a browser')
     args = parser.parse_args(argv)
     try:
+        if args.command == 'view':
+            return run_view(args.repo, args.out, not args.no_open)
         return run_ready(args.repo)
     except BoardError as error:
         print(error, file=sys.stderr)

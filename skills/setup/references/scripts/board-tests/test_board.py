@@ -5,10 +5,11 @@ Run from the project root:  python -m unittest discover -s scripts/tests -v
 Each test writes its own board into a throwaway repo under a temp directory, so the project's
 real board is never read. The CLI tests run board.py with the current interpreter.
 """
-from datetime import date
+from datetime import date, datetime
 import importlib.util
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -198,6 +199,101 @@ class ReadyCliTests(BoardTestCase):
         result = run_cli(root, 'ready', env=env)
         self.assertEqual(result.returncode, 1, result.stderr.decode('utf-8', 'replace'))
         self.assertIn('library-ui ← scan-pipeline'.encode('utf-8'), result.stdout)
+
+
+NOW = datetime(2026, 11, 4, 9, 12)
+
+
+def article(page, card_id):
+    """(classes, body) of the board card for card_id."""
+    match = re.search(r'<article class="([^"]+)" data-card="%s">(.*?)</article>' % re.escape(card_id), page, re.S)
+    assert match, f'no card article for {card_id}'
+    return match.group(1).split(), match.group(2)
+
+
+def detail(page, card_id):
+    match = re.search(r'<template id="detail-%s">(.*?)</template>' % re.escape(card_id), page, re.S)
+    assert match, f'no detail template for {card_id}'
+    return match.group(1)
+
+
+class ViewTests(BoardTestCase):
+    def render(self, board_text=BOARD_MD, issues=None):
+        parsed = board.parse_board(board_text, ARCHIVE_MD)
+        return board.render_view(parsed, board.judge(parsed), issues or {}, 'MyApp', NOW)
+
+    def test_render_issue_subset_and_escaping(self):
+        rendered = board.render_issue('# T\n\n> q\n\n- a\n- b\n\n1. x\n\nuse `c` and **d** <script>')
+        for fragment in ('<h3>T</h3>', '<blockquote>q</blockquote>', '<ul><li>a</li><li>b</li></ul>',
+                         '<ol><li>x</li></ol>', '<code>c</code>', '<strong>d</strong>', '&lt;script&gt;'):
+            self.assertIn(fragment, rendered)
+        self.assertNotIn('<script>', rendered)
+
+    def test_view_layout_order_badges_and_dimming(self):
+        page = self.render()
+        positions = [page.index(f'<h3>{name}</h3>') for name in ('Main Line (v0)', 'Core', 'Docs')]
+        self.assertEqual(positions, sorted(positions))
+        classes, body = article(page, 'library-ui')
+        self.assertIn('blocked', classes)
+        self.assertIn('<span class="badge blocked">blocked ← scan-pipeline</span>', body)
+        classes, body = article(page, 'sleep-timer')
+        self.assertNotIn('blocked', classes)
+        for fragment in ('<span class="flag">⚑</span>', '<span class="rank">1</span>',
+                         '<span class="badge ready">ready</span>'):
+            self.assertIn(fragment, body)
+        for card_id in ('api-guide', 'db-migration'):
+            self.assertIn('<span class="badge cleanup">needs cleanup</span>', article(page, card_id)[1])
+        self.assertNotIn('needs cleanup', article(page, 'sleep-timer')[1])
+        self.assertIn('feature/scan-pipeline · started 11-02 · day 3', article(page, 'scan-pipeline')[1])
+        self.assertIn('ready 3 · blocked 2 · in progress 1', page)
+        self.assertIn('generated 2026-11-04 09:12', page)
+
+    def test_view_escapes_summaries_and_issue_text(self):
+        text = BOARD_MD.replace('— sleep timer', '— a <b> & "c"')
+        page = self.render(text, issues={'sleep-timer': '<img src=x>'})
+        self.assertNotIn('a <b> & "c"', page)
+        self.assertIn('a &lt;b&gt; &amp; &quot;c&quot;', page)
+        self.assertNotIn('<img src=x>', page)
+        self.assertIn('&lt;img src=x&gt;', detail(page, 'sleep-timer'))
+
+    def test_view_detail_templates(self):
+        issue = '# library-ui\n\nv0 first screen.\n\n## What Must Be Decided\n\n1. cache location\n'
+        page = self.render(issues={'library-ui': issue})
+        self.assertIn('<span class="badge detail">detail</span>', article(page, 'library-ui')[1])
+        self.assertNotIn('badge detail', article(page, 'sleep-timer')[1])
+        rendered = detail(page, 'library-ui')
+        self.assertIn('<h4>What Must Be Decided</h4>', rendered)
+        self.assertIn('<ol><li>cache location</li></ol>', rendered)
+        self.assertIn('scan-pipeline', rendered)
+        self.assertIn('sleep timer', detail(page, 'sleep-timer'))
+
+    def test_view_without_issues_dir_and_bad_date(self):
+        root = make_repo(self.tmp / 'repo', board_text=BOARD_MD.replace('started 2026-11-02', 'started 2026-13-40'))
+        out = self.tmp / 'out.html'
+        result = run_cli(root, 'view', '--no-open', '--out', str(out))
+        self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', 'replace'))
+        self.assertNotIn('day ', article(out.read_text(encoding='utf-8'), 'scan-pipeline')[1])
+
+    def test_view_cli_writes_file_and_prints_summary(self):
+        root = make_repo(self.tmp / 'repo')
+        out = self.tmp / 'out.html'
+        result = run_cli(root, 'view', '--no-open', '--out', str(out))
+        self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', 'replace'))
+        self.assertEqual(result.stdout.decode('utf-8').splitlines(), [
+            f'board view: {out}',
+            'board: ToDo 5 / In Progress 1 / archived 1 -- ready 3, blocked 2',
+            'needs cleanup: 1 stale, 1 broken edges -- run board.py ready for the list',
+        ])
+        self.assertTrue(out.is_file())
+
+    def test_view_default_output_name_is_sanitized(self):
+        root = make_repo(self.tmp / 'My App 한글')
+        temp = self.tmp / 't'
+        temp.mkdir()
+        env = dict(os.environ, TMP=str(temp), TEMP=str(temp), TMPDIR=str(temp), PYTHONDONTWRITEBYTECODE='1')
+        result = run_cli(root, 'view', '--no-open', env=env)
+        self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', 'replace'))
+        self.assertTrue((temp / 'board-view-My_App___.html').is_file())
 
 
 if __name__ == '__main__':
