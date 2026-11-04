@@ -19,7 +19,7 @@ was not, delete the whole block. The marker lines themselves are always deleted)
 |---|---|---|---|---|
 | `review-loop` | Autonomous review-fix loop | on | `/review` command, plus the skills and agents for the chosen review mode (`review-loop.md`) | — |
 | `commit-rhythm` | Commit rhythm (`wip:`) | on | — (blocks inside CLAUDE.md, workflow.md, commands) | — |
-| `board` | Work board | on | `docs/board.md` · `roadmap.md` · `backlog.md` · `board-archive.md` · `docs/issues/` · `scripts/board.py` · `board-view.html` · `scripts/tests/test_board.py` · `scripts/run-python.sh` (shared with `hooks`) · `/board` command (`board.md`). Needs `bash` and Python 3.9 or newer | — |
+| `board` | Work board | on | `docs/board.md` · `roadmap.md` · `backlog.md` · `board-archive.md` · `docs/issues/` · `scripts/board` · `board.cmd` · `board.py` · `board-view.html` · `scripts/tests/test_board.py` · `scripts/run-python.sh` (shared with `hooks`) · `/board` command (`board.md`). Needs `bash` and Python 3.9 or newer | — |
 | `watch` | PM progress watch | on | `scripts/watch-commits.sh` | `commit-rhythm` |
 | `just` | `/just` procedure-skip command | on | `.claude/commands/just.md` | — |
 | `gate-script` | Gate script | on | `scripts/check.ps1` (Windows) or `scripts/check.sh` | — |

@@ -6,7 +6,7 @@ setlocal
 set "GITBASH="
 for /f "delims=" %%G in ('where git 2^>nul') do if not defined GITBASH if exist "%%~dpG..\bin\bash.exe" set "GITBASH=%%~dpG..\bin\bash.exe"
 if not defined GITBASH (
-    echo board: Git Bash not found - install Git for Windows, or run "bash scripts/board" from Git Bash 1>&2
+    >&2 echo board: Git Bash not found - install Git for Windows, or run "bash scripts/board" from Git Bash
     exit /b 2
 )
 set "HERE=%~dp0"

@@ -14,9 +14,8 @@ Start a PM session. Follow this procedure:
 2. Establish the current state:
 <!-- module:board -->
    - `docs/board.md` — In Progress and ToDo
-   - `bash scripts/run-python.sh scripts/board.py ready` — startable cards · blocked cards ·
-     **stale prerequisites and broken references**. When a stale prerequisite shows up, delete
-     that line and commit
+   - `bash scripts/board ready` — startable cards · blocked cards · **stale prerequisites and
+     broken references**. When a stale prerequisite shows up, delete that line and commit
 <!-- /module:board -->
    - `git log --oneline -10`
    - `git branch -a`
@@ -327,8 +326,8 @@ Target branch: $ARGUMENTS
    - Remove the item from In Progress in `docs/board.md`
    - **Delete the prerequisite lines that pointed at this card** — left in place, that card reads
      as blocked forever
-   - Confirm with `bash scripts/run-python.sh scripts/board.py ready` — stale prerequisites and
-     broken references must be zero
+   - Confirm with `bash scripts/board ready` — stale prerequisites and broken references must
+     be zero
    - If `docs/issues/<id>.md` exists, move the key conclusions into the archive entry and the
      design document, then delete it
    - Commit the board changes
@@ -359,8 +358,7 @@ description: Open the work board as a kanban page in the browser
 disable-model-invocation: true
 ---
 
-Open the work board as a read-only kanban page: run
-`bash scripts/run-python.sh scripts/board.py view`.
+Open the work board as a read-only kanban page: run `bash scripts/board`.
 
 - Report in one line what the command printed: the card counts, and the stale and broken edge
   counts when it names them

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Read docs/board.md and report what its prerequisite lines imply, or show it as a page.
 
-    bash scripts/run-python.sh scripts/board.py ready
-    bash scripts/run-python.sh scripts/board.py view
+    scripts/board ready      (scripts\board ready in Windows cmd)
+    scripts/board            (opens the page; same as scripts/board view)
+
+scripts/board and scripts/board.cmd find a working Python through scripts/run-python.sh.
 
 `view` renders the board as a read-only kanban page (scripts/board-view.html), writes it to
 the temp directory and opens it in the browser. The page is a snapshot: run it again to see
@@ -406,7 +408,7 @@ def cleanup_line(verdict: Verdict) -> str:
     if not (verdict.stale or verdict.broken):
         return ''
     return (f'needs cleanup: {len(verdict.stale)} stale, {len(verdict.broken)} broken edges '
-            f'-- run board.py ready for the list')
+            f'-- run scripts/board ready for the list')
 
 
 def render_header(board: Board, verdict: Verdict, project: str, now: datetime) -> str:

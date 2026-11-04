@@ -21,6 +21,26 @@ Set up a local PM-Dev-Reviewer development workflow for a project: CLAUDE.md, wo
 
 The hooks are Python, launched through bash, so they run the same on Windows (Git Bash) and macOS/Linux. They need Python 3.9 or newer.
 
+## Board Page From a Terminal
+
+With the `board` module, `scripts/board` (`scripts\board` in Windows cmd) opens the project's
+board as a read-only kanban page, and `scripts/board ready` prints which cards can start. To type
+just `board` anywhere inside a project, add a per-user shortcut:
+
+- macOS/Linux — in `~/.zshrc` or `~/.bashrc`:
+  `board() { bash "$(git rev-parse --show-toplevel)/scripts/board" "$@"; }`
+- Windows cmd — save this as `board.cmd` in a folder on `PATH`:
+
+  ```bat
+  @echo off
+  setlocal
+  set "ROOT="
+  for /f "delims=" %%R in ('git rev-parse --show-toplevel 2^>nul') do set "ROOT=%%R"
+  if not defined ROOT (>&2 echo board: not inside a git project& exit /b 2)
+  if not exist "%ROOT:/=\%\scripts\board.cmd" (>&2 echo board: %ROOT% has no scripts\board.cmd& exit /b 2)
+  call "%ROOT:/=\%\scripts\board.cmd" %*
+  ```
+
 ## Install
 
 Clone into your skills directory and the plugin loads on the next session:

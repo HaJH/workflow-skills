@@ -291,10 +291,10 @@ kebab-case slug and is fixed once chosen — the branch `feature/<id>` and the r
 `docs/reports/feature-<id>.md` are tied together by that string.
 
 PM (`/pm`) owns the updates. Write the **prerequisite relation between cards as a `- prereq:
-<id>` line, not as prose**. `bash scripts/run-python.sh scripts/board.py ready` reads those lines
-and produces the startable cards along with stale prerequisites and broken references. `/board`
-(or `board.py view` in a terminal) shows the board as a read-only kanban page. The detailed rules
-are at the top of `docs/board.md`.
+<id>` line, not as prose**. `bash scripts/board ready` reads those lines and produces the startable
+cards along with stale prerequisites and broken references. `/board` (or `scripts/board` in a
+terminal, `scripts\board` in Windows cmd) shows the board as a read-only kanban page. The detailed
+rules are at the top of `docs/board.md`.
 <!-- /module:board -->
 
 ## Design Documents

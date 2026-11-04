@@ -298,7 +298,7 @@ class ViewTests(BoardTestCase):
         self.assertEqual(result.stdout.decode('utf-8').splitlines(), [
             f'board view: {out}',
             'board: ToDo 5 / In Progress 1 / archived 1 -- ready 3, blocked 2',
-            'needs cleanup: 1 stale, 1 broken edges -- run board.py ready for the list',
+            'needs cleanup: 1 stale, 1 broken edges -- run scripts/board ready for the list',
         ])
         self.assertTrue(out.is_file())
 
