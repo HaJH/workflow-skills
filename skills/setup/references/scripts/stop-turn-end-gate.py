@@ -71,11 +71,14 @@ PROMISE_PATTERNS = [
 ]
 
 # The escape hatch has to name what would restart the work, or the words "resume
-# condition" alone become a phrase that passes the gate while promising nothing.
+# condition" alone become a phrase that passes the gate while promising nothing. The two
+# completion labels of main-session-header.md "Resume Condition" (step complete / session
+# complete, and their Korean forms) are such a name too: they say nothing restarts it.
 RESUME_RE = re.compile(
     r"(resume\s*condition|resumes?\s+when|resuming\s+on|재개\s*조건)"
     r"[\s\S]{0,120}?"
-    r"(user|background|notification|wakeup|Monitor|Cron|사용자|백그라운드)",
+    r"(user|background|notification|wakeup|Monitor|Cron|사용자|백그라운드"
+    r"|step\s+complete|session\s+complete|단계\s*완료|세션\s*종료\s*가능)",
     re.I,
 )
 
