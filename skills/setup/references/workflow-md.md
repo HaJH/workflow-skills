@@ -81,6 +81,10 @@ more rounds will not surface them. Do not make that blind spot a gate.
 - Keep **"For the User to Check by Eye"** in the Dev report. It is the only place that records
   where the code could not reach, and it tells a fix card where to look first. It is not a pass
   condition
+<!-- module:board -->
+- At the merge that list moves into the card's issue file, and the card waits in the board's Done
+  column until the user, having used the work, says it holds up, or a fix card takes over
+<!-- /module:board -->
 
 The cost is accepted: defects can remain in merged code. What makes this trade-off possible is a
 fully local repository, where a merge is not a hard-to-reverse operation.
@@ -214,15 +218,23 @@ Response section of the report.
 
 ### What the User Will Need Later Does Not Live in the Report
 
-The report is gitignored and `/merge-branch` deletes it. Write something here that must survive
-the merge and **it is erased, with no way to recover it from history either.**
+The report is gitignored and `/merge-branch` deletes it. Whatever is read after the merge needs a
+place to move to before then — what is left only in the report **is erased, with no way to recover
+it from history either.**
 
+- The test is "**does the person reading this sentence read it after the branch is gone?**" If so,
+  give the sentence one of the places below
+<!-- module:board -->
+- The one-line conclusion and "For the User to Check by Eye" are written in the report —
+  `/merge-branch` moves them into the card's issue file at the merge
+<!-- /module:board -->
+<!-- module:!board -->
 - Something written once right after the merge and then discarded — "For the User to Check by
   Eye" — belongs in the report
+<!-- /module:!board -->
 - A procedure that gets pulled out again weeks later (a measurement command line, the meaning of
   fields in an output file, a decision criterion) goes to a **canonical document** (`docs/`). The
   report keeps only the line pointing at that document
-- The test is "**does the person reading this sentence read it after the branch is gone?**"
 - Write command lines the user will run **against the main tree** — gitignored settings and
   environment do not follow into a worktree
 
@@ -271,18 +283,21 @@ Scale: <n> files / <total lines> lines · <n> findings
 - Cleanup after the merge (once the user confirms): delete the feature branch, remove the
   worktree, delete the report
 <!-- module:board -->
-- **Before** deleting the report, move a one-line conclusion into `docs/board-archive.md`
+- **Before** deleting the report, move its one-line conclusion and its "For the User to Check by
+  Eye" list into the card's issue file, and the card into the board's Done column
 <!-- /module:board -->
 
 <!-- module:board -->
 ## Work Board
 
-- `docs/board.md` — In Progress / ToDo. Only what is being done now and what comes next
+- `docs/board.md` — ToDo / In Progress / Done. What comes next, what is being done now, and what is
+  merged (or, without a branch, finished) but not yet confirmed by the user in real use
 - `docs/roadmap.md` — the definition of done for a milestone plus candidates for the next one.
   Removed on promotion
 - `docs/backlog.md` — items dropped or deferred in design review. Promoted to ToDo only when
   revived
-- `docs/board-archive.md` — completed items, grouped by milestone
+- `docs/board-archive.md` — finished items the user has confirmed or a fix card has taken over,
+  grouped by milestone
 - `docs/issues/<id>.md` — a card's background, provenance, and decisions
 
 The flow is `issue → design → implementation → done`. ToDo comes out of user and PM judgment, and
@@ -290,11 +305,13 @@ a design document is an artifact produced while carrying out that issue. An item
 kebab-case slug and is fixed once chosen — the branch `feature/<id>` and the report
 `docs/reports/feature-<id>.md` are tied together by that string.
 
-PM (`/pm`) owns the updates. Write the **prerequisite relation between cards as a `- prereq:
-<id>` line, not as prose**. `bash scripts/board ready` reads those lines and produces the startable
-cards along with stale prerequisites and broken references. `/board` (or `scripts/board` in a
-terminal, `scripts\board` in Windows cmd) shows the board as a read-only kanban page. The detailed
-rules are at the top of `docs/board.md`.
+PM (`/pm`) owns the updates — ToDo → In Progress when directing Dev, In Progress → Done at the
+merge, Done → archive once the user says the work holds up in real use or a fix card takes over.
+Write the **prerequisite
+relation between cards as a `- prereq: <id>` line, not as prose**. `bash scripts/board ready` reads
+those lines and produces the startable cards along with stale prerequisites and broken references.
+`/board` (or `scripts/board` in a terminal, `scripts\board` in Windows cmd) shows the board as a
+read-only kanban page. The detailed rules are at the top of `docs/board.md`.
 <!-- /module:board -->
 
 ## Design Documents

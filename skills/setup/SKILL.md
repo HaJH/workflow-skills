@@ -103,8 +103,8 @@ writing project-specific sections, no anecdotes, dates, or counted values.
   matches, or run the command it gates
 - [board] `bash scripts/board ready` exits 0, and
   `python -m unittest discover -s scripts/tests -v` passes
-- [board] When re-applying: `bash scripts/board ready` prints the first line recorded before,
-  and `git diff -- docs/` changes only the lines a migration names
+- [board] When re-applying: `bash scripts/board ready` prints the counts of the first line
+  recorded before, and `git diff -- docs/` changes only the lines a migration names
 - [gate-script] `scripts/check.ps1` passes on the current tree, or the failure is confirmed to be
   the project state (unfinished code) and not the script
 - [hooks] Leftover example-rule check: `grep -rn '"example-' .claude/hooks` returns none — either
