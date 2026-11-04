@@ -13,7 +13,7 @@ Start a PM session. Follow this procedure:
 1. Read `CLAUDE.md` and `docs/workflow.md`
 2. Establish the current state:
 <!-- module:board -->
-   - `docs/board.md` — In Progress and ToDo
+   - `docs/board.md` — In Progress, Done, and ToDo
    - `bash scripts/board ready` — startable cards · blocked cards · **stale prerequisites and
      broken references**. When a stale prerequisite shows up, delete that line and commit
 <!-- /module:board -->
@@ -41,15 +41,22 @@ Start a PM session. Follow this procedure:
 
 - **When directing work**: move ToDo → In Progress and fill in the branch, report path, and start
   date
-- **When a merge completes**: In Progress → `docs/board-archive.md` (part of the `/merge-branch`
-  procedure)
+- **When a merge completes**: In Progress → Done (part of the `/merge-branch` procedure). A card
+  finished without a branch moves the same way: status line `started <date> · done <date>`, the
+  conclusion into its issue file
+- **When the user says a Done card holds up in real use**: move it to the archive — an entry in the
+  current milestone of `docs/board-archive.md` dated from its status line, with the conclusion from
+  its issue file; the key conclusions into the design document; then delete the issue file. Never
+  ask the user to check a Done card
+- **When a problem shows up on a Done card**: file the fix card in ToDo, carrying over what its
+  issue file still lists as unchecked, and move the original to the archive as in the item above,
+  naming the fix card in its archive entry
 - **Refilling ToDo**: the issue comes first and the design is its artifact — never mine work out
   of a design document. Candidates for the next milestone in `docs/roadmap.md` are promoted when
   started (remove what was promoted). `docs/backlog.md` is the pile of dropped and deferred
   items, so promote from it **only when reviving** something (remove what was promoted)
 - **User direction**: when the user says "this needs doing", add it straight to ToDo
-- **Never rewrite an item's text** — update only the move and the state fields (branch, date,
-  conclusion)
+- **Never rewrite an item's text** — update only the move and the state fields (branch, date)
 - **A card is one line.** Background, provenance, and decisions go to `docs/issues/<id>.md` — the
   board is read whole in every PM session, so a long card charges that cost every time
 - **Write a prerequisite as a `- prereq: \`<id>\`` line, not as prose**. A weak relation like an
@@ -92,6 +99,7 @@ every card; **finish the work and then report, focused on what matters.**
 
 Leave the "For the User to Check by Eye" list in the Dev report as it is. It is not a pass
 condition.
+<!-- module:board -->At the merge `/merge-branch` moves it into the card's issue file, where the board page's Done card shows it.<!-- /module:board -->
 
 ### Exception — Ask Only When Observation Is Required
 
@@ -321,15 +329,17 @@ Target branch: $ARGUMENTS
 3. Run the merge: `git -C {PROJECT_PATH} merge --no-ff $ARGUMENTS`
 <!-- module:board -->
 4. Update the board (**before deleting the report**):
-   - Pull a one-line conclusion out of the report and add it to the current milestone in
-     `docs/board-archive.md`
-   - Remove the item from In Progress in `docs/board.md`
+   - Move the card from In Progress to Done in `docs/board.md`, and replace its status line with
+     `started <its start date> · done <today>`
+   - Write into `docs/issues/<id>.md` a "Conclusion" section with a one-line conclusion pulled out
+     of the report, and a "For the User to Check by Eye" section with that list from the report.
+     If the file does not exist, create it and add `(detail: issues/)` to the card. This command
+     writes no archive entry — PM writes it from this file when the card leaves Done (`/pm`
+     "Board Management")
    - **Delete the prerequisite lines that pointed at this card** — left in place, that card reads
      as blocked forever
    - Confirm with `bash scripts/board ready` — stale prerequisites and broken references must
      be zero
-   - If `docs/issues/<id>.md` exists, move the key conclusions into the archive entry and the
-     design document, then delete it
    - Commit the board changes
 <!-- /module:board -->
 5. Clean up (once the user confirms):

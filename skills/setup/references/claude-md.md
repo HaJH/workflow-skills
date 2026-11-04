@@ -66,9 +66,9 @@ module blocks. Do not duplicate rules the user's global `~/.claude/CLAUDE.md` al
 <!-- module:board -->
 ## Work Management
 
-- `docs/board.md` — lightweight kanban board (In Progress / ToDo). `/pm` owns the updates
+- `docs/board.md` — lightweight kanban board (ToDo / In Progress / Done). `/pm` owns the updates
 - `docs/roadmap.md` — milestone roadmap · `docs/backlog.md` — dropped and deferred ·
-  `docs/board-archive.md` — done
+  `docs/board-archive.md` — finished and confirmed
 - `docs/issues/<id>.md` — a card's background, provenance, and decisions. **The card is one line;
   the detail goes here**
 - `bash scripts/board ready` — startable cards, stale prerequisites, broken references
