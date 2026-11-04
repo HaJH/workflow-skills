@@ -9,6 +9,8 @@ For a local project with no external issue tracker. Files generated:
 | `docs/backlog.md` | Dropped and deferred |
 | `docs/board-archive.md` | Done (by milestone) |
 | `docs/issues/` | Empty directory (`.gitkeep`) |
+| `scripts/board` | Copy of `scripts/board` — the short entry point (macOS/Linux/Git Bash). Keep it executable: `chmod +x`, and record the bit with `git update-index --chmod=+x scripts/board` |
+| `scripts/board.cmd` | Copy of `scripts/board.cmd` — the same entry point for Windows cmd. CRLF line endings, ASCII only |
 | `scripts/board.py` | Copy of `scripts/board.py`, with the `{PROJECT_PATH}` default substituted |
 | `scripts/board-view.html` | Copy of `scripts/board-view.html` — the page template `board.py view` fills |
 | `scripts/tests/test_board.py` | Copy of `scripts/board-tests/test_board.py` |
@@ -16,8 +18,9 @@ For a local project with no external issue tracker. Files generated:
 | `.claude/commands/board.md` | `commands.md` "/board" |
 
 **Prerequisite**: `scripts/board.py` runs on `bash` and Python 3.9 or newer, through the shared
-`scripts/run-python.sh` launcher. If either is missing, say so at setup and leave the `board`
-module off — `/pm` and `/merge-branch` would call a script that cannot run.
+`scripts/run-python.sh` launcher; on Windows, `scripts\board.cmd` takes `bash` from Git for
+Windows. If either is missing, say so at setup and leave the `board` module off — `/pm` and
+`/merge-branch` would call a script that cannot run.
 
 **Re-applying to a project set up before `board.py`**: delete `scripts/board-ready.sh`. Symptom:
 `scripts/` holds both verdict scripts, and they disagree once the board format changes.
@@ -113,9 +116,9 @@ Starting work — **never hold a card because it is in the same area**:
 - A provenance note ("split out of `x`") is not a prerequisite — it is history and blocks nothing
 - An "order check" is not one either — to mark it at all, use `` - adjacent: `<id>` ``
 
-`bash scripts/run-python.sh scripts/board.py ready` reads these lines and produces three things —
-**startable cards** · **stale prerequisites** (the target is already in the archive) · **broken
-references** (the target matches no card anywhere).
+`bash scripts/board ready` reads these lines and produces three things — **startable cards** ·
+**stale prerequisites** (the target is already in the archive) · **broken references** (the target
+matches no card anywhere).
 
 ## Format
 

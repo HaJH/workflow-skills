@@ -108,7 +108,7 @@ Default rules in `file-pattern-map.json`:
 | `hook-config` | `.claude/hooks/*.sh` · `*.py` (the tests included) · the three rule files · `scripts/run-python.sh` | reads: `.claude/hooks/README.md` | always |
 | `specs` | `docs/specs/*.md` | reads: `docs/workflow.md` | `design-review` module |
 | `design-docs` | `docs/design/*.md` | reads: `docs/workflow.md` | always |
-| `board` | `docs/board.md`, `docs/board-archive.md` | none (message: prereq lines, `board.py ready`) | `board` module |
+| `board` | `docs/board.md`, `docs/board-archive.md` | none (message: prereq lines, `scripts/board ready`) | `board` module |
 
 `commandRules` ships with one rule, `git-write`: `git commit` · `git worktree add` · `git merge`
 require a `Read` of `docs/workflow.md`, which is not injected at session start. Domain rules (a

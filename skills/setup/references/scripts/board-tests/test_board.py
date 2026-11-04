@@ -10,6 +10,7 @@ import importlib.util
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -17,6 +18,8 @@ import unittest
 
 
 BOARD = Path(__file__).resolve().parents[1] / 'board.py'
+SCRIPTS = BOARD.parent
+BASH = shutil.which('bash')
 
 sys.dont_write_bytecode = True
 _spec = importlib.util.spec_from_file_location('board', BOARD)
@@ -295,7 +298,7 @@ class ViewTests(BoardTestCase):
         self.assertEqual(result.stdout.decode('utf-8').splitlines(), [
             f'board view: {out}',
             'board: ToDo 5 / In Progress 1 / archived 1 -- ready 3, blocked 2',
-            'needs cleanup: 1 stale, 1 broken edges -- run board.py ready for the list',
+            'needs cleanup: 1 stale, 1 broken edges -- run scripts/board ready for the list',
         ])
         self.assertTrue(out.is_file())
 
@@ -307,6 +310,70 @@ class ViewTests(BoardTestCase):
         result = run_cli(root, 'view', '--no-open', env=env)
         self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', 'replace'))
         self.assertTrue((temp / 'board-view-My_App___.html').is_file())
+
+
+def make_project(root):
+    """A project laid out the way setup generates it: docs/ plus scripts/, with board.py's
+    default repo pointing at this project."""
+    make_repo(root)
+    scripts = root / 'scripts'
+    scripts.mkdir()
+    source = re.sub(r"^DEFAULT_REPO = .*$", f'DEFAULT_REPO = {root.as_posix()!r}',
+                    BOARD.read_text(encoding='utf-8'), count=1, flags=re.M)
+    (scripts / 'board.py').write_bytes(source.encode('utf-8'))
+    for name in ('board-view.html', 'run-python.sh', 'board', 'board.cmd'):
+        shutil.copy2(SCRIPTS / name, scripts / name)
+    return root
+
+
+@unittest.skipUnless(BASH, 'bash is required to run scripts/board')
+class ShortcutTests(BoardTestCase):
+    def setUp(self):
+        super().setUp()
+        self.root = make_project(self.tmp / 'My Project')
+        self.temp = self.tmp / 'temp'
+        self.temp.mkdir()
+        self.env = dict(os.environ, TMP=str(self.temp), TEMP=str(self.temp), TMPDIR=str(self.temp),
+                        PYTHONDONTWRITEBYTECODE='1')
+
+    def browser_recorder(self):
+        """Point Python's BROWSER variable at a program that logs the URL it is asked to open."""
+        folder = Path(tempfile.mkdtemp(prefix='board-rec-'))
+        self.addCleanup(shutil.rmtree, folder, True)
+        log = folder / 'opened.txt'
+        if os.name == 'nt':
+            program = folder / 'record.cmd'
+            program.write_bytes(f'@echo %~1>>"{log}"\r\n'.encode('ascii'))
+        else:
+            program = folder / 'record'
+            program.write_text(f'#!/bin/sh\necho "$1" >> "{log}"\n', encoding='utf-8')
+            program.chmod(0o755)
+        return log, dict(self.env, BROWSER=str(program))
+
+    def test_board_without_arguments_opens_the_view(self):
+        log, env = self.browser_recorder()
+        result = subprocess.run([BASH, (self.root / 'scripts' / 'board').as_posix()],
+                                capture_output=True, env=env, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', 'replace'))
+        self.assertTrue(result.stdout.startswith(b'board view: '), result.stdout)
+        page = self.temp / 'board-view-My_Project.html'
+        self.assertTrue(page.is_file())
+        self.assertEqual(log.read_text(encoding='ascii').split(), [page.resolve().as_uri()])
+
+    def test_board_passes_arguments_through(self):
+        result = subprocess.run([BASH, (self.root / 'scripts' / 'board').as_posix(), 'ready'],
+                                capture_output=True, env=self.env, check=False)
+        self.assertEqual(result.returncode, 1, result.stderr.decode('utf-8', 'replace'))
+        self.assertEqual(result.stdout, READY_TEXT.encode('utf-8'))
+
+    @unittest.skipUnless(os.name == 'nt', 'board.cmd is the Windows cmd entry point')
+    def test_board_cmd_runs_from_cmd(self):
+        for command in ([str(self.root / 'scripts' / 'board.cmd'), 'ready'], ['scripts\\board', 'ready']):
+            with self.subTest(command=command[0]):
+                result = subprocess.run(['cmd', '/c', *command], cwd=self.root, capture_output=True,
+                                        env=self.env, check=False)
+                self.assertEqual(result.returncode, 1, result.stderr.decode('utf-8', 'replace'))
+                self.assertEqual(result.stdout.replace(b'\r\n', b'\n'), READY_TEXT.encode('utf-8'))
 
 
 if __name__ == '__main__':

@@ -81,7 +81,7 @@
    "id": "board",
    "patterns": ["board.md", "board-archive.md"],
    "scopePath": ["docs/"],
-   "message": "Board: one-line cards, prerequisites as a '- prereq: `<id>`' line only, commit right after editing. Run bash scripts/run-python.sh scripts/board.py ready -- stale or broken edges must be zero."
+   "message": "Board: one-line cards, prerequisites as a '- prereq: `<id>`' line only, commit right after editing. Run bash scripts/board ready -- stale or broken edges must be zero."
   }
  ]
 }
