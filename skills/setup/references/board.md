@@ -22,8 +22,33 @@ For a local project with no external issue tracker. Files generated:
 Windows. If either is missing, say so at setup and leave the `board` module off — `/pm` and
 `/merge-branch` would call a script that cannot run.
 
-**Re-applying to a project set up before `board.py`**: delete `scripts/board-ready.sh`. Symptom:
-`scripts/` holds both verdict scripts, and they disagree once the board format changes.
+## Re-Applying to a Project That Already Has a Board
+
+The board documents are the project's progress — cards, archive entries, milestones, issue
+files. Re-applying the workflow never regenerates them.
+
+1. **Make a restore point.** Commit any uncommitted change under `docs/` and tell the user that
+   commit — it is where to go back to. Record the first line the current board script prints
+   (`board: ToDo … / In Progress … / archived …`): `bash scripts/board ready`, or
+   `bash scripts/board-ready.sh` in a project set up before it
+2. **Generate only what is missing.** An existing `docs/board.md`, `docs/roadmap.md`,
+   `docs/backlog.md`, `docs/board-archive.md`, or file under `docs/issues/` stays as it is. The
+   scripts and the `/board` command are replaced from the templates
+3. **Migrate rule text line by line**, through the migrations below and only those lines. Never
+   copy a template block over a board document — the cards, archive entries, milestones, and the
+   project's area table live in the same files
+4. **Verify.** `bash scripts/board ready` prints the recorded first line again, and
+   `git diff -- docs/` changes only the lines a migration names. Symptom of a regenerated board:
+   the ToDo or archived count drops, or the diff deletes card lines
+
+Migrations — apply each one whose condition holds:
+
+- **The project has `scripts/board-ready.sh`**: delete it. In `docs/board.md`, rewrite the
+  sentences that name it to this template's wording — the prerequisite bullet under "Rules" and
+  the paragraph after the "Prerequisite Line" example
+
+When a template change alters text inside the board documents, add its migration here in the same
+change. Symptom: a re-applied project's board rules name a script or step that no longer exists.
 
 ## docs/board.md
 
