@@ -15,9 +15,13 @@ Edges live in one place and one format -- a `- prereq: `<id>`` bullet directly u
 (VOCABULARY). Everything else about a card is prose for humans; the verdict reads only that
 bullet.
 
+A card is `- **`<id>`** · <title> — <summary>`, or `- **`<id>`** — <summary>` with no title. The
+title is recognised only by the ` · ` right after the id, because summaries already contain ` — `.
+
   ready   -- cards nothing is blocking, so a session can pick one right now
   blocked -- cards waiting on a card that is still in ToDo or In Progress
-  stale   -- the prerequisite already merged, so the edge is a lie the card keeps telling
+  stale   -- the prerequisite is already done (Done or the archive), so the edge is a lie the
+             card keeps telling
   broken  -- the prerequisite matches no card anywhere: a typo, or a card dropped without
              looking at who pointed at it
 
@@ -41,12 +45,13 @@ DEFAULT_REPO = '{PROJECT_PATH}'
 
 # The words the parser reads, one row per language. Every row is read on every board, so a board
 # written in the project's language parses without configuration. Add a language by appending a
-# row; editing an existing row stops the boards already written with it from parsing.
+# row, and a word by adding its key to every row; editing an existing word stops the boards
+# already written with it from parsing.
 VOCABULARY = (
     {'prereq': 'prereq', 'adjacent': 'adjacent', 'branch': 'branch', 'report': 'report',
-     'started': 'started', 'detail': '(detail: issues/)'},
+     'started': 'started', 'finished': 'done', 'detail': '(detail: issues/)'},
     {'prereq': '선행', 'adjacent': '인접', 'branch': '브랜치', 'report': '보고서',
-     'started': '시작', 'detail': '(상세: issues/)'},
+     'started': '시작', 'finished': '완료', 'detail': '(상세: issues/)'},
 )
 
 
@@ -58,10 +63,12 @@ EDGE_KIND = {row[kind]: kind for row in VOCABULARY for kind in ('prereq', 'adjac
 
 CARD_RE = re.compile(r'^- (⚑ )?\*\*`([a-z0-9-]+)`\*\*(.*)$')
 EDGE_RE = re.compile(r'^\s+-\s*(' + '|'.join(map(re.escape, EDGE_KIND)) + r'):(.*)$')
-STATUS_RE = re.compile(r'^\s+-\s*' + any_word('branch') + r'\b')
+# A status line opens with the branch word in In Progress and with the start word in Done.
+STATUS_RE = re.compile(r'^\s+-\s*(?:' + any_word('branch') + '|' + any_word('started') + r')\b')
 BRANCH_RE = re.compile(any_word('branch') + r' `([^`]+)`')
 REPORT_RE = re.compile(any_word('report') + r' `([^`]+)`')
 STARTED_RE = re.compile(any_word('started') + r' (\d{4}-\d{2}-\d{2})')
+FINISHED_RE = re.compile(any_word('finished') + r' (\d{4}-\d{2}-\d{2})')
 ID_RE = re.compile(r'`([a-z0-9-]+)`')
 DETAIL_SUFFIXES = tuple(row['detail'] for row in VOCABULARY)
 
@@ -74,12 +81,14 @@ class BoardError(Exception):
 class Card:
     id: str
     summary: str
+    title: str | None = None
     flag: bool = False
     prereqs: list[str] = field(default_factory=list)
     adjacent: list[str] = field(default_factory=list)
     branch: str | None = None
     report: str | None = None
     started: date | None = None
+    finished: date | None = None
 
 
 @dataclass
@@ -91,6 +100,7 @@ class Group:
 @dataclass
 class Board:
     in_progress: list[Card]
+    done: list[Card]
     groups: list[Group]
     archived: set[str]
 
@@ -129,13 +139,25 @@ def section(lines: list[str], title: str) -> list[str]:
 
 
 def parse_card(match: re.Match) -> Card:
-    summary = match.group(3).strip()
-    if summary.startswith('—'):
-        summary = summary[1:].strip()
+    rest = match.group(3).strip()
     for suffix in DETAIL_SUFFIXES:
-        if summary.endswith(suffix):
-            summary = summary[:-len(suffix)].strip()
-    return Card(id=match.group(2), summary=summary, flag=bool(match.group(1)))
+        if rest.endswith(suffix):
+            rest = rest[:-len(suffix)].strip()
+    title = None
+    if rest.startswith('·'):
+        title, _, rest = rest[1:].partition(' — ')
+        title = title.strip() or None
+    elif rest.startswith('—'):
+        rest = rest[1:]
+    return Card(id=match.group(2), summary=rest.strip(), title=title, flag=bool(match.group(1)))
+
+
+def found_date(pattern: re.Pattern, line: str) -> date | None:
+    match = pattern.search(line)
+    try:
+        return date.fromisoformat(match.group(1)) if match else None
+    except ValueError:
+        return None
 
 
 def apply_sub_bullet(card: Card, line: str) -> None:
@@ -147,13 +169,10 @@ def apply_sub_bullet(card: Card, line: str) -> None:
     if STATUS_RE.match(line):
         branch = BRANCH_RE.search(line)
         report = REPORT_RE.search(line)
-        started = STARTED_RE.search(line)
         card.branch = branch.group(1) if branch else None
         card.report = report.group(1) if report else None
-        try:
-            card.started = date.fromisoformat(started.group(1)) if started else None
-        except ValueError:
-            card.started = None
+        card.started = found_date(STARTED_RE, line)
+        card.finished = found_date(FINISHED_RE, line)
 
 
 def parse_cards(lines: list[str], groups: list[Group]) -> None:
@@ -175,15 +194,19 @@ def parse_cards(lines: list[str], groups: list[Group]) -> None:
             apply_sub_bullet(card, line)
 
 
+def section_cards(lines: list[str], title: str) -> list[Card]:
+    groups: list[Group] = []
+    parse_cards(section(lines, title), groups)
+    return [card for group in groups for card in group.cards]
+
+
 def parse_board(board_text: str, archive_text: str) -> Board:
     lines = unfenced_lines(board_text)
-    running: list[Group] = []
-    parse_cards(section(lines, 'In Progress'), running)
     todo: list[Group] = []
     parse_cards(section(lines, 'ToDo'), todo)
     archived = {match.group(2) for line in unfenced_lines(archive_text) if (match := CARD_RE.match(line))}
-    return Board(in_progress=[card for group in running for card in group.cards], groups=todo,
-                 archived=archived)
+    return Board(in_progress=section_cards(lines, 'In Progress'), done=section_cards(lines, 'Done'),
+                 groups=todo, archived=archived)
 
 
 def load_board(repo: Path) -> Board:
@@ -206,10 +229,11 @@ def todo_cards(board: Board) -> list[Card]:
 def judge(board: Board) -> Verdict:
     live = {card.id for card in todo_cards(board)}
     running = {card.id for card in board.in_progress}
+    finished = board.archived | {card.id for card in board.done}
     blocked, stale, broken = [], [], []
     for card in todo_cards(board):
         for dep in card.prereqs:
-            if dep in board.archived:
+            if dep in finished:
                 stale.append((card.id, dep))
             elif dep in live or dep in running:
                 blocked.append((card.id, dep))
@@ -222,7 +246,8 @@ def judge(board: Board) -> Verdict:
 
 def counts_line(board: Board) -> str:
     return (f'board: ToDo {len({card.id for card in todo_cards(board)})} / '
-            f'In Progress {len({card.id for card in board.in_progress})} / archived {len(board.archived)}')
+            f'In Progress {len({card.id for card in board.in_progress})} / '
+            f'Done {len({card.id for card in board.done})} / archived {len(board.archived)}')
 
 
 def format_ready(board: Board, verdict: Verdict) -> str:
@@ -235,7 +260,7 @@ def format_ready(board: Board, verdict: Verdict) -> str:
     lines = [counts_line(board)]
     lines += block(f'ready ({len(verdict.ready)})', verdict.ready)
     lines += block(f'blocked ({len(verdict.blocked)})', edges(verdict.blocked))
-    lines += block(f'stale edges -- prerequisite already merged; delete the line ({len(verdict.stale)})',
+    lines += block(f'stale edges -- prerequisite already done; delete the line ({len(verdict.stale)})',
                    edges(verdict.stale), keep_empty=False)
     lines += block(f'broken edges -- prerequisite matches no card ({len(verdict.broken)})',
                    edges(verdict.broken), keep_empty=False)
@@ -243,7 +268,7 @@ def format_ready(board: Board, verdict: Verdict) -> str:
 
 
 TEMPLATE = Path(__file__).with_name('board-view.html')
-MARKERS = ('title', 'header', 'in-progress', 'todo', 'details')
+MARKERS = ('title', 'header', 'todo', 'in-progress', 'done', 'details')
 HEADING_RE = re.compile(r'^(#{1,3})\s+(.*)$')
 BULLET_RE = re.compile(r'^[-*]\s+(.*)$')
 NUMBERED_RE = re.compile(r'^\d+\.\s+(.*)$')
@@ -336,16 +361,30 @@ def progress_meta(card: Card, now: datetime) -> str:
     return ' · '.join(parts)
 
 
+def done_meta(card: Card) -> str:
+    return f'done {card.finished:%m-%d}' if card.finished else ''
+
+
 def card_html(card: Card, classes: str, head: str, badges: list[str], meta: str = '') -> str:
+    """One line each: the id with its badges, the title, the summary. The page clips a line that
+    does not fit; the detail panel shows the whole text."""
+    badge_html = f'<span class="badges">{"".join(badges)}</span>' if badges else ''
     parts = [f'<article class="{classes}" data-card="{esc(card.id)}">',
-             f'<div class="card-head">{head}<span class="id">{esc(card.id)}</span></div>',
-             f'<p class="summary">{esc(card.summary)}</p>']
+             f'<div class="card-head">{head}<span class="id">{esc(card.id)}</span>{badge_html}</div>']
+    if card.title:
+        parts.append(f'<p class="title">{inline(card.title)}</p>')
+    if card.summary:
+        parts.append(f'<p class="summary">{inline(card.summary)}</p>')
     if meta:
         parts.append(f'<p class="meta">{esc(meta)}</p>')
-    if badges:
-        parts.append(f'<div class="badges">{"".join(badges)}</div>')
     parts.append('</article>')
     return '\n'.join(parts)
+
+
+def card_grid(articles: list[str]) -> str:
+    if not articles:
+        return '<p class="empty">none</p>'
+    return '<div class="cards">\n' + '\n'.join(articles) + '\n</div>'
 
 
 def detail_badge(card: Card, issues: dict[str, str]) -> list[str]:
@@ -353,39 +392,43 @@ def detail_badge(card: Card, issues: dict[str, str]) -> list[str]:
 
 
 def todo_badges(card: Card, verdict: Verdict, issues: dict[str, str]) -> list[str]:
-    waiting = edges_of(verdict.blocked, card.id)
-    badges = ([f'<span class="badge blocked">blocked ← {esc(", ".join(waiting))}</span>'] if waiting
-              else ['<span class="badge ready">ready</span>'])
-    if edges_of(verdict.stale, card.id) or edges_of(verdict.broken, card.id):
-        badges.append('<span class="badge cleanup">needs cleanup</span>')
-    return badges + detail_badge(card, issues)
+    cleanup = edges_of(verdict.stale, card.id) or edges_of(verdict.broken, card.id)
+    return (['<span class="badge cleanup">needs cleanup</span>'] if cleanup else []) + detail_badge(card, issues)
 
 
 def render_todo(board: Board, verdict: Verdict, issues: dict[str, str]) -> str:
+    """A ToDo card is ready unless it is dimmed, with what it waits on on its meta line."""
     if not board.groups:
         return '<p class="empty">none</p>'
-    waiting = blocked_ids(verdict)
     sections = []
     for group in board.groups:
-        parts = ['<section class="group">']
-        if group.name is not None:
-            parts.append(f'<h3>{esc(group.name)}</h3>')
+        articles = []
         for rank, card in enumerate(group.cards, 1):
             head = f'<span class="rank">{rank}</span>' + ('<span class="flag">⚑</span>' if card.flag else '')
-            classes = 'card blocked' if card.id in waiting else 'card'
-            parts.append(card_html(card, classes, head, todo_badges(card, verdict, issues)))
-        if not group.cards:
-            parts.append('<p class="empty">none</p>')
-        parts.append('</section>')
+            waits_on = edges_of(verdict.blocked, card.id)
+            classes = 'card blocked' if waits_on else 'card'
+            meta = f'blocked ← {", ".join(waits_on)}' if waits_on else ''
+            articles.append(card_html(card, classes, head, todo_badges(card, verdict, issues), meta))
+        if group.name is None:
+            parts = ['<section class="group">']
+        else:
+            parts = [f'<section class="group" data-group="{esc(group.name)}">',
+                     f'<h3><button type="button" class="group-toggle" aria-expanded="true">'
+                     f'<span class="group-name">{esc(group.name)}</span>'
+                     f'<span class="count">{len(group.cards)}</span></button></h3>']
+        parts += [card_grid(articles), '</section>']
         sections.append('\n'.join(parts))
     return '\n'.join(sections)
 
 
 def render_in_progress(board: Board, issues: dict[str, str], now: datetime) -> str:
-    if not board.in_progress:
-        return '<p class="empty">none</p>'
-    return '\n'.join(card_html(card, 'card', '', detail_badge(card, issues), progress_meta(card, now))
-                     for card in board.in_progress)
+    return card_grid([card_html(card, 'card', '', detail_badge(card, issues), progress_meta(card, now))
+                      for card in board.in_progress])
+
+
+def render_done(board: Board, issues: dict[str, str]) -> str:
+    return card_grid([card_html(card, 'card', '', detail_badge(card, issues), done_meta(card))
+                      for card in board.done])
 
 
 def edge_list(ids: list[str]) -> str:
@@ -400,8 +443,12 @@ def render_detail(card: Card, place: str, verdict: Verdict, issues: dict[str, st
                        ('adjacent', card.adjacent)):
         if ids:
             rows.append(f'<dt>{label}</dt><dd>{edge_list(ids)}</dd>')
-    parts = [f'<template id="detail-{esc(card.id)}">', f'<h2>{esc(card.id)}</h2>',
-             f'<p class="meta">{esc(place)}</p>', f'<p class="summary">{esc(card.summary)}</p>']
+    parts = [f'<template id="detail-{esc(card.id)}">', f'<h2>{esc(card.id)}</h2>']
+    if card.title:
+        parts.append(f'<p class="title">{inline(card.title)}</p>')
+    parts.append(f'<p class="meta">{esc(place)}</p>')
+    if card.summary:
+        parts.append(f'<p class="summary">{inline(card.summary)}</p>')
     if rows:
         parts.append(f'<dl>{"".join(rows)}</dl>')
     if card.id in issues:
@@ -418,6 +465,8 @@ def render_details(board: Board, verdict: Verdict, issues: dict[str, str], now: 
     for card in board.in_progress:
         meta = progress_meta(card, now)
         parts.append(render_detail(card, 'in progress' + (f' · {meta}' if meta else ''), verdict, issues))
+    for card in board.done:
+        parts.append(render_detail(card, done_meta(card) or 'done', verdict, issues))
     for group in board.groups:
         for rank, card in enumerate(group.cards, 1):
             state = 'blocked' if card.id in waiting else 'ready'
@@ -436,7 +485,8 @@ def cleanup_line(verdict: Verdict) -> str:
 def render_header(board: Board, verdict: Verdict, project: str, now: datetime) -> str:
     parts = [f'<h1>{esc(project)}</h1>',
              f'<p class="meta">generated {now:%Y-%m-%d %H:%M} · ready {len(verdict.ready)} · '
-             f'blocked {len(blocked_ids(verdict))} · in progress {len(board.in_progress)}</p>']
+             f'blocked {len(blocked_ids(verdict))} · in progress {len(board.in_progress)} · '
+             f'done {len(board.done)} · archived {len(board.archived)}</p>']
     notice = cleanup_line(verdict)
     if notice:
         parts.append(f'<p class="notice">{esc(notice)}</p>')
@@ -448,8 +498,9 @@ def render_view(board: Board, verdict: Verdict, issues: dict[str, str], project:
     fills = {
         'title': esc(project),
         'header': render_header(board, verdict, project, now),
-        'in-progress': render_in_progress(board, issues, now),
         'todo': render_todo(board, verdict, issues),
+        'in-progress': render_in_progress(board, issues, now),
+        'done': render_done(board, issues),
         'details': render_details(board, verdict, issues, now),
     }
     for name in MARKERS:
@@ -462,7 +513,7 @@ def render_view(board: Board, verdict: Verdict, issues: dict[str, str], project:
 
 def read_issues(repo: Path, board: Board) -> dict[str, str]:
     issues = {}
-    for card in board.in_progress + todo_cards(board):
+    for card in board.in_progress + board.done + todo_cards(board):
         path = repo / 'docs' / 'issues' / f'{card.id}.md'
         try:
             issues[card.id] = path.read_text(encoding='utf-8-sig', errors='replace')

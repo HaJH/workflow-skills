@@ -52,6 +52,11 @@ A lightweight kanban board.
 - **`scan-pipeline`** — scan the library folder → register in the DB (detail: issues/)
   - branch `feature/scan-pipeline` · report `docs/reports/feature-scan-pipeline.md` · started 2026-11-02
 
+## Done
+
+- **`tag-editor`** · Tag editor — edit tags in place (detail: issues/)
+  - started 2026-10-28 · done 2026-11-01
+
 ## ToDo
 
 ### Main Line (v0)
@@ -66,6 +71,8 @@ A lightweight kanban board.
 - ⚑ **`sleep-timer`** — sleep timer
 - **`db-migration`** — DB schema migration tool
   - prereq: `ghost`
+- **`tag-bulk`** · Bulk tagging — tag many works at once
+  - prereq: `tag-editor`
 
 ### Docs
 
@@ -91,18 +98,20 @@ ARCHIVE_MD = """# Board Archive
 - **`old-done`** (2026-10-01 ~ 10-03) — finished earlier
 """
 
-READY_TEXT = """board: ToDo 5 / In Progress 1 / archived 1
+READY_TEXT = """board: ToDo 6 / In Progress 1 / Done 1 / archived 1
 
-ready (3)
+ready (4)
   sleep-timer
   db-migration
+  tag-bulk
   api-guide
 
 blocked (2)
   library-ui ← scan-pipeline
   playback-queue ← library-ui
 
-stale edges -- prerequisite already merged; delete the line (1)
+stale edges -- prerequisite already done; delete the line (2)
+  tag-bulk ← tag-editor
   api-guide ← old-done
 
 broken edges -- prerequisite matches no card (1)
@@ -135,7 +144,7 @@ class BoardTestCase(unittest.TestCase):
 
     def cards(self, parsed):
         return {card.id: card for group in parsed.groups for card in group.cards} | \
-            {card.id: card for card in parsed.in_progress}
+            {card.id: card for card in parsed.in_progress + parsed.done}
 
 
 class ParseTests(BoardTestCase):
@@ -148,11 +157,21 @@ class ParseTests(BoardTestCase):
         self.assertEqual(scan.started, date(2026, 11, 2))
         self.assertEqual([group.name for group in parsed.groups], ['Main Line (v0)', 'Core', 'Docs'])
         self.assertEqual([[card.id for card in group.cards] for group in parsed.groups],
-                         [['library-ui', 'playback-queue'], ['sleep-timer', 'db-migration'], ['api-guide']])
+                         [['library-ui', 'playback-queue'], ['sleep-timer', 'db-migration', 'tag-bulk'],
+                          ['api-guide']])
+        self.assertEqual([card.id for card in parsed.done], ['tag-editor'])
+        done = parsed.done[0]
+        self.assertEqual((done.title, done.summary), ('Tag editor', 'edit tags in place'))
+        self.assertEqual((done.started, done.finished), (date(2026, 10, 28), date(2026, 11, 1)))
+        self.assertIsNone(done.branch)
+        self.assertIsNone(scan.finished)
         cards = self.cards(parsed)
         self.assertTrue(cards['sleep-timer'].flag)
         self.assertFalse(cards['db-migration'].flag)
         self.assertEqual(cards['library-ui'].summary, 'implement the v0 screen')
+        self.assertIsNone(cards['library-ui'].title)
+        self.assertEqual((cards['tag-bulk'].title, cards['tag-bulk'].summary),
+                         ('Bulk tagging', 'tag many works at once'))
         self.assertEqual(cards['library-ui'].prereqs, ['scan-pipeline'])
         self.assertEqual(cards['api-guide'].adjacent, ['library-ui'])
         self.assertEqual(parsed.archived, {'old-done'})
@@ -162,11 +181,21 @@ class ParseTests(BoardTestCase):
         self.assertNotIn('fenced-only', self.cards(parsed))
         self.assertNotIn('fenced-only', parsed.archived)
 
+    def test_title_is_marked_only_by_the_dot_after_the_id(self):
+        text = ('## ToDo\n\n'
+                '- **`plain`** — scan · then register — later\n'
+                '- **`titled`** · Scan — walk · then register — later (detail: issues/)\n'
+                '- **`title-only`** · Just a title\n')
+        cards = self.cards(board.parse_board(text, ARCHIVE_MD))
+        self.assertEqual((cards['plain'].title, cards['plain'].summary), (None, 'scan · then register — later'))
+        self.assertEqual((cards['titled'].title, cards['titled'].summary), ('Scan', 'walk · then register — later'))
+        self.assertEqual((cards['title-only'].title, cards['title-only'].summary), ('Just a title', ''))
+
     def test_judge_matches_board_ready_semantics(self):
         verdict = board.judge(board.parse_board(BOARD_MD, ARCHIVE_MD))
-        self.assertEqual(verdict.ready, ['sleep-timer', 'db-migration', 'api-guide'])
+        self.assertEqual(verdict.ready, ['sleep-timer', 'db-migration', 'tag-bulk', 'api-guide'])
         self.assertEqual(verdict.blocked, [('library-ui', 'scan-pipeline'), ('playback-queue', 'library-ui')])
-        self.assertEqual(verdict.stale, [('api-guide', 'old-done')])
+        self.assertEqual(verdict.stale, [('tag-bulk', 'tag-editor'), ('api-guide', 'old-done')])
         self.assertEqual(verdict.broken, [('db-migration', 'ghost')])
 
     def test_korean_vocabulary_parses_like_english(self):
@@ -177,15 +206,18 @@ class ParseTests(BoardTestCase):
                   .replace('  - branch `feature/scan-pipeline` · report `docs/reports/feature-scan-pipeline.md` · '
                            'started 2026-11-02',
                            '  - 브랜치 `feature/scan-pipeline` · 보고서 `docs/reports/feature-scan-pipeline.md` · '
-                           '시작 2026-11-02'))
+                           '시작 2026-11-02')
+                  .replace('  - started 2026-10-28 · done 2026-11-01', '  - 시작 2026-10-28 · 완료 2026-11-01'))
         self.assertNotEqual(korean, BOARD_MD)
         self.assertEqual(board.parse_board(korean, ARCHIVE_MD), board.parse_board(BOARD_MD, ARCHIVE_MD))
 
     def test_status_line_without_a_branch_keeps_the_start_date(self):
         text = '## In Progress\n\n- **`signoff`** — review\n  - 브랜치 없음(사용자 검토) · 시작 2026-11-03\n\n## ToDo\n'
-        card = board.parse_board(text, ARCHIVE_MD).in_progress[0]
+        parsed = board.parse_board(text, ARCHIVE_MD)
+        card = parsed.in_progress[0]
         self.assertIsNone(card.branch)
         self.assertEqual(card.started, date(2026, 11, 3))
+        self.assertEqual(parsed.done, [])
 
     def test_every_vocabulary_row_names_every_word(self):
         keys = set(board.VOCABULARY[0])
@@ -204,7 +236,8 @@ class ReadyCliTests(BoardTestCase):
         self.assertEqual(result.returncode, 1, result.stderr.decode('utf-8', 'replace'))
         self.assertEqual(result.stdout, READY_TEXT.encode('utf-8'))
 
-        clean = BOARD_MD.replace('  - prereq: `ghost`\n', '').replace('  - prereq: `old-done`\n', '')
+        clean = (BOARD_MD.replace('  - prereq: `ghost`\n', '').replace('  - prereq: `old-done`\n', '')
+                 .replace('  - prereq: `tag-editor`\n', ''))
         root = make_repo(self.tmp / 'clean', board_text=clean)
         result = run_cli(root, 'ready')
         self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', 'replace'))
@@ -269,28 +302,51 @@ class ViewTests(BoardTestCase):
 
     def test_view_layout_order_badges_and_dimming(self):
         page = self.render()
-        positions = [page.index(f'<h3>{name}</h3>') for name in ('Main Line (v0)', 'Core', 'Docs')]
+        columns = [page.index(f'<section class="column {name}">') for name in ('todo', 'in-progress', 'done')]
+        self.assertEqual(columns, sorted(columns))
+        positions = [page.index(f'<section class="group" data-group="{name}">')
+                     for name in ('Main Line (v0)', 'Core', 'Docs')]
         self.assertEqual(positions, sorted(positions))
+        self.assertIn('<span class="group-name">Core</span><span class="count">3</span>', page)
         classes, body = article(page, 'library-ui')
         self.assertIn('blocked', classes)
-        self.assertIn('<span class="badge blocked">blocked ← scan-pipeline</span>', body)
+        self.assertIn('<p class="meta">blocked ← scan-pipeline</p>', body)
         classes, body = article(page, 'sleep-timer')
         self.assertNotIn('blocked', classes)
-        for fragment in ('<span class="flag">⚑</span>', '<span class="rank">1</span>',
-                         '<span class="badge ready">ready</span>'):
+        for fragment in ('<span class="flag">⚑</span>', '<span class="rank">1</span>'):
             self.assertIn(fragment, body)
+        self.assertNotIn('class="badge', body)
         for card_id in ('api-guide', 'db-migration'):
             self.assertIn('<span class="badge cleanup">needs cleanup</span>', article(page, card_id)[1])
         self.assertNotIn('needs cleanup', article(page, 'sleep-timer')[1])
         self.assertIn('feature/scan-pipeline · started 11-02 · day 3', article(page, 'scan-pipeline')[1])
-        self.assertIn('ready 3 · blocked 2 · in progress 1', page)
+        self.assertIn('ready 4 · blocked 2 · in progress 1 · done 1 · archived 1', page)
         self.assertIn('generated 2026-11-04 09:12', page)
 
+    def test_view_card_lines_title_and_done_column(self):
+        page = self.render()
+        body = article(page, 'tag-bulk')[1]
+        self.assertIn('<p class="title">Bulk tagging</p>', body)
+        self.assertIn('<p class="summary">tag many works at once</p>', body)
+        self.assertNotIn('class="title"', article(page, 'library-ui')[1])
+        done_column = page[page.index('<section class="column done">'):page.index('</main>')]
+        self.assertIn('data-card="tag-editor"', done_column)
+        self.assertIn('<p class="meta">done 11-01</p>', article(page, 'tag-editor')[1])
+        self.assertIn('<p class="meta">done 11-01</p>', detail(page, 'tag-editor'))
+
+    def test_view_renders_inline_code_and_bold_in_card_text(self):
+        page = self.render(BOARD_MD.replace('— DB schema migration tool', '— **DB** schema `migrate` tool'))
+        expected = '<p class="summary"><strong>DB</strong> schema <code>migrate</code> tool</p>'
+        self.assertIn(expected, article(page, 'db-migration')[1])
+        self.assertIn(expected, detail(page, 'db-migration'))
+
     def test_view_escapes_summaries_and_issue_text(self):
-        text = BOARD_MD.replace('— sleep timer', '— a <b> & "c"')
+        text = BOARD_MD.replace('— sleep timer', '— a <b> & "c"').replace('· Bulk tagging', '· Bulk <i>')
         page = self.render(text, issues={'sleep-timer': '<img src=x>'})
         self.assertNotIn('a <b> & "c"', page)
         self.assertIn('a &lt;b&gt; &amp; &quot;c&quot;', page)
+        self.assertNotIn('Bulk <i>', page)
+        self.assertIn('Bulk &lt;i&gt;', page)
         self.assertNotIn('<img src=x>', page)
         self.assertIn('&lt;img src=x&gt;', detail(page, 'sleep-timer'))
 
@@ -319,10 +375,20 @@ class ViewTests(BoardTestCase):
         self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', 'replace'))
         self.assertEqual(result.stdout.decode('utf-8').splitlines(), [
             f'board view: {out}',
-            'board: ToDo 5 / In Progress 1 / archived 1 -- ready 3, blocked 2',
-            'needs cleanup: 1 stale, 1 broken edges -- run scripts/board ready for the list',
+            'board: ToDo 6 / In Progress 1 / Done 1 / archived 1 -- ready 4, blocked 2',
+            'needs cleanup: 2 stale, 1 broken edges -- run scripts/board ready for the list',
         ])
         self.assertTrue(out.is_file())
+
+    def test_view_cli_reads_the_issue_files_of_done_cards(self):
+        issue = '# tag-editor\n\n## For the User to Check by Eye\n\n- the tag field keeps focus\n'
+        root = make_repo(self.tmp / 'repo', issues={'tag-editor': issue})
+        out = self.tmp / 'out.html'
+        result = run_cli(root, 'view', '--no-open', '--out', str(out))
+        self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', 'replace'))
+        page = out.read_text(encoding='utf-8')
+        self.assertIn('<span class="badge detail">detail</span>', article(page, 'tag-editor')[1])
+        self.assertIn('<li>the tag field keeps focus</li>', detail(page, 'tag-editor'))
 
     def test_view_default_output_name_is_sanitized(self):
         root = make_repo(self.tmp / 'My App 한글')
