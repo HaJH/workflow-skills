@@ -81,7 +81,7 @@ was not. Always delete the marker lines themselves).
 | `.gitignore` | add `docs/reports/` · `.claude/settings.local.json` |
 | [discipline] `docs/discipline.md` | `references/discipline-md.md` |
 | [review-loop] skills and agents | `references/review-loop.md` (+ for `custom`, `review-rules-{lang}.md` → `references/rules.md`) |
-| [board] 4 board documents · `docs/issues/` · `scripts/board-ready.sh` | `references/board.md` · `references/scripts/board-ready.sh` |
+| [board] 4 board documents · `docs/issues/` · `scripts/board.py` · `scripts/board-view.html` · `scripts/tests/test_board.py` · `scripts/run-python.sh` · `.claude/commands/board.md` | `references/board.md` · `references/scripts/board.py` · `references/scripts/board-view.html` · `references/scripts/board-tests/test_board.py` · `references/scripts/run-python.sh` · `references/commands.md` "/board" |
 | [watch] `scripts/watch-commits.sh` | `references/scripts/watch-commits.sh` |
 | [just] `.claude/commands/just.md` | `references/commands.md` "/just" |
 | [gate-script] `scripts/check.ps1` | `references/scripts/check.ps1` (keep only the language block) |
@@ -98,7 +98,8 @@ writing project-specific sections, no anecdotes, dates, or counted values.
 - [hooks] Actually run the tests and the commands in `references/hooks.md` "Verification". Confirm
   that every `requires.reads` path exists — a typo means nobody can edit the files that rule
   matches, or run the command it gates
-- [board] `bash scripts/board-ready.sh` exits 0
+- [board] `bash scripts/run-python.sh scripts/board.py ready` exits 0, and
+  `python -m unittest discover -s scripts/tests -v` passes
 - [gate-script] `scripts/check.ps1` passes on the current tree, or the failure is confirmed to be
   the project state (unfinished code) and not the script
 - [hooks] Leftover example-rule check: `grep -rn '"example-' .claude/hooks` returns none — either

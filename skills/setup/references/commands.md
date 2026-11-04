@@ -14,8 +14,9 @@ Start a PM session. Follow this procedure:
 2. Establish the current state:
 <!-- module:board -->
    - `docs/board.md` — In Progress and ToDo
-   - `bash scripts/board-ready.sh` — startable cards · blocked cards · **stale prerequisites and
-     broken references**. When a stale prerequisite shows up, delete that line and commit
+   - `bash scripts/run-python.sh scripts/board.py ready` — startable cards · blocked cards ·
+     **stale prerequisites and broken references**. When a stale prerequisite shows up, delete
+     that line and commit
 <!-- /module:board -->
    - `git log --oneline -10`
    - `git branch -a`
@@ -326,8 +327,8 @@ Target branch: $ARGUMENTS
    - Remove the item from In Progress in `docs/board.md`
    - **Delete the prerequisite lines that pointed at this card** — left in place, that card reads
      as blocked forever
-   - Confirm with `bash scripts/board-ready.sh` — stale prerequisites and broken references must
-     be zero
+   - Confirm with `bash scripts/run-python.sh scripts/board.py ready` — stale prerequisites and
+     broken references must be zero
    - If `docs/issues/<id>.md` exists, move the key conclusions into the archive entry and the
      design document, then delete it
    - Commit the board changes
@@ -346,6 +347,26 @@ Target branch: $ARGUMENTS
 - Confirm each cleanup step with the user before doing it
 - The report is deleted, so move anything still needed after the merge into a canonical document
   first
+```
+
+---
+
+## /board (module: board)
+
+```markdown
+---
+description: Open the work board as a kanban page in the browser
+disable-model-invocation: true
+---
+
+Open the work board as a read-only kanban page: run
+`bash scripts/run-python.sh scripts/board.py view`.
+
+- Report in one line what the command printed: the card counts, and the stale and broken edge
+  counts when it names them
+- Never move a card, edit the board, or propose the next task — the user reads the page and
+  decides. Symptom: the reply lists cards or recommends what to start
+- Exit 2 means a board file could not be read: report the message as it is
 ```
 
 ---

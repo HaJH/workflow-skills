@@ -19,11 +19,11 @@ was not, delete the whole block. The marker lines themselves are always deleted)
 |---|---|---|---|---|
 | `review-loop` | Autonomous review-fix loop | on | `/review` command, plus the skills and agents for the chosen review mode (`review-loop.md`) | — |
 | `commit-rhythm` | Commit rhythm (`wip:`) | on | — (blocks inside CLAUDE.md, workflow.md, commands) | — |
-| `board` | Work board | on | `docs/board.md` · `roadmap.md` · `backlog.md` · `board-archive.md` · `docs/issues/` · `scripts/board-ready.sh` (`board.md`) | — |
+| `board` | Work board | on | `docs/board.md` · `roadmap.md` · `backlog.md` · `board-archive.md` · `docs/issues/` · `scripts/board.py` · `board-view.html` · `scripts/tests/test_board.py` · `scripts/run-python.sh` (shared with `hooks`) · `/board` command (`board.md`). Needs `bash` and Python 3.9 or newer | — |
 | `watch` | PM progress watch | on | `scripts/watch-commits.sh` | `commit-rhythm` |
 | `just` | `/just` procedure-skip command | on | `.claude/commands/just.md` | — |
 | `gate-script` | Gate script | on | `scripts/check.ps1` (Windows) or `scripts/check.sh` | — |
-| `hooks` | Hooks (session injection · file-pattern gate · content lint · command read and flag gate · MCP gate · session-length signal · turn-end gate) | on | `.claude/settings.json` · `.claude/hooks/*` · `.claude/hooks/tests/` (`hooks.md`). Every hook needs `bash` (Git Bash on Windows) and Python 3.9 or newer | — |
+| `hooks` | Hooks (session injection · file-pattern gate · content lint · command read and flag gate · MCP gate · session-length signal · turn-end gate) | on | `.claude/settings.json` · `.claude/hooks/*` · `.claude/hooks/tests/` · `scripts/run-python.sh` (shared with `board`) (`hooks.md`). Every hook needs `bash` (Git Bash on Windows) and Python 3.9 or newer | — |
 | `discipline` | Development discipline document | on | `docs/discipline.md` (`discipline-md.md`) | — |
 | `comment-audit` | Pre-staging comment audit | on | `.claude/agents/{PREFIX}-comment-auditor.md` + the audit block in `/commit` (`comment-audit.md`) | `discipline` |
 | `design-review` | Design review gate | off | `.claude/skills/design-review/*` · 3 agents · `docs/design-principles.md` · `docs/specs/` (`design-review.md`) | — |
