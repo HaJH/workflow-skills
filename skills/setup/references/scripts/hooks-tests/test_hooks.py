@@ -395,6 +395,21 @@ class HookTests(unittest.TestCase):
         self.silent(self.invoke('stop-turn-end-gate.py', payload))
         self.assertTrue((self.home / '.claude' / 'logs' / 'stop-turn-end-gate.jsonl').is_file())
 
+    def test_stop_gate_accepts_the_completion_labels(self):
+        for prompt, message in (
+                ('c1', 'I will report the result. Resume condition: step complete'),
+                ('c2', 'I will archive the card. Resume condition: session complete'),
+                ('c3', '이어서 진행하겠습니다. 재개 조건: `단계 완료`'),
+                ('c4', '보드를 정리하겠습니다. 재개 조건: 세션 종료 가능')):
+            payload = {'hook_event_name': 'Stop', 'session_id': 'labels', 'prompt_id': prompt,
+                       'last_assistant_message': message}
+            self.silent(self.invoke('stop-turn-end-gate.py', payload))
+
+    def test_stop_gate_still_blocks_a_promise_naming_no_resume_condition_in_korean(self):
+        payload = {'hook_event_name': 'Stop', 'session_id': 'labels', 'prompt_id': 'k1',
+                   'last_assistant_message': '커밋했습니다. 이어서 진행하겠습니다.'}
+        self.assertEqual(self.invoke('stop-turn-end-gate.py', payload).returncode, 2)
+
     # ---- scripts/run-python.sh ----
 
     def candidate(self, name, body):

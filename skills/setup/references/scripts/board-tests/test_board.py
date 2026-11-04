@@ -169,6 +169,28 @@ class ParseTests(BoardTestCase):
         self.assertEqual(verdict.stale, [('api-guide', 'old-done')])
         self.assertEqual(verdict.broken, [('db-migration', 'ghost')])
 
+    def test_korean_vocabulary_parses_like_english(self):
+        korean = (BOARD_MD
+                  .replace('  - prereq:', '  - 선행:')
+                  .replace('  - adjacent:', '  - 인접:')
+                  .replace('(detail: issues/)', '(상세: issues/)')
+                  .replace('  - branch `feature/scan-pipeline` · report `docs/reports/feature-scan-pipeline.md` · '
+                           'started 2026-11-02',
+                           '  - 브랜치 `feature/scan-pipeline` · 보고서 `docs/reports/feature-scan-pipeline.md` · '
+                           '시작 2026-11-02'))
+        self.assertNotEqual(korean, BOARD_MD)
+        self.assertEqual(board.parse_board(korean, ARCHIVE_MD), board.parse_board(BOARD_MD, ARCHIVE_MD))
+
+    def test_status_line_without_a_branch_keeps_the_start_date(self):
+        text = '## In Progress\n\n- **`signoff`** — review\n  - 브랜치 없음(사용자 검토) · 시작 2026-11-03\n\n## ToDo\n'
+        card = board.parse_board(text, ARCHIVE_MD).in_progress[0]
+        self.assertIsNone(card.branch)
+        self.assertEqual(card.started, date(2026, 11, 3))
+
+    def test_every_vocabulary_row_names_every_word(self):
+        keys = set(board.VOCABULARY[0])
+        self.assertTrue(all(set(row) == keys for row in board.VOCABULARY))
+
     def test_crlf_and_bom_parse_identically(self):
         windows = '﻿' + BOARD_MD.replace('\n', '\r\n')
         archive = '﻿' + ARCHIVE_MD.replace('\n', '\r\n')
