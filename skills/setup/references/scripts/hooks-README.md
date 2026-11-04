@@ -4,9 +4,11 @@
 
 Every hook runs on `bash` and Python 3.9 or newer, identically on Windows (Git Bash) and
 macOS/Linux. `.claude/settings.json` launches each one as
-`bash "$CLAUDE_PROJECT_DIR/.claude/hooks/run-python-hook.sh" <script.py> [args...]`. The launcher
-finds the script next to itself and tries `python3` → `python` → `py -3`, taking the first that
-actually runs a supported version. The probe does not read stdin; the chosen interpreter is
+`bash "$CLAUDE_PROJECT_DIR/scripts/run-python.sh" "$CLAUDE_PROJECT_DIR/.claude/hooks/<script.py>" [args...]`.
+The launcher runs the script path it is given (absolute, or relative to the current directory)
+and tries `python3` → `python` → `py -3`, taking the first that actually runs a supported
+version. It lives in `scripts/`, not here, because the board module runs `scripts/board.py`
+through it too. The probe does not read stdin; the chosen interpreter is
 `exec`ed, so input, arguments, output and exit code pass through untouched. A hook that fails is
 never re-run under another interpreter.
 
@@ -201,7 +203,7 @@ Run the regression tests ("Tests" below), then check a real rule from `bash` (Gi
 Windows) with a `session_id` no real session has:
 
 ```bash
-echo '{"session_id":"verify-1","tool_name":"Edit","tool_input":{"file_path":"<project absolute path>/<a file the rule matches>","new_string":"x"}}' | bash .claude/hooks/run-python-hook.sh pre-tool-use.py
+echo '{"session_id":"verify-1","tool_name":"Edit","tool_input":{"file_path":"<project absolute path>/<a file the rule matches>","new_string":"x"}}' | bash scripts/run-python.sh .claude/hooks/pre-tool-use.py
 ```
 
 On a match with requirements unfulfilled, `permissionDecision: deny` JSON, listing the `Read:` /
@@ -324,7 +326,7 @@ Verification — a call missing one required argument (or a gated command before
 produce deny JSON, a complete one empty output:
 
 ```bash
-echo '{"session_id":"verify-1","tool_name":"Bash","tool_input":{"command":"<the guarded command, one flag removed>"}}' | bash .claude/hooks/run-python-hook.sh pre-tool-use-command.py
+echo '{"session_id":"verify-1","tool_name":"Bash","tool_input":{"command":"<the guarded command, one flag removed>"}}' | bash scripts/run-python.sh .claude/hooks/pre-tool-use-command.py
 ```
 
 ## UserPromptSubmit — Session-Length Signal
@@ -358,7 +360,7 @@ user has chosen to continue. Parse and IO failures exit 0 (fail-open).
 Verification — the transcript path is `~/.claude/projects/<project slug>/<session_id>.jsonl`:
 
 ```bash
-echo '{"hook_event_name":"UserPromptSubmit","session_id":"test","transcript_path":"<a long session jsonl>"}' | bash .claude/hooks/run-python-hook.sh user-prompt-submit-session-length.py
+echo '{"hook_event_name":"UserPromptSubmit","session_id":"test","transcript_path":"<a long session jsonl>"}' | bash scripts/run-python.sh .claude/hooks/user-prompt-submit-session-length.py
 ```
 
 Over the threshold, `additionalContext` JSON; called again with the same `session_id`, empty
@@ -400,7 +402,7 @@ blocks every turn written in that language.
 Verification:
 
 ```bash
-echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p1","last_assistant_message":"Committed the fix. I will check the build output next."}' | bash .claude/hooks/run-python-hook.sh stop-turn-end-gate.py; echo "exit=$?"
+echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p1","last_assistant_message":"Committed the fix. I will check the build output next."}' | bash scripts/run-python.sh .claude/hooks/stop-turn-end-gate.py; echo "exit=$?"
 ```
 
 `exit=2` plus the reason. Called again with the same `prompt_id`, `exit=0`.
@@ -416,7 +418,7 @@ copies the hooks into a throwaway project under a temp directory — a path with
 and the worktree shape — writes **its own** rule files there, and points `HOME` and the temp
 directory at the same place. The project's real rules, session records and logs are not touched,
 so the tests check the scripts; this project's rules are checked with the "Verification" commands.
-The tests run each hook through `run-python-hook.sh`, including the launcher's fallback, version
+The tests run each hook through `scripts/run-python.sh`, including the launcher's fallback, version
 probe, stdin passing and exit codes, so `bash` is required.
 
 After changing a hook's behavior, add or adjust the test for it in the same change.
@@ -425,12 +427,12 @@ After changing a hook's behavior, add or adjust the test for it in the same chan
 
 - `*.py` hooks, `*.json` rule files, `*.md` headers: UTF-8. A BOM is tolerated on every file the
   hooks read; the JSON they write is UTF-8 bytes whatever the locale
-- `run-python-hook.sh`: LF line endings — bash on Windows fails on a CRLF script
+- `scripts/run-python.sh`: LF line endings — bash on Windows fails on a CRLF script
 
 ## Registering in settings
 
 They are registered in `.claude/settings.json` (shared with the team), each with
-`"shell": "bash"` and a command that goes through `run-python-hook.sh`. Right after editing
+`"shell": "bash"` and a command that goes through `scripts/run-python.sh`. Right after editing
 settings, open the `/hooks` menu once or restart for it to take effect.
 
 Each event holds a **list** of entries, and each entry a list of commands, so several scripts can

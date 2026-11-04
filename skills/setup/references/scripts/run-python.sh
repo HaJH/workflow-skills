@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 
 if [[ $# -lt 1 ]]; then
-    printf '%s\n' 'Usage: run-python-hook.sh <script.py> [args...]' >&2
+    printf '%s\n' 'Usage: run-python.sh <script.py> [args...]' >&2
     exit 1
 fi
 
-hook_dir="$(CDPATH= cd -- "${BASH_SOURCE[0]%/*}" && pwd)" || exit 1
-script="$hook_dir/$1"
+script="$1"
 shift
 probe='import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)'
 

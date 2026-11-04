@@ -50,7 +50,9 @@
     ".claude/hooks/*.sh",
     "*/.claude/hooks/*.sh",
     ".claude/hooks/*.py",
-    "*/.claude/hooks/*.py"
+    "*/.claude/hooks/*.py",
+    "scripts/run-python.sh",
+    "*/scripts/run-python.sh"
    ],
    "requires": {
     "reads": [".claude/hooks/README.md"]

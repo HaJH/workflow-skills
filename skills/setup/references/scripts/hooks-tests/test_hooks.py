@@ -5,7 +5,7 @@ Run from the project root:  python -m unittest discover -s .claude/hooks/tests -
 Each test copies the hook scripts into a throwaway project under a temp directory whose
 path holds spaces, non-ASCII and the worktree shape, writes its own rule files there,
 and points HOME / TEMP at the same place -- the project's real rule files, session
-records and logs are never read or touched. Hooks run through run-python-hook.sh the way
+records and logs are never read or touched. Hooks run through scripts/run-python.sh the way
 settings.json runs them, so bash is required.
 """
 import json
@@ -21,6 +21,9 @@ import unittest
 HOOKS = Path(__file__).resolve().parents[1]
 SETTINGS = HOOKS.parent / 'settings.json'
 BASH = shutil.which('bash')
+# The project layout keeps the launcher in <root>/scripts/; the template repo keeps it next to the hooks.
+LAUNCHER = next((path for path in (HOOKS.parents[1] / 'scripts' / 'run-python.sh', HOOKS / 'run-python.sh')
+                 if path.is_file()), None)
 
 MAP = {
     'commandRules': [
@@ -56,7 +59,8 @@ GATE = {
 }
 
 
-@unittest.skipUnless(BASH, 'bash is required to run the hooks the way settings.json does')
+@unittest.skipUnless(BASH and LAUNCHER, 'bash and scripts/run-python.sh are required to run the hooks the way '
+                                        'settings.json does')
 class HookTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='hook 한글 space ')
@@ -68,6 +72,9 @@ class HookTests(unittest.TestCase):
         for source in HOOKS.iterdir():
             if source.is_file():
                 shutil.copy2(source, self.hooks / source.name)
+        self.launcher = self.root / 'scripts' / 'run-python.sh'
+        self.launcher.parent.mkdir()
+        shutil.copy2(LAUNCHER, self.launcher)
         self.write_rules('file-pattern-map.json', MAP)
         self.write_rules('content-lint.json', LINT)
         self.write_rules('command-gate.json', GATE)
@@ -90,7 +97,7 @@ class HookTests(unittest.TestCase):
     def invoke(self, script, payload=None, raw=None, args=(), env=None):
         if raw is None:
             raw = json.dumps(payload or {}, ensure_ascii=False).encode('utf-8')
-        return subprocess.run([BASH, (self.hooks / 'run-python-hook.sh').as_posix(), script, *args],
+        return subprocess.run([BASH, self.launcher.as_posix(), (self.hooks / script).as_posix(), *args],
                               input=raw, capture_output=True, cwd=self.base,
                               env=env or self.env, check=False)
 
@@ -386,7 +393,7 @@ class HookTests(unittest.TestCase):
         self.silent(self.invoke('stop-turn-end-gate.py', payload))
         self.assertTrue((self.home / '.claude' / 'logs' / 'stop-turn-end-gate.jsonl').is_file())
 
-    # ---- run-python-hook.sh ----
+    # ---- scripts/run-python.sh ----
 
     def candidate(self, name, body):
         path = self.bin / name
@@ -424,6 +431,13 @@ class HookTests(unittest.TestCase):
         self.assertEqual((result.returncode, result.stdout), (1, b''))
         self.assertIn(b'Python 3.9', result.stderr)
 
+    def test_runner_resolves_relative_path_from_cwd(self):
+        env = self.runner_env()
+        self.candidate('python', 'exec "$REAL_PYTHON" "$@"\n')
+        result = subprocess.run([BASH, self.launcher.as_posix(), '.claude/hooks/probe.py', 'rel', '0'],
+                                input=b'x', capture_output=True, cwd=self.root, env=env, check=False)
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, b'x', b'rel'))
+
     # ---- settings.json ----
 
     @unittest.skipUnless(SETTINGS.is_file(), 'no .claude/settings.json next to the hooks')
@@ -432,7 +446,7 @@ class HookTests(unittest.TestCase):
         for event, registrations in settings.get('hooks', {}).items():
             for registration in registrations:
                 for hook in registration.get('hooks', []):
-                    if 'run-python-hook.sh' not in hook.get('command', ''):
+                    if 'run-python.sh' not in hook.get('command', ''):
                         continue
                     with self.subTest(event=event, command=hook['command']):
                         self.assertEqual(hook.get('shell'), 'bash')
