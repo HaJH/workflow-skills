@@ -9,7 +9,18 @@ For a local project with no external issue tracker. Files generated:
 | `docs/backlog.md` | Dropped and deferred |
 | `docs/board-archive.md` | Done (by milestone) |
 | `docs/issues/` | Empty directory (`.gitkeep`) |
-| `scripts/board-ready.sh` | Copy of `scripts/board-ready.sh`, with the `REPO` default substituted |
+| `scripts/board.py` | Copy of `scripts/board.py`, with the `{PROJECT_PATH}` default substituted |
+| `scripts/board-view.html` | Copy of `scripts/board-view.html` — the page template `board.py view` fills |
+| `scripts/tests/test_board.py` | Copy of `scripts/board-tests/test_board.py` |
+| `scripts/run-python.sh` | Copy of `scripts/run-python.sh`. Shared with the `hooks` module — generate it once when either module is on |
+| `.claude/commands/board.md` | `commands.md` "/board" |
+
+**Prerequisite**: `scripts/board.py` runs on `bash` and Python 3.9 or newer, through the shared
+`scripts/run-python.sh` launcher. If either is missing, say so at setup and leave the `board`
+module off — `/pm` and `/merge-branch` would call a script that cannot run.
+
+**Re-applying to a project set up before `board.py`**: delete `scripts/board-ready.sh`. Symptom:
+`scripts/` holds both verdict scripts, and they disagree once the board format changes.
 
 ## docs/board.md
 
@@ -44,7 +55,7 @@ A ToDo item comes into being like this:
   document, then delete the file
 - **Write a prerequisite as a line, not as prose** — one sub-bullet, only on a blocked card:
   `` - prereq: `<id>` `` (comma-separated if several). The format must be the single one for
-  `scripts/board-ready.sh` to read it
+  `scripts/board.py` to read it
 - Attach the status line (branch, report, start date) only when promoting to In Progress
 - Never rewrite an item's text when moving it. Update only the status fields
 - Group headers carry the fixed category name only — never hang a per-issue comment or an
@@ -102,9 +113,9 @@ Starting work — **never hold a card because it is in the same area**:
 - A provenance note ("split out of `x`") is not a prerequisite — it is history and blocks nothing
 - An "order check" is not one either — to mark it at all, use `` - adjacent: `<id>` ``
 
-`scripts/board-ready.sh` reads these lines and produces three things — **startable cards** ·
-**stale prerequisites** (the target is already in the archive) · **broken references** (the target
-matches no card anywhere).
+`bash scripts/run-python.sh scripts/board.py ready` reads these lines and produces three things —
+**startable cards** · **stale prerequisites** (the target is already in the archive) · **broken
+references** (the target matches no card anywhere).
 
 ## Format
 

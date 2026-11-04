@@ -50,7 +50,9 @@
     ".claude/hooks/*.sh",
     "*/.claude/hooks/*.sh",
     ".claude/hooks/*.py",
-    "*/.claude/hooks/*.py"
+    "*/.claude/hooks/*.py",
+    "scripts/run-python.sh",
+    "*/scripts/run-python.sh"
    ],
    "requires": {
     "reads": [".claude/hooks/README.md"]
@@ -79,7 +81,7 @@
    "id": "board",
    "patterns": ["board.md", "board-archive.md"],
    "scopePath": ["docs/"],
-   "message": "Board: one-line cards, prerequisites as a '- prereq: `<id>`' line only, commit right after editing. Run bash scripts/board-ready.sh -- stale or broken edges must be zero."
+   "message": "Board: one-line cards, prerequisites as a '- prereq: `<id>`' line only, commit right after editing. Run bash scripts/run-python.sh scripts/board.py ready -- stale or broken edges must be zero."
   }
  ]
 }

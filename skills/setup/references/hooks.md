@@ -69,17 +69,22 @@ Its patterns cover English and Korean. Adding a language means appending to `PRO
 blocks every turn written in that language.
 
 **Prerequisite**: every hook runs on `bash` and Python 3.9 or newer, the same on Windows (Git
-Bash) and macOS/Linux. `settings.json` launches each one through `run-python-hook.sh`, which picks
-the first of `python3` · `python` · `py -3` that actually runs a supported version. If `bash` or a
-supported Python is missing, say so at setup and leave the `hooks` module off — a registered hook
-whose command cannot run reports an error on every call.
+Bash) and macOS/Linux. `settings.json` launches each one through `scripts/run-python.sh`, which
+picks the first of `python3` · `python` · `py -3` that actually runs a supported version. If `bash`
+or a supported Python is missing, say so at setup and leave the `hooks` module off — a registered
+hook whose command cannot run reports an error on every call.
+
+**Re-applying to a project set up before the launcher moved**: delete
+`.claude/hooks/run-python-hook.sh` and rewrite every `settings.json` hook command to the shape in
+`scripts/settings.json`. Symptom: after re-applying, every hook reports `No such file` on its
+launcher.
 
 ## Files Created
 
 | Target | Source | Substitution |
 |---|---|---|
 | `.claude/settings.json` | `scripts/settings.json` | none (merge the `hooks` key if a settings.json already exists) |
-| `.claude/hooks/run-python-hook.sh` | `scripts/run-python-hook.sh` | none |
+| `scripts/run-python.sh` | `scripts/run-python.sh` | none. Shared with the `board` module — generate it once when either module is on |
 | `.claude/hooks/hook_common.py` | `scripts/hook_common.py` | none |
 | `.claude/hooks/session-start.py` | `scripts/session-start.py` | none |
 | `.claude/hooks/session-start-header.md` | `scripts/session-start-header.md` | `{PROJECT_NAME}` · module blocks |
@@ -100,10 +105,10 @@ Default rules in `file-pattern-map.json`:
 |---|---|---|---|
 | `source` | `{SOURCE_GLOB_LIST}` in `{SOURCE_DIRS}` | reads: `CLAUDE.md` (+ `docs/discipline.md`) | always. Without the `discipline` module, drop that path |
 | `instructions` | `CLAUDE.md`, `docs/workflow.md`, `docs/discipline.md`, the two header files, `.claude/skills/*`, `.claude/agents/*`, `.claude/commands/*` | reads: `{AUTHORING_POLICY_DOC}` — `docs/authoring-policy.md` with the `doc-review` module, else `docs/workflow.md` | always. Without the `doc-review` module, drop the `/doc-review` sentence from the message |
-| `hook-config` | `.claude/hooks/*.sh` · `*.py` (the tests included) · the three rule files | reads: `.claude/hooks/README.md` | always |
+| `hook-config` | `.claude/hooks/*.sh` · `*.py` (the tests included) · the three rule files · `scripts/run-python.sh` | reads: `.claude/hooks/README.md` | always |
 | `specs` | `docs/specs/*.md` | reads: `docs/workflow.md` | `design-review` module |
 | `design-docs` | `docs/design/*.md` | reads: `docs/workflow.md` | always |
-| `board` | `docs/board.md`, `docs/board-archive.md` | none (message: prereq lines, `board-ready.sh`) | `board` module |
+| `board` | `docs/board.md`, `docs/board-archive.md` | none (message: prereq lines, `board.py ready`) | `board` module |
 
 `commandRules` ships with one rule, `git-write`: `git commit` · `git worktree add` · `git merge`
 require a `Read` of `docs/workflow.md`, which is not injected at session start. Domain rules (a
@@ -151,45 +156,45 @@ Use a `session_id` no real session has; a new one starts with nothing recorded. 
 under the project root as Python sees it, matches no rule, and every case comes back empty.
 
 ```bash
-H=".claude/hooks/run-python-hook.sh"
+H="scripts/run-python.sh"
 
 # File pattern gate -- a path the source rule matches must produce deny JSON
-echo '{"session_id":"verify-1","tool_name":"Edit","tool_input":{"file_path":"{PROJECT_PATH}/{SOURCE_SAMPLE}","new_string":"x"}}' | bash "$H" pre-tool-use.py
+echo '{"session_id":"verify-1","tool_name":"Edit","tool_input":{"file_path":"{PROJECT_PATH}/{SOURCE_SAMPLE}","new_string":"x"}}' | bash "$H" .claude/hooks/pre-tool-use.py
 
 # After recording the Read (and with the discipline module, a Read of docs/discipline.md too),
 # the same edit must produce additionalContext JSON (the reminder)
-echo '{"session_id":"verify-1","tool_name":"Read","tool_input":{"file_path":"{PROJECT_PATH}/CLAUDE.md"}}' | bash "$H" pre-tool-use.py
-echo '{"session_id":"verify-1","tool_name":"Edit","tool_input":{"file_path":"{PROJECT_PATH}/{SOURCE_SAMPLE}","new_string":"x"}}' | bash "$H" pre-tool-use.py
+echo '{"session_id":"verify-1","tool_name":"Read","tool_input":{"file_path":"{PROJECT_PATH}/CLAUDE.md"}}' | bash "$H" .claude/hooks/pre-tool-use.py
+echo '{"session_id":"verify-1","tool_name":"Edit","tool_input":{"file_path":"{PROJECT_PATH}/{SOURCE_SAMPLE}","new_string":"x"}}' | bash "$H" .claude/hooks/pre-tool-use.py
 
 # Content lint -- a payload carrying one banned item must produce deny JSON
-echo '{"session_id":"verify-2","tool_name":"Write","tool_input":{"file_path":"{PROJECT_PATH}/{SOURCE_SAMPLE}","content":"<a line carrying one banned item>"}}' | bash "$H" pre-tool-use.py
+echo '{"session_id":"verify-2","tool_name":"Write","tool_input":{"file_path":"{PROJECT_PATH}/{SOURCE_SAMPLE}","content":"<a line carrying one banned item>"}}' | bash "$H" .claude/hooks/pre-tool-use.py
 
 # Command gates -- one required flag removed (or a commandRules command before its Read)
 # must produce deny JSON; the complete command empty output
-echo '{"session_id":"verify-3","tool_name":"Bash","tool_input":{"command":"<the guarded command, one flag removed>"}}' | bash "$H" pre-tool-use-command.py
+echo '{"session_id":"verify-3","tool_name":"Bash","tool_input":{"command":"<the guarded command, one flag removed>"}}' | bash "$H" .claude/hooks/pre-tool-use-command.py
 
 # MCP tool gate -- a call missing one required field must produce deny JSON
-echo '{"session_id":"verify-3","tool_name":"<the guarded tool>","tool_input":{}}' | bash "$H" pre-tool-use-command.py
+echo '{"session_id":"verify-3","tool_name":"<the guarded tool>","tool_input":{}}' | bash "$H" .claude/hooks/pre-tool-use-command.py
 
 # Session injection -- SubagentStart carries session-start-header only; SessionStart also
 # carries main-session-header (docs/workflow.md is never injected)
-echo '{}' | bash "$H" session-start.py --hook-event-name SubagentStart
-echo '{}' | bash "$H" session-start.py --hook-event-name SessionStart
+echo '{}' | bash "$H" .claude/hooks/session-start.py --hook-event-name SubagentStart
+echo '{}' | bash "$H" .claude/hooks/session-start.py --hook-event-name SessionStart
 
 # Turn-end gate -- a promise with no resume condition must exit 2
-echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p1","last_assistant_message":"Committed the fix. I will check the build output next."}' | bash "$H" stop-turn-end-gate.py; echo "exit=$?"
+echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p1","last_assistant_message":"Committed the fix. I will check the build output next."}' | bash "$H" .claude/hooks/stop-turn-end-gate.py; echo "exit=$?"
 
 # The same prompt_id again must exit 0 (one block per prompt)
-echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p1","last_assistant_message":"Committed the fix. I will check the build output next."}' | bash "$H" stop-turn-end-gate.py; echo "exit=$?"
+echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p1","last_assistant_message":"Committed the fix. I will check the build output next."}' | bash "$H" .claude/hooks/stop-turn-end-gate.py; echo "exit=$?"
 
 # Escape hatches -- all three must exit 0
-echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p2","last_assistant_message":"I will check the build. Resume condition: background completion notification."}' | bash "$H" stop-turn-end-gate.py; echo "exit=$?"
-echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p3","last_assistant_message":"I will need the token. Please run the login command and paste the output."}' | bash "$H" stop-turn-end-gate.py; echo "exit=$?"
-echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p4","last_assistant_message":"I checked the build and it passed. Nothing left to do."}' | bash "$H" stop-turn-end-gate.py; echo "exit=$?"
+echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p2","last_assistant_message":"I will check the build. Resume condition: background completion notification."}' | bash "$H" .claude/hooks/stop-turn-end-gate.py; echo "exit=$?"
+echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p3","last_assistant_message":"I will need the token. Please run the login command and paste the output."}' | bash "$H" .claude/hooks/stop-turn-end-gate.py; echo "exit=$?"
+echo '{"hook_event_name":"Stop","session_id":"t","prompt_id":"p4","last_assistant_message":"I checked the build and it passed. Nothing left to do."}' | bash "$H" .claude/hooks/stop-turn-end-gate.py; echo "exit=$?"
 
 # Session-length signal -- against a long session's transcript, additionalContext JSON;
 # the same session_id again, empty output
-echo '{"hook_event_name":"UserPromptSubmit","session_id":"t","transcript_path":"<a long session jsonl>"}' | bash "$H" user-prompt-submit-session-length.py
+echo '{"hook_event_name":"UserPromptSubmit","session_id":"t","transcript_path":"<a long session jsonl>"}' | bash "$H" .claude/hooks/user-prompt-submit-session-length.py
 ```
 
 A gate hook that exits 1 with a message on stderr did **not** run its check (a broken rule file,

@@ -6,7 +6,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/run-python-hook.sh\" session-start.py --hook-event-name SessionStart",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/run-python.sh\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.py\" --hook-event-name SessionStart",
             "timeout": 30
           }
         ]
@@ -18,7 +18,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/run-python-hook.sh\" session-start.py --hook-event-name SubagentStart",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/run-python.sh\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.py\" --hook-event-name SubagentStart",
             "timeout": 30
           }
         ]
@@ -30,7 +30,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/run-python-hook.sh\" user-prompt-submit-session-length.py",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/run-python.sh\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/user-prompt-submit-session-length.py\"",
             "timeout": 15
           }
         ]
@@ -43,7 +43,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/run-python-hook.sh\" pre-tool-use.py",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/run-python.sh\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use.py\"",
             "timeout": 10
           }
         ]
@@ -54,7 +54,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/run-python-hook.sh\" pre-tool-use-command.py",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/run-python.sh\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use-command.py\"",
             "timeout": 10
           }
         ]
@@ -65,7 +65,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/run-python-hook.sh\" pre-tool-use-command.py",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/run-python.sh\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use-command.py\"",
             "timeout": 10
           }
         ]
@@ -77,7 +77,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/run-python-hook.sh\" stop-turn-end-gate.py",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/run-python.sh\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-turn-end-gate.py\"",
             "timeout": 15,
             "statusMessage": "Checking the turn-end report..."
           }

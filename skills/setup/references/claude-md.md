@@ -71,7 +71,10 @@ module blocks. Do not duplicate rules the user's global `~/.claude/CLAUDE.md` al
   `docs/board-archive.md` — done
 - `docs/issues/<id>.md` — a card's background, provenance, and decisions. **The card is one line;
   the detail goes here**
-- `bash scripts/board-ready.sh` — startable cards, stale prerequisites, broken references
+- `bash scripts/run-python.sh scripts/board.py ready` — startable cards, stale prerequisites,
+  broken references
+- `/board`, or `bash scripts/run-python.sh scripts/board.py view` in a terminal — the board as a
+  read-only kanban page
 - The flow is `issue → design → implementation → done`. A design document is an issue's output,
   not the source of work
 <!-- /module:board -->
