@@ -134,7 +134,9 @@ A hook is a device that keeps you from forgetting, not a device that teaches.
 - Requirements that do not belong at edit time (pre-commit, pre-merge gates) are never hooked as
   `requires` — they block the writing itself.
 - Notification is once per rule per session.
-- Scripts keep exit 0 (fail-open) on exceptions.
+- A script never blocks the tool call on its own failure — it exits 0 or exits 1 with a
+  diagnostic, by the branch in `.claude/hooks/README.md` "How Far a Failure Is Surfaced". Only a
+  policy decision denies.
 
 ## Header Promotion Criteria
 
